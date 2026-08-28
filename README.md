@@ -7,6 +7,7 @@ Each phase has a separate responsibility and is intentionally user-invoked. Skil
 ## Architecture
 
 ```mermaid
+%%{init: { "flowchart": { "diagramPadding": 200 } } }%%
 flowchart LR
     A["/discuss<br/>Shared understanding"] -->|manual| B["/design<br/>Confirmed design"]
     B -->|manual| C["/improve<br/>Improved design"]
