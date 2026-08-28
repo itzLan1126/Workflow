@@ -1,0 +1,6 @@
+interface:
+  display_name: "Improve"
+  short_description: "Challenge and strengthen confirmed designs"
+
+policy:
+  allow_implicit_invocation: false

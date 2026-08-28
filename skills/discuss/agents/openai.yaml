@@ -1,0 +1,6 @@
+interface:
+  display_name: "Discuss"
+  short_description: "Clarify intent, scope, and constraints"
+
+policy:
+  allow_implicit_invocation: false
