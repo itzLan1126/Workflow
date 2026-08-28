@@ -2,28 +2,28 @@
 status: draft
 ---
 
-# <Design name>
+# <!-- REPLACE: Design name -->
 
 ## Goal
 
-<What this design will achieve.>
+<!-- REPLACE: What this design will achieve. -->
 
 ## Requirements
 
-- <Confirmed requirement that affects implementation.>
+- <!-- REPLACE: Confirmed requirement that affects implementation. -->
 
 ## Implementation Approach
 
-<The final architecture, responsibilities, and important behavior.>
+<!-- REPLACE: The final architecture, responsibilities, and important behavior. -->
 
 ## File Changes
 
-### `<real/path>`
+### <!-- REPLACE: real/path -->
 
-- <This file's responsibility in the change.>
+- <!-- REPLACE: This file's responsibility in the change. -->
 
 ## Testing
 
-- <Observable behavior or regression to verify after implementation.>
+- <!-- REPLACE: Observable behavior or regression to verify after implementation. -->
 
-<!-- Add only relevant sections such as Data Flow, Interface Changes, Compatibility, Migration, Security, Dependencies, or Implementation Order. -->
+<!-- GUIDANCE: Add only relevant sections such as Data Flow, Interface Changes, Compatibility, Migration, Security, Dependencies, or Implementation Order. -->
