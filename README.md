@@ -4,6 +4,18 @@ A portable set of five [Agent Skills](https://agentskills.io/) for moving a soft
 
 Each phase has a separate responsibility and is intentionally user-invoked. Skills never start one another automatically. A skill stops at its own completion gate; the user decides whether to continue, repeat, or skip a phase. Some phases still consume earlier artifacts: `/improve`, for example, requires a confirmed design.
 
+## Installation
+
+Install the skills for the current project with:
+
+```sh
+npx skills add itzLan1126/Workflow
+```
+
+Add `--global` to install them for the current user instead.
+
+The specifications use slash names such as `/discuss`. Invoke the installed skill with the syntax supported by your agent; for example, Codex uses `$discuss`, `$design`, `$improve`, `$implement`, and `$review`.
+
 ## Architecture
 
 ```mermaid
@@ -69,24 +81,6 @@ Important or unclear work: /discuss -> /design -> /improve -> /implement -> /rev
 ```
 
 Each skill lives in its own directory under `skills/`. Supporting files exist only when the workflow needs them; currently only `/design` needs a template.
-
-## Installation
-
-From the root of a cloned copy of this repository, install the skills for the current user with:
-
-```sh
-mkdir -p ~/.agents/skills
-cp -R skills/discuss skills/design skills/improve skills/implement skills/review ~/.agents/skills/
-```
-
-For a repository-scoped installation, replace `/path/to/project` with the target repository:
-
-```sh
-mkdir -p /path/to/project/.agents/skills
-cp -R skills/discuss skills/design skills/improve skills/implement skills/review /path/to/project/.agents/skills/
-```
-
-The specifications use slash names such as `/discuss`. Invoke the installed skill with the syntax supported by your agent; for example, Codex uses `$discuss`, `$design`, `$improve`, `$implement`, and `$review`.
 
 ## Validation
 
