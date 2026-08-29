@@ -51,6 +51,19 @@ class ValidatorTests(unittest.TestCase):
         skill_file.write_text(SKILL + ("line\n" * (500 - line_count)), encoding="utf-8")
         self.assertEqual(([], 1), validate_repository(root))
 
+    def test_allows_percent_encoded_resource_links(self):
+        temporary_directory, root = self.repository()
+        self.addCleanup(temporary_directory.cleanup)
+        skill_file = root / "skills/demo/SKILL.md"
+        skill_file.write_text(
+            SKILL.replace("references/guide.md", "references/my%20guide.md"),
+            encoding="utf-8",
+        )
+        (root / "skills/demo/references/guide.md").rename(
+            root / "skills/demo/references/my guide.md"
+        )
+        self.assertEqual(([], 1), validate_repository(root))
+
     def test_rejects_invalid_project_contracts(self):
         cases = {
             "invalid YAML": (
