@@ -38,12 +38,12 @@ The arrows show the full workflow, not a required pipeline. A small, clear chang
 | Skill | Responsibility | Workspace effect | Completion gate |
 | --- | --- | --- | --- |
 | [`discuss`](skills/discuss/SKILL.md) | Investigate facts and resolve product intent, scope, constraints, and high-level direction one decision at a time. | Read-only. | The user confirms the shared understanding and no material product decision remains open. |
-| [`design`](skills/design/SKILL.md) | Turn clear requirements and real repository evidence into an implementation-ready design. | Creates a dated Markdown design using the bundled [template](skills/design/templates/design.md). | The user confirms the design and its status becomes `confirmed`. |
+| [`design`](skills/design/SKILL.md) | Turn clear requirements and real repository evidence into an implementation-ready design. | Creates a dated Markdown design using the bundled [template](skills/design/assets/design.md). | The user confirms the design and its status becomes `confirmed`. |
 | [`improve`](skills/improve/SKILL.md) | Independently challenge a confirmed design, validate useful suggestions, and simplify or strengthen it. | Updates the same design file only when a material improvement is found. | The improved design is reconfirmed, or the confirmed design is left unchanged when no improvement survives validation. |
 | [`implement`](skills/implement/SKILL.md) | Produce the smallest correct production change, behavioral tests, and proportionate verification. | Modifies task-related production, test, generated, or directly affected documentation files. | Requirements and any confirmed design are satisfied with reported verification evidence. |
 | [`review`](skills/review/SKILL.md) | Perform one independent, read-only, defect-first review of a specific change. | Read-only. | The complete target is covered and only evidence-backed findings and material verification gaps are reported. |
 
-All five skills use `disable-model-invocation: true`. They do not automatically invoke one another, commit, push, open pull requests, or merge changes.
+All five skills use `disable-model-invocation: true` for Claude Code and `policy.allow_implicit_invocation: false` in `agents/openai.yaml` for Codex. They do not automatically invoke one another, commit, push, open pull requests, or merge changes.
 
 ## Typical paths
 
@@ -67,12 +67,17 @@ Important or unclear work: /discuss -> /design -> /improve -> /implement -> /rev
 │   ├── implement Skill Specification.md
 │   └── review Skill Specification.md
 ├── scripts/
-│   └── validate_skills.py
+│   └── validation.py
+├── tests/
+│   └── test_validation.py
 ├── skills/
 │   ├── discuss/SKILL.md
 │   ├── design/
 │   │   ├── SKILL.md
-│   │   └── templates/design.md
+│   │   ├── agents/openai.yaml
+│   │   └── assets/
+│   │       ├── design.md
+│   │       └── design.zh-CN.md
 │   ├── improve/SKILL.md
 │   ├── implement/SKILL.md
 │   └── review/SKILL.md
@@ -80,17 +85,21 @@ Important or unclear work: /discuss -> /design -> /improve -> /implement -> /rev
 └── README.md
 ```
 
-Each skill lives in its own directory under `skills/`. Supporting files exist only when the workflow needs them; currently only `/design` needs a template.
+Each skill lives in its own directory under `skills/`. A skill may use only `scripts/`, `references/`, `assets/`, and `agents/` as direct subdirectories. Supporting files exist only when the workflow needs them; currently only `/design` needs templates.
 
 ## Validation
 
-Run the same validation used by CI:
+Install the validation dependency, then run the same checks used by CI:
 
 ```sh
-python3 scripts/validate_skills.py
+python3 -m pip install strictyaml==1.7.3
+python3 -m unittest discover -s tests
+python3 scripts/validation.py
 ```
 
-The validator checks every directory under `skills/` for a valid name, matching `SKILL.md` frontmatter, a bounded description, and non-empty instructions.
+The project-specific validator parses YAML frontmatter and checks its allowed fields and constraints, required manual-invocation policies for Claude Code and Codex, supported direct subdirectories, a 500-line maximum, non-empty instructions, local resource references, and agreement between the README skill list and the directories under `skills/`.
+
+Passing CI proves these static repository contracts. It does not launch an agent client or prove runtime invocation behavior.
 
 ## License
 
