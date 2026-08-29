@@ -26,7 +26,7 @@ Read the request and prior decisions. If a missing choice would change the goal,
 
 ## Design document
 
-Read the template that matches the design document language: [templates/design.zh-CN.md](templates/design.zh-CN.md) for Simplified Chinese, or [templates/design.md](templates/design.md) otherwise. Then:
+Read the template that matches the design document language: [assets/design.zh-CN.md](assets/design.zh-CN.md) for Simplified Chinese, or [assets/design.md](assets/design.md) otherwise. Then:
 
 1. Use the repository's existing design directory; otherwise use `docs/designs/`.
 2. Create `YYYY-MM-DD-<short-name>.md`. For an existing same-day path, append `-2`, `-3`, and so on. Each independent `/design` creates a new document; never overwrite an older design.
