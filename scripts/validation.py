@@ -111,7 +111,8 @@ def referenced_paths(body: str) -> set[str]:
             references.add(local_path)
 
     references.update(
-        match.group(0).rstrip(".,:;") for match in RESOURCE_PATH_PATTERN.finditer(body)
+        unquote(match.group(0).rstrip(".,:;"))
+        for match in RESOURCE_PATH_PATTERN.finditer(body)
     )
     return references
 

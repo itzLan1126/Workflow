@@ -765,14 +765,15 @@ YYYY-MM-DD-<design-name>.md
 ```text
 design/
 ├── SKILL.md
-└── templates/
-    └── design.md
+└── assets/
+    ├── design.md
+    └── design.zh-CN.md
 ```
 
 Agent 每次执行：
 
 ```text
-读取 templates/design.md
+根据 design 文档语言读取 assets/design.zh-CN.md 或 assets/design.md
 ↓
 根据当前任务填写
 ↓
