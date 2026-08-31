@@ -11,16 +11,17 @@ Build a shared understanding of **what** to build before deciding exactly **how*
 ## Decision tree
 
 1. Read the request and investigate the available context: repository instructions, relevant code, tests, configuration, documentation, history, and current worktree state.
-2. Classify each unresolved item:
+2. Internally scan the relevant coverage areas: functional scope and behavior, users and roles, data and lifecycle, primary/alternate/error/recovery flows, non-functional requirements, external dependencies, constraints, trade-offs, terminology, and success conditions. Mark each area `clear`, `partial`, `missing`, or `not relevant`. Use this only to find gaps; never turn it into a fixed questionnaire.
+3. Classify each unresolved item:
    - Investigate a **fact** when the environment can establish it.
    - Add a **decision** to the decision tree when it can change the goal, scope, behavior, constraints, compatibility, high-level direction, or success condition.
    - For a fact that the environment cannot establish, determine whether the user must provide it.
    - Keep an **assumption** labeled until it is confirmed or verified.
-3. Select the most upstream unresolved item. Determine what its answer can change. Remove the item if its answer has no material effect on later design or implementation.
-4. For an item with a material effect, ask one specific question. State your recommendation or current best guess. When useful, offer a small set of real choices and explain the evidence and trade-offs. Wait for the answer before asking another question.
-5. After each answer, update the decision tree and remove branches that the answer makes irrelevant. Check the facts, decisions, constraints, dependencies, assumptions, contradictions, and trade-offs.
-6. Repeat from step 3 only while an unresolved item could materially change later design or implementation.
-7. Otherwise, summarize the shared understanding and ask the user to confirm it. Incorporate corrections and repeat this confirmation until the user explicitly agrees.
+4. Select the most upstream unresolved item. Determine what its answer can change. Remove the item if its answer has no material effect on later design or implementation.
+5. For an item with a material effect, ask one specific question. State your recommendation or current best guess. When useful, offer a small set of real choices and explain the evidence and trade-offs. Wait for the answer before asking another question.
+6. After each answer, update the decision tree and remove branches that the answer makes irrelevant. Check the facts, decisions, constraints, dependencies, assumptions, contradictions, and trade-offs.
+7. Repeat from step 4 only while an unresolved item could materially change later design or implementation.
+8. Otherwise, summarize the shared understanding and ask the user to confirm it. Incorporate corrections and repeat this confirmation until the user explicitly agrees.
 
 ## Boundaries
 
