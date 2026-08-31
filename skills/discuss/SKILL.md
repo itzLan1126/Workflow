@@ -18,7 +18,7 @@ Build a shared understanding of **what** to build before deciding exactly **how*
    - Add a **decision** to the decision tree when it can change the goal, scope, behavior, constraints, compatibility, high-level direction, or success condition.
    - For a fact that the environment cannot establish, determine whether the user must provide it.
    - Keep an **assumption** labeled until it is confirmed or verified.
-4. Select the most upstream unresolved item. Determine what its answer can change. Remove the item if its answer has no material effect on later design or implementation.
+4. Select the most upstream candidate with the greatest combination of impact and uncertainty. Use downstream rework cost to break close calls. Remove a candidate if its answer would not materially change later design or implementation.
 5. For an item with a material effect, ask one specific question. For a discovery question, stay neutral. For a decision, state your recommendation or current best guess and, when useful, offer a small set of real choices with evidence and trade-offs. Wait for the answer before asking another question.
 6. After each answer, update the decision tree and remove branches that the answer makes irrelevant. Check the facts, decisions, constraints, dependencies, assumptions, contradictions, and trade-offs.
 7. Repeat from step 4 only while an unresolved item could materially change later design or implementation.
