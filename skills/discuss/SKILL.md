@@ -24,7 +24,7 @@ Build a shared understanding of **what** to build before deciding exactly **how*
 6. After each answer, update the decision tree and ledger, remove branches that the answer makes irrelevant, and check dependencies, assumptions, contradictions, trade-offs, and coverage.
 7. Repeat from step 4 only while an unresolved item could materially change later design or implementation.
 8. Otherwise, check that each important requirement has an observable success condition that `/design` can later verify. Resolve material vague terms, contradictions, unlabeled assumptions, and blocking unknowns before continuing.
-9. Summarize the shared understanding and ask the user to confirm it. Incorporate corrections and repeat this confirmation until the user explicitly agrees.
+9. Summarize the shared understanding using only non-empty parts: goal, in-scope and out-of-scope work, expected behavior and success conditions, verified facts with evidence, confirmed decisions with rationale, constraints, assumptions and non-blocking unknowns, deferred items, and high-level direction. Ask the user to confirm it. Incorporate corrections and repeat this confirmation until the user explicitly agrees.
 
 ## Boundaries
 
@@ -38,4 +38,4 @@ Build a shared understanding of **what** to build before deciding exactly **how*
 
 ## Completion criterion
 
-Discussion is complete only when the verification check in step 8 passes; the goal, scope, expected behavior, important constraints, key decisions, high-level direction, and any non-blocking unknowns are explicit; no material decision remains unresolved; and the user has confirmed the summary. Stop after confirmation. The user chooses whether to invoke `/design` or another phase.
+Discussion is complete only when the verification check in step 8 passes; the final summary makes the goal, scope, expected behavior, success conditions, important constraints, key decisions, high-level direction, and any non-blocking unknowns explicit; no material decision remains unresolved; and the user has confirmed the summary. Stop after confirmation. The user chooses whether to invoke `/design` or another phase.
