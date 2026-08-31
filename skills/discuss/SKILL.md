@@ -22,7 +22,8 @@ Build a shared understanding of **what** to build before deciding exactly **how*
 5. For an item with a material effect, ask one specific question. For a discovery question, stay neutral. For a decision, state your recommendation or current best guess and, when useful, offer a small set of real choices with evidence and trade-offs. For ambiguous behavior, use one ordinary example and one relevant alternate, error, or recovery example without designing tests. Wait for the answer before asking another question.
 6. After each answer, update the decision tree and remove branches that the answer makes irrelevant. Check the facts, decisions, constraints, dependencies, assumptions, contradictions, and trade-offs.
 7. Repeat from step 4 only while an unresolved item could materially change later design or implementation.
-8. Otherwise, summarize the shared understanding and ask the user to confirm it. Incorporate corrections and repeat this confirmation until the user explicitly agrees.
+8. Otherwise, check that each important requirement has an observable success condition that `/design` can later verify. Resolve material vague terms, contradictions, unlabeled assumptions, and blocking unknowns before continuing.
+9. Summarize the shared understanding and ask the user to confirm it. Incorporate corrections and repeat this confirmation until the user explicitly agrees.
 
 ## Boundaries
 
@@ -36,4 +37,4 @@ Build a shared understanding of **what** to build before deciding exactly **how*
 
 ## Completion criterion
 
-Discussion is complete only when the goal, scope, expected behavior, important constraints, key decisions, high-level direction, and any non-blocking unknowns are explicit; no material decision remains unresolved; and the user has confirmed the summary. Stop after confirmation. The user chooses whether to invoke `/design` or another phase.
+Discussion is complete only when the verification check in step 8 passes; the goal, scope, expected behavior, important constraints, key decisions, high-level direction, and any non-blocking unknowns are explicit; no material decision remains unresolved; and the user has confirmed the summary. Stop after confirmation. The user chooses whether to invoke `/design` or another phase.
