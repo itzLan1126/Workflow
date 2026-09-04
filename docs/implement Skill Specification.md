@@ -341,6 +341,14 @@ status: confirmed
 
 design。
 
+如果相关 design 为：
+
+```yaml
+status: completed
+```
+
+则它只提供之前实现的背景信息，不再作为后续 `/implement` 的 contract，也不回退状态。
+
 不得仅因为：
 
 ```text
@@ -1825,7 +1833,7 @@ service unavailable
 
 ## 64. Completion Condition
 
-不得因为以下原因认为 `/implement` 已完成：
+不得因为以下原因请求用户确认 `/implement` 已完成：
 
 ```text
 代码已经写完
@@ -1836,7 +1844,7 @@ target test 运行过一次
 diff 看起来合理
 ```
 
-正确完成条件是：
+请求确认前的正确完成条件是：
 
 ```text
 Requirement 已实现
@@ -1859,6 +1867,16 @@ Requirement 已实现
 +
 没有临时 implementation artifact
 ```
+
+满足上述条件后，Agent 必须先报告 implementation 和 verification 结果，再请求用户确认实现完成。只有用户明确确认后，`/implement` 才正式完成。
+
+如果存在当前实现所遵循的 `status: confirmed` design，用户确认后立即将其改为：
+
+```yaml
+status: completed
+```
+
+没有关联 design 时仍须请求确认，但不修改 design 文件。如果用户不确认，则保持 `status: confirmed`，根据反馈继续修改和验证，再次请求确认。已经是 `status: completed` 的 design 只作为后续实现的背景，不回退或重复修改。
 
 ---
 
@@ -2094,7 +2112,7 @@ formatting 不得制造大量与当前任务无关的 diff。
 
 ### 禁止自动进入 `/review`
 
-`/implement` 完成后停止。
+用户确认 `/implement` 完成后停止。
 
 ---
 
@@ -2107,16 +2125,20 @@ formatting 不得制造大量与当前任务无关的 diff。
 ↓
 读取当前 Requirement 和上下文
 ↓
-寻找当前任务相关 confirmed design
+寻找当前任务相关 design
 ↓
-是否存在 confirmed design？
-├── 是
+design 状态是什么？
+├── confirmed
 │   ↓
 │   读取完整 design
 │   ↓
 │   将 design 作为 implementation contract
 │
-└── 否
+├── completed
+│   ↓
+│   读取为背景信息，不作为 implementation contract
+│
+└── draft 或不存在
     ↓
     判断 Requirement 是否足够明确
     ├── 否
@@ -2225,9 +2247,26 @@ formatting 不得制造大量与当前任务无关的 diff。
 ↓
 输出 implementation 结果
 ↓
-停止
-↓
-等待用户手动运行 /review
+请求用户确认实现完成
+├── 不确认
+│   ↓
+│   保持 status: confirmed
+│   ↓
+│   根据反馈继续修改和验证
+│   ↓
+│   再次请求确认
+│
+└── 确认
+    ↓
+    关联 design 是 status: confirmed？
+    ├── 是
+    │   └── 改为 status: completed
+    └── 否
+        └── 不修改 design
+    ↓
+    停止
+    ↓
+    等待用户手动运行 /review
 ```
 
 ---
@@ -2244,6 +2283,8 @@ formatting 不得制造大量与当前任务无关的 diff。
 是否存在无法完成的 verification
 是否存在需要用户知道的限制或已有问题
 ```
+
+说明这些结果后，必须请求用户确认实现完成；确认后再更新关联 design 状态并结束。
 
 如果使用了 confirmed design，应明确：
 

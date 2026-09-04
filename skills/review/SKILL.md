@@ -16,7 +16,7 @@ Review the actual change, prove each defect, and report only issues worth fixing
 
 ## Establish the basis
 
-Read applicable repository instructions and determine the best available requirement from the request, discussion, issue or pull-request text, specifications, commits, tests, documentation, and established behavior. Find a related `status: confirmed` design when reliable; treat drafts only as non-authoritative context.
+Read applicable repository instructions and determine the best available requirement from the request, discussion, issue or pull-request text, specifications, commits, tests, documentation, and established behavior. Find a related `status: confirmed` or `status: completed` design when reliable; both are authoritative review bases, while `completed` also records that the user accepted the implementation. Treat drafts only as non-authoritative context.
 
 Review intended behavior against the implementation using this priority: explicit requirement, confirmed specification or design, repository rules, established behavior, then generic engineering expectations. Missing requirements or unavailable material checks are verification gaps, not permission to guess.
 

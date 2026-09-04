@@ -29,6 +29,7 @@ flowchart LR
     B -. creates .-> F["docs/designs/<br/>status: confirmed"]
     C -. updates the same file .-> F
     D -. follows when present .-> F
+    F -->|user confirms implementation| G["same design file<br/>status: completed"]
 ```
 
 The arrows show the full workflow, not a required pipeline. A small, clear change can start at `/implement`; a design can go directly from `/design` to `/implement`; a high-risk change can use all five phases.
@@ -40,7 +41,7 @@ The arrows show the full workflow, not a required pipeline. A small, clear chang
 | [`discuss`](skills/discuss/SKILL.md) | Investigate facts and resolve product intent, scope, constraints, and high-level direction one decision at a time. | Read-only. | The user confirms the shared understanding and no material product decision remains open. |
 | [`design`](skills/design/SKILL.md) | Turn clear requirements and real repository evidence into an implementation-ready design. | Creates a dated Markdown design using the bundled [template](skills/design/assets/design.md). | The user confirms the design and its status becomes `confirmed`. |
 | [`improve`](skills/improve/SKILL.md) | Independently challenge a confirmed design, validate useful suggestions, and simplify or strengthen it. | Updates the same design file only when a material improvement is found. | The improved design is reconfirmed, or the confirmed design is left unchanged when no improvement survives validation. |
-| [`implement`](skills/implement/SKILL.md) | Produce the smallest correct production change, behavioral tests, and proportionate verification. | Modifies task-related production, test, generated, or directly affected documentation files. | Requirements and any confirmed design are satisfied with reported verification evidence. |
+| [`implement`](skills/implement/SKILL.md) | Produce the smallest correct production change, behavioral tests, and proportionate verification. | Modifies task-related production, test, generated, or directly affected documentation files. | The user confirms the verified implementation; a related `status: confirmed` design becomes `status: completed`. |
 | [`review`](skills/review/SKILL.md) | Perform one independent, read-only, defect-first review of a specific change. | Read-only. | The complete target is covered and only evidence-backed findings and material verification gaps are reported. |
 
 All five skills use `disable-model-invocation: true` for Claude Code and `policy.allow_implicit_invocation: false` in `agents/openai.yaml` for Codex. They do not automatically invoke one another, commit, push, open pull requests, or merge changes.
@@ -53,7 +54,7 @@ Clear feature:            /design -> /implement -> /review
 Important or unclear work: /discuss -> /design -> /improve -> /implement -> /review
 ```
 
-`/discuss`, `/design`, and `/improve` include explicit user-confirmation gates. `/implement` and `/review` stop after reporting their result, so fixes and re-reviews always begin as new user-invoked phases.
+`/discuss`, `/design`, `/improve`, and `/implement` include explicit user-confirmation gates. `/implement` reports and waits for confirmation before marking a related design completed; `/review` stops after reporting its result. Fixes and re-reviews always begin as new user-invoked phases, and a completed design is background context rather than a contract for later `/implement` work.
 
 ## Repository layout
 

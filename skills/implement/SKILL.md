@@ -10,7 +10,7 @@ Write the simplest correct production implementation that satisfies the requirem
 
 ## Establish the contract
 
-1. Read the request and locate any related design from its explicit path or reliable task context. A `status: confirmed` design is the implementation contract; a draft is context only.
+1. Read the request and locate any related design from its explicit path or reliable task context. A `status: confirmed` design is the implementation contract. A `status: completed` design records a previously accepted implementation and is background context only for later `/implement` work; a draft is also context only.
 2. `/implement` may proceed without a design for a clear, local change. If requirements are materially ambiguous, return to `/discuss`. If the work needs a new core subsystem, important dependency, public contract, persistence model, difficult-to-reverse architecture, or another major technical decision, return to `/design`.
 3. If project evidence makes a confirmed design unsafe or infeasible, stop and report the exact design rule, conflicting fact, and affected work; return to `/design` or `/improve`. Keep low-level implementation choices that preserve the contract autonomous.
 
@@ -34,6 +34,6 @@ Before adding a helper, service, component, hook, validator, type, wrapper, abst
 
 Review the complete diff for requirement and confirmed-design compliance, missed callers, unintended API changes, scope creep, unrelated formatting, temporary code, debug output, hard-coded fixtures, stale generated files, and accidental user-work changes. Remove only artifacts created by this implementation.
 
-Completion requires the requested behavior to be implemented, any confirmed design to be followed, relevant behavioral tests and proportionate checks to pass, change-caused failures to be resolved, no necessary scope to be missing, and no unexplained verification gap or user-work damage to remain.
+Before requesting completion confirmation, ensure the requested behavior is implemented, any confirmed design is followed, relevant behavioral tests and proportionate checks pass, change-caused failures are resolved, no necessary scope is missing, and no unexplained verification gap or user-work damage remains.
 
-Report what changed, the main affected areas, every test or check actually run and its result, and any unverified behavior with its residual risk. Do not commit, push, open a pull request, merge, or start `/review` unless the user separately asks. Stop after the implementation report.
+Report what changed, the main affected areas, every test or check actually run and its result, and any unverified behavior with its residual risk, then ask the user to confirm that the implementation is complete. If the user does not confirm, keep any design at `status: confirmed`, address the feedback, reverify, and ask again. Only after explicit confirmation, change a related `status: confirmed` design to `status: completed`; if there is no such design, still require confirmation but do not change a design file. Leave any already-completed design unchanged. Do not commit, push, open a pull request, merge, or start `/review` unless the user separately asks. Stop after confirmation and any required status update.
