@@ -200,13 +200,15 @@ Testing goals
 重大 Technical Decisions
 ```
 
-如果当前任务存在：
+如果当前任务存在以下任一状态的 design：
 
 ```yaml
 status: confirmed
+# 或
+status: completed
 ```
 
-的 design，则该 design 是重要 review basis。
+则该 design 是重要 review basis。`completed` 还表示用户已经确认对应实现完成。
 
 `/review` 应检查：
 
@@ -749,6 +751,8 @@ design 目录
 
 ```yaml
 status: confirmed
+# 或
+status: completed
 ```
 
 的当前任务 design。
@@ -766,7 +770,7 @@ status: confirmed
 
 ## 19. Design Compliance
 
-如果存在 confirmed design：
+如果存在 `status: confirmed` 或 `status: completed` design：
 
 ```text
 /review 必须验证 design compliance
@@ -3175,7 +3179,7 @@ repository 状态无法安全读取
 但以下情况默认不会阻止 defect review：
 
 ```text
-没有 confirmed design
+没有 confirmed 或 completed design
 没有完整 Requirement
 部分 verification 无法运行
 ```
@@ -3281,9 +3285,9 @@ target 或 base 无法可靠确定时必须停止询问。
 
 ---
 
-### 禁止把 draft design 当作 confirmed contract
+### 禁止把 draft design 当作正式 contract
 
-只有 confirmed design 具有正式 design-compliance 权威。
+只有 `status: confirmed` 或 `status: completed` design 具有正式 design-compliance 权威。
 
 ---
 
@@ -3452,11 +3456,11 @@ P0 到 P3 已提供处理优先级。
 ↓
 确定 Requirement
 ↓
-寻找 related confirmed design
+寻找 related confirmed 或 completed design
 ↓
 建立 review basis：
     Requirement
-    confirmed design，如果存在
+    confirmed 或 completed design，如果存在
     repository rules
     existing behavior
 ↓
