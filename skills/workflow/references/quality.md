@@ -6,4 +6,4 @@ Then follow [the tool guide](quality-tools.md) to execute [CRAP](../scripts/crap
 
 Interpret surviving mutations before requesting fixes; an equivalent mutation is not automatically a test defect. Do not weaken tests, exclusions, or thresholds merely to obtain a pass. Keep source and tests unchanged yourself; the implementer owns repairs and any required tool setup. Run mutation tooling on an isolated copy containing the exact accepted changes, including relevant uncommitted work, without resetting or deleting user files.
 
-Return findings, actual commands and results, material gaps, and evidence paths. Recheck affected review and tool evidence after repairs; report repeated lack of progress. Quality scores do not establish user acceptance.
+Return findings, actual commands and results, material gaps, and evidence paths. Identify which required checks completed and which are blocked so the coordinator can apply the stage completion criterion. Recheck affected review and tool evidence after repairs; report repeated lack of progress. Quality scores do not establish user acceptance.
