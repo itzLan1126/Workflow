@@ -17,10 +17,17 @@ def is_count(value):
     return type(value) is int and 0 <= value <= 2**53 - 1
 
 
+def is_text(value):
+    return isinstance(value, str) and value.strip() != ''
+
+
+def has_fields(f):
+    return (all(is_text(f.get(key)) for key in ('file', 'name'))
+            and all(is_count(f.get(key)) for key in ('line', 'complexity', 'total', 'covered')))
+
+
 def is_measurement(f):
-    return (isinstance(f, dict)
-            and all(isinstance(f.get(key), str) and f[key].strip() for key in ('file', 'name'))
-            and all(is_count(f.get(key)) for key in ('line', 'complexity', 'total', 'covered'))
+    return (isinstance(f, dict) and has_fields(f)
             and min(f['line'], f['complexity'], f['total']) >= 1
             and f['covered'] <= f['total']
             and f.get('coverageKind') in ('line', 'branch', 'statement', 'basis-path'))
