@@ -61,7 +61,8 @@ Configure a real installed mutation engine and a new output path. Set engine tes
 | `cargo-mutants` | Rust cargo-mutants `mutants.out/outcomes.json` | `["cargo", "mutants"]` |
 | `stryker` | JS/TS Stryker JSON reporter | `["./node_modules/.bin/stryker", "run", "--reporters", "json"]` |
 | `muter` | Swift Muter JSON report | `["muter", "run", "--format", "json", "--output", "mutation.json", "--skip-update-check"]` |
-| `normalized` | Other engines, including Python, through a project-owned exporter | `["python", "/absolute/project-analysis/run-mutation.py"]` |
+| `normalized` | Python mutmut 3 through the bundled [exporter](../scripts/mutmut_export.py) | `["/absolute/venv/bin/python", "/path/to/workflow/scripts/mutmut_export.py", "mutation.json"]` |
+| `normalized` | Other engines through a project-owned exporter | `["python", "/absolute/project-analysis/run-mutation.py"]` |
 
 For example, in a fresh Rust analysis copy with cargo-mutants already installed:
 
@@ -75,6 +76,17 @@ For example, in a fresh Rust analysis copy with cargo-mutants already installed:
 }
 ```
 
+### Scope to the change
+
+Mutate the changed code by default; whole-project runs can take hours. Widen the scope only with a stated reason, and record the scope with the result.
+
+| Engine | Changed-code scope |
+| --- | --- |
+| cargo-mutants | `--in-diff changes.diff`, using a diff of the accepted change |
+| Stryker | `--mutate "src/a.ts:10-40"` file and line ranges; do not use `--incremental`, which reuses earlier results |
+| Muter | `--files-to-mutate` with the changed files |
+| mutmut | `only_mutate` globs in the analysis copy's `[tool.mutmut]` configuration |
+
 Do not use cargo-mutants `--check` or skip its baseline. Stryker and Muter must run their normal baseline/test flow. Use Stryker's completed JSON reporter output, never its incremental cache or a partial report. Configure their JSON output to match `report`; do not enable network dashboard upload as part of this workflow.
 
 The normalized adapter requires real engine output converted by executable code, not a prompt-generated summary:
@@ -85,7 +97,7 @@ The normalized adapter requires real engine output converted by executable code,
 
 Allowed statuses are `killed`, `survived`, `noCoverage`, `timeout`, `unviable`, `ignored`, and `error`. Only actual failing tests count as kills; compile failures and ignored mutants are excluded. Runtime errors and unfinished runs produce exit 2. Timeouts require investigation instead of being counted as kills. Equivalent survivors require an evidence-backed disposition; do not rewrite the report to get exit 0. Preserve a nonzero result and explain any justified exception.
 
-There is no built-in Python-engine exporter yet. Other languages are supported through this explicit adapter contract, not automatic engine discovery. Native adapters are covered by report fixtures and subprocess tests; validate the installed engine version and its report format on each target project.
+The mutmut exporter runs `mutmut run` with the interpreter that runs the exporter, so use the analysis environment's Python. It refuses an existing `mutants/` directory because mutmut would reuse stale results, writes no report when mutmut's clean baseline fails, and maps abnormal or unfinished mutants (suspicious, segfault, interrupted, not checked) to `error`. mutmut derives module names from file paths relative to the project root (dropping a leading `src/`), so tests must import the code under those names; code started as a subprocess from another directory is not associated with tests. Other languages are supported through this explicit adapter contract, not automatic engine discovery. Native adapters are covered by report fixtures and subprocess tests; validate the installed engine version and its report format on each target project.
 
 ## Sources
 
