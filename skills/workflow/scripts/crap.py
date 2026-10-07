@@ -2,6 +2,7 @@
 """Compute CRAP scores and gate them, with aggregate coverage, against the skill's standard."""
 
 import json
+from fractions import Fraction
 import sys
 
 from run_report import run_report
@@ -44,9 +45,10 @@ def score_functions(measurements):
         if identity in seen:
             raise ValueError(f'Duplicate function measurement: {identity}')
         seen.add(identity)
-        coverage = f['covered'] / f['total']
+        coverage = Fraction(f['covered'], f['total'])
         crap = f['complexity'] ** 2 * (1 - coverage) ** 3 + f['complexity']
-        functions.append({**f, 'coverage': coverage, 'crap': crap, 'exceedsThreshold': crap > MAX_CRAP})
+        functions.append({**f, 'coverage': float(coverage), 'crap': float(crap),
+                          'exceedsThreshold': crap > MAX_CRAP})
     functions.sort(key=lambda f: f['crap'], reverse=True)
     return functions
 

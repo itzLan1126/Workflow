@@ -72,7 +72,10 @@ def stop(child):
         if os.name == "posix":
             os.killpg(child.pid, signal.SIGKILL)
         else:
-            child.kill()
+            # kill() only terminates the root on Windows; /T includes its descendants.
+            subprocess.run(["taskkill", "/PID", str(child.pid), "/T", "/F"],
+                           check=True, stdin=subprocess.DEVNULL,
+                           stdout=sys.stderr, stderr=sys.stderr)
     except ProcessLookupError:
         pass
     child.wait()

@@ -12,6 +12,13 @@ STATUSES = {"killed": "killed", "survived": "survived", "no tests": "noCoverage"
             "timeout": "timeout", "skipped": "ignored", "caught by type check": "unviable"}
 
 
+def classify(code, status_by_exit_code):
+    # pytest exit 3 is INTERNAL_ERROR, even though mutmut 3.8 labels it "killed".
+    if code == 3:
+        return "error"
+    return STATUSES.get(status_by_exit_code.get(code), "error")
+
+
 def collect(mutants_dir, status_by_exit_code):
     metas = sorted(Path(mutants_dir).rglob("*.meta"))
     if not metas:
@@ -21,7 +28,7 @@ def collect(mutants_dir, status_by_exit_code):
         exit_codes = json.loads(meta.read_text(encoding="utf-8")).get("exit_code_by_key")
         if not isinstance(exit_codes, dict):
             raise ValueError(f"Unrecognized mutmut metadata: {meta}")
-        mutants.extend({"id": key, "status": STATUSES.get(status_by_exit_code[code], "error")}
+        mutants.extend({"id": key, "status": classify(code, status_by_exit_code)}
                        for key, code in exit_codes.items())
     return mutants
 

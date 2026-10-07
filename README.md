@@ -98,7 +98,7 @@ CRAP-test the skill's own scripts against that standard with its bundled collect
 .venv/bin/python scripts/self_crap.py
 ```
 
-It exits 0: line coverage is 97%, branch coverage is 92%, and every function scores CRAP ≤ 6. Four functions sit exactly at 6 with full coverage, so any uncovered line in them fails the standard.
+The command exits 0 only when the current measurements meet the standard. Read its JSON output for exact counts and per-function scores; results depend on the source snapshot and checks actually run. The threshold comparison uses exact rational arithmetic, even when a displayed score rounds to 6.
 
 Mutation-test the skill's own scripts with its bundled runner and mutmut exporter. The script builds a fresh analysis copy in a temporary directory and prints its path for the evidence:
 
@@ -106,7 +106,7 @@ Mutation-test the skill's own scripts with its bundled runner and mutmut exporte
 .venv/bin/python scripts/self_mutation.py
 ```
 
-It exits 1 because 27 surviving mutants are accepted as equivalent rather than hidden: JSON indentation and `allow_nan` on reports that cannot contain non-finite numbers; `encoding="utf-8"` versus `"UTF-8"` or the locale default on UTF-8 systems; `mutants` versus `MUTANTS` on case-insensitive file systems; `shell=None` or an omitted `shell=False`; and a timeout changed by 0.1%. Sixteen timeouts are detections: those mutants make the timeout tests hang. Investigate any other survivor.
+The analysis copy includes all five bundled scripts, including the Lizard/LCOV collector, and imports them under their real module names so mutmut can associate tests with each function. Entrypoint smoke tests and the nested real-mutmut integration test are excluded from the inner run. Inspect the current report and preserved per-mutant evidence: survivors and timeouts need investigation, and pytest internal errors must remain errors. A nonzero result is not a pass; do not reuse historical survivor counts or assume survivors are equivalent.
 
 The existing validator and CI check skill packaging, YAML, references, README consistency, and explicit invocation policies. These are deterministic checks of this repository, not proof that an agent host implements the workflow correctly or that a target application meets its requirements. CI and release validation run all script tests with Python unittest. The bundled scripts require Python 3.10+; target mutation engines retain their own runtime requirements.
 

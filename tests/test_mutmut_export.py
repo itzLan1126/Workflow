@@ -13,6 +13,7 @@ from unittest import mock
 SCRIPTS = Path(__file__).resolve().parents[1] / "skills/workflow/scripts"
 sys.path.insert(0, str(SCRIPTS))
 from mutmut_export import collect, main
+from mutation import summarize
 
 # A subset of mutmut 3's status table; collect() receives the installed table at runtime.
 TABLE = {1: "killed", 0: "survived", 33: "no tests", 36: "timeout", 34: "skipped",
@@ -50,6 +51,13 @@ class MutmutExportTests(unittest.TestCase):
         (self.root / "mutants/a.py.meta").write_text(json.dumps({"exit_code_by_key": []}))
         with self.assertRaisesRegex(ValueError, "^Unrecognized mutmut metadata: .*a.py.meta$"):
             collect(self.root / "mutants", TABLE)
+
+    def test_pytest_internal_error_cannot_pass_mutation_gate(self):
+        meta(self.root, "src/a.py.meta", {"a.x_f__mutmut_1": 3})
+        # mutmut 3.8 calls pytest's internal-error exit a kill; it is not a failing assertion.
+        mutants = collect(self.root / "mutants", {**TABLE, 3: "killed"})
+        self.assertEqual(mutants, [{"id": "a.x_f__mutmut_1", "status": "error"}])
+        self.assertEqual(summarize({"baselinePassed": True, "mutants": mutants}, "normalized")["exitCode"], 2)
 
     def run_main(self, argv=None):
         self.addCleanup(os.chdir, os.getcwd())
