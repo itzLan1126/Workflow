@@ -49,6 +49,17 @@ class CrapTests(unittest.TestCase):
                 self.assertEqual(result['findings'], 1)
         self.assertEqual(calculate(report(MEASURED, line={'covered': 0, 'total': 1}))['findings'], 1)
 
+    def test_crap_threshold_uses_exact_counts(self):
+        for total in (1000000, 2**53 - 1):
+            for covered, exceeds in ((total - 1, True), (total, False)):
+                with self.subTest(total=total, covered=covered):
+                    measured = {**MEASURED, 'complexity': 6, 'covered': covered, 'total': total}
+                    self.assertEqual(calculate(report(measured))['functions'][0]['exceedsThreshold'], exceeds)
+        # Complexity 4 reaches exactly 6 at half coverage; one count either way matters.
+        for covered, exceeds in ((499999, True), (500000, False), (500001, False)):
+            measured = {**MEASURED, 'covered': covered, 'total': 1000000}
+            self.assertEqual(calculate(report(measured))['functions'][0]['exceedsThreshold'], exceeds)
+
     def test_accepts_boundary_values_and_every_coverage_kind(self):
         largest = 2**53 - 1
         for kind in ['line', 'branch', 'statement', 'basis-path']:

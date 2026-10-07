@@ -1,12 +1,18 @@
+from contextlib import redirect_stderr
+import io
 import json
+import os
 from pathlib import Path
 import subprocess
 import sys
 import tempfile
 import unittest
+from unittest import mock
 
 
-SCRIPT = Path(__file__).resolve().parents[1] / "skills/workflow/scripts/lizard-metrics.py"
+SCRIPT = Path(__file__).resolve().parents[1] / "skills/workflow/scripts/lizard_metrics.py"
+sys.path.insert(0, str(SCRIPT.parent))
+import lizard_metrics
 
 
 class LizardMetricsTests(unittest.TestCase):
@@ -18,9 +24,21 @@ class LizardMetricsTests(unittest.TestCase):
         self.output = self.root / "metrics.json"
 
     def run_metrics(self, *sources):
-        return subprocess.run([sys.executable, str(SCRIPT), str(self.coverage),
-                               str(self.output), *sources], cwd=self.root,
-                              text=True, capture_output=True)
+        # Exercise the imported module so mutmut can associate these tests with its mutants.
+        argv = [str(SCRIPT), str(self.coverage), str(self.output), *sources]
+        previous = Path.cwd()
+        try:
+            os.chdir(self.root)
+            with mock.patch.object(sys, "argv", argv), redirect_stderr(io.StringIO()) as stderr:
+                code = lizard_metrics.main()
+            return subprocess.CompletedProcess(argv, code, "", stderr.getvalue())
+        finally:
+            os.chdir(previous)
+
+    def test_script_entrypoint(self):
+        result = subprocess.run([sys.executable, str(SCRIPT)], capture_output=True, text=True)
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("Usage:", result.stderr)
 
     def test_real_multilanguage_analysis(self):
         samples = {

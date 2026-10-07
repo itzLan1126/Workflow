@@ -15,7 +15,7 @@ from unittest import mock
 SCRIPTS = Path(__file__).resolve().parents[1] / "skills/workflow/scripts"
 sys.path.insert(0, str(SCRIPTS))
 from mutation import main, run_mutation, summarize
-from run_report import read_json, run_report
+from run_report import read_json, run_report, stop
 
 REQUIRE = r"^Require cwd, report, nonempty command argv and positive timeoutMs \(max 2147483647\)$"
 NO_BASELINE = r"^cargo-mutants requires a successful baseline test \(do not use --check or --baseline skip\)$"
@@ -35,8 +35,15 @@ def cargo(*summaries):
 def alive(pid):
     try:
         os.kill(pid, 0)
+        if sys.platform == "linux":
+            # An orphan can stay as a zombie when container PID 1 does not reap it.
+            # The comm field may contain spaces or parentheses; state follows its last ')'.
+            state = Path(f"/proc/{pid}/stat").read_text().rsplit(")", 1)[1].split()[0]
+            return state != "Z"
     except ProcessLookupError:
         return False
+    except FileNotFoundError:
+        return False  # Reaped between kill(0) and reading /proc.
     return True
 
 
@@ -212,6 +219,15 @@ class MutationTests(unittest.TestCase):
         while alive(pid) and time.monotonic() < deadline:
             time.sleep(0.05)
         self.assertFalse(alive(pid), "a grandchild process outlived the timeout")
+
+    def test_windows_cleanup_targets_descendants(self):
+        child = mock.Mock(pid=123)
+        with mock.patch("run_report.os.name", "nt"), mock.patch("run_report.subprocess.run") as run:
+            stop(child)
+        run.assert_called_once_with(["taskkill", "/PID", "123", "/T", "/F"], check=True,
+                                    stdin=subprocess.DEVNULL, stdout=sys.stderr, stderr=sys.stderr)
+        child.kill.assert_not_called()
+        child.wait.assert_called_once_with()
 
     def test_json_rejects_nonfinite_numbers(self):
         path = self.fixture({})
