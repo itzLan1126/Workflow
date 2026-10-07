@@ -38,40 +38,56 @@ def has_test(outcome):
                for phase in array(outcome.get("phase_results")))
 
 
-def summarize(report, format):
-    object_value(report)
-    if format == "stryker":
-        results = [object_value(m).get("status")
-                   for file in object_value(report.get("files")).values()
-                   for m in array(object_value(file).get("mutants"))]
-    elif format == "cargo-mutants":
-        outcomes = [object_value(o) for o in array(report.get("outcomes"))]
-        baselines = [o for o in outcomes if o.get("scenario") == "Baseline"]
-        if not baselines or any(o.get("summary") != "Success" or not has_test(o) for o in baselines):
-            raise ValueError("cargo-mutants requires a successful baseline test (do not use --check or --baseline skip)")
-        results = []
-        for outcome in outcomes:
-            if outcome.get("scenario") == "Baseline":
-                continue
-            object_value(object_value(outcome.get("scenario")).get("Mutant"))
-            summary = outcome.get("summary")
-            if summary in ("CaughtMutant", "MissedMutant") and not has_test(outcome):
-                raise ValueError("Missing mutation test phase")
-            results.append(summary)
-        if type(report.get("total_mutants")) is not int or report["total_mutants"] != len(results):
-            raise ValueError("Inconsistent cargo-mutants count")
-    elif format == "muter":
-        results = [object_value(m).get("testSuiteOutcome")
-                   for file in array(report.get("fileReports"))
-                   for m in array(object_value(file).get("appliedOperators"))]
-    elif format == "normalized":
-        if report.get("baselinePassed") is not True:
-            raise ValueError("Normalized report must confirm baselinePassed: true")
-        results = [object_value(m).get("status") for m in array(report.get("mutants"))]
-    else:
-        raise ValueError(f"Unsupported mutation format: {format}")
-    if not results:
-        raise ValueError("No mutations reported")
+def stryker_results(report):
+    return [object_value(m).get("status")
+            for file in object_value(report.get("files")).values()
+            for m in array(object_value(file).get("mutants"))]
+
+
+def is_successful_baseline(outcome):
+    return outcome.get("summary") == "Success" and has_test(outcome)
+
+
+def check_cargo_baseline(outcomes):
+    baselines = [o for o in outcomes if o.get("scenario") == "Baseline"]
+    if not baselines or not all(map(is_successful_baseline, baselines)):
+        raise ValueError("cargo-mutants requires a successful baseline test (do not use --check or --baseline skip)")
+
+
+def cargo_mutant(outcome):
+    object_value(object_value(outcome.get("scenario")).get("Mutant"))
+    summary = outcome.get("summary")
+    if summary in ("CaughtMutant", "MissedMutant") and not has_test(outcome):
+        raise ValueError("Missing mutation test phase")
+    return summary
+
+
+def cargo_results(report):
+    outcomes = [object_value(o) for o in array(report.get("outcomes"))]
+    check_cargo_baseline(outcomes)
+    results = [cargo_mutant(o) for o in outcomes if o.get("scenario") != "Baseline"]
+    if type(report.get("total_mutants")) is not int or report["total_mutants"] != len(results):
+        raise ValueError("Inconsistent cargo-mutants count")
+    return results
+
+
+def muter_results(report):
+    return [object_value(m).get("testSuiteOutcome")
+            for file in array(report.get("fileReports"))
+            for m in array(object_value(file).get("appliedOperators"))]
+
+
+def normalized_results(report):
+    if report.get("baselinePassed") is not True:
+        raise ValueError("Normalized report must confirm baselinePassed: true")
+    return [object_value(m).get("status") for m in array(report.get("mutants"))]
+
+
+RESULTS = {"stryker": stryker_results, "cargo-mutants": cargo_results,
+           "muter": muter_results, "normalized": normalized_results}
+
+
+def count_statuses(results, format):
     counts = dict.fromkeys(STATUSES, 0)
     for result in results:
         if not isinstance(result, str):
@@ -80,10 +96,25 @@ def summarize(report, format):
         if status not in STATUSES:
             raise ValueError(f"Unknown mutation status: {result}")
         counts[status] += 1
+    return counts
+
+
+def exit_code(counts, assessed):
+    if counts["error"] or not assessed:
+        return 2
+    return 1 if counts["survived"] + counts["noCoverage"] + counts["timeout"] else 0
+
+
+def summarize(report, format):
+    object_value(report)
+    if format not in RESULTS:
+        raise ValueError(f"Unsupported mutation format: {format}")
+    results = RESULTS[format](report)
+    if not results:
+        raise ValueError("No mutations reported")
+    counts = count_statuses(results, format)
     assessed = sum(counts[status] for status in ("killed", "survived", "noCoverage", "timeout"))
-    code = (2 if counts["error"] or not assessed else
-            1 if counts["survived"] + counts["noCoverage"] + counts["timeout"] else 0)
-    return {"format": format, "counts": counts, "assessed": assessed, "exitCode": code}
+    return {"format": format, "counts": counts, "assessed": assessed, "exitCode": exit_code(counts, assessed)}
 
 
 def run_mutation(config_path):

@@ -98,7 +98,7 @@ CRAP-test the skill's own scripts against that standard with its bundled collect
 .venv/bin/python scripts/self_crap.py
 ```
 
-It currently exits 1. Line coverage (96%) and branch coverage (93%) meet the standard, but 5 of 24 functions score CRAP above 6: `mutation.summarize`, `run_report.run_report`, `lizard-metrics.read_lcov` and `collect`, and `crap.is_measurement`.
+It exits 0: line coverage is 97%, branch coverage is 92%, and every function scores CRAP ≤ 6. Four functions sit exactly at 6 with full coverage, so any uncovered line in them fails the standard.
 
 Mutation-test the skill's own scripts with its bundled runner and mutmut exporter. The script builds a fresh analysis copy in a temporary directory and prints its path for the evidence:
 
@@ -106,7 +106,7 @@ Mutation-test the skill's own scripts with its bundled runner and mutmut exporte
 .venv/bin/python scripts/self_mutation.py
 ```
 
-It exits 1 because 28 surviving mutants are accepted as equivalent rather than hidden: JSON indentation and `allow_nan` on reports that cannot contain non-finite numbers; `encoding="utf-8"` versus `"UTF-8"` or the locale default on UTF-8 systems; `mutants` versus `MUTANTS` on case-insensitive file systems; `shell=None` or an omitted `shell=False`; and timeouts changed by 1 ms or 0.1%. Fifteen timeouts are detections: those mutants make the timeout tests hang. Investigate any other survivor.
+It exits 1 because 27 surviving mutants are accepted as equivalent rather than hidden: JSON indentation and `allow_nan` on reports that cannot contain non-finite numbers; `encoding="utf-8"` versus `"UTF-8"` or the locale default on UTF-8 systems; `mutants` versus `MUTANTS` on case-insensitive file systems; `shell=None` or an omitted `shell=False`; and a timeout changed by 0.1%. Sixteen timeouts are detections: those mutants make the timeout tests hang. Investigate any other survivor.
 
 The existing validator and CI check skill packaging, YAML, references, README consistency, and explicit invocation policies. These are deterministic checks of this repository, not proof that an agent host implements the workflow correctly or that a target application meets its requirements. CI and release validation run all script tests with Python unittest. The bundled scripts require Python 3.10+; target mutation engines retain their own runtime requirements.
 
