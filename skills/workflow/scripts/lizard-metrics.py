@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Join Lizard function complexity with fresh LCOV line coverage, without guessing."""
+"""Join Lizard function complexity with fresh LCOV line and branch coverage, without guessing."""
 
 import json
 from pathlib import Path
@@ -7,42 +7,62 @@ import re
 import sys
 
 
+def parse_line(record):
+    fields = record[3:].split(",")
+    if (len(fields) not in (2, 3) or not re.fullmatch(r"[1-9][0-9]*", fields[0])
+            or not re.fullmatch(r"[0-9]+", fields[1])):
+        raise ValueError(f"Invalid LCOV line record: {record}")
+    return int(fields[0]), int(fields[1])
+
+
+def parse_branch(record):
+    # BRDA:<line>,<block>,<branch>,<taken>; taken is "-" when the branch's line never ran.
+    match = re.fullmatch(r"BRDA:([1-9][0-9]*),([^,]+),(.+),(-|[0-9]+)", record)
+    if not match:
+        raise ValueError(f"Invalid LCOV branch record: {record}")
+    line, block, branch, taken = match.groups()
+    return (int(line), block, branch), 0 if taken == "-" else int(taken)
+
+
 def read_lcov(path):
     files = {}
     source = None
-    lines = {}
+    records = {}
     for record in Path(path).read_text(encoding="utf-8").splitlines():
         if record.startswith("SF:"):
             if source is not None or not record[3:]:
                 raise ValueError("LCOV has nested or empty SF records")
-            source, lines = Path(record[3:]).resolve(), {}
-        elif record.startswith("DA:"):
-            fields = record[3:].split(",")
-            if (source is None or len(fields) not in (2, 3)
-                    or not re.fullmatch(r"[1-9][0-9]*", fields[0])
-                    or not re.fullmatch(r"[0-9]+", fields[1])):
-                raise ValueError(f"Invalid LCOV line record: {record}")
-            line, count = int(fields[0]), int(fields[1])
-            if line in lines:
-                raise ValueError(f"Duplicate LCOV line {line} in {source}")
-            lines[line] = count
+            source, records = Path(record[3:]).resolve(), {"lines": {}, "branches": {}}
+        elif record.startswith(("DA:", "BRDA:")):
+            if source is None:
+                raise ValueError(f"LCOV record outside SF: {record}")
+            kind, parse = ("lines", parse_line) if record.startswith("DA:") else ("branches", parse_branch)
+            key, count = parse(record)
+            if key in records[kind]:
+                raise ValueError(f"Duplicate LCOV {kind} record in {source}: {record}")
+            records[kind][key] = count
         elif record == "end_of_record":
             if source is None:
                 raise ValueError("LCOV end_of_record without SF")
-            merged = files.setdefault(source, {})
-            for line, count in lines.items():
-                merged[line] = merged.get(line, 0) + count
+            merged = files.setdefault(source, {"lines": {}, "branches": {}})
+            for kind, counts in records.items():
+                for key, count in counts.items():
+                    merged[kind][key] = merged[kind].get(key, 0) + count
             source = None
     if source is not None or not files:
         raise ValueError("Incomplete or empty LCOV report")
     return files
 
 
+def summarize(counts):
+    return {"covered": sum(count > 0 for count in counts), "total": len(counts)}
+
+
 def collect(coverage, sources):
     import lizard
     from lizard_languages import get_reader_for
 
-    result, seen = [], set()
+    result, seen, lines, branches = [], set(), [], []
     for argument in sources:
         source = Path(argument).resolve(strict=True)
         if source in seen:
@@ -57,9 +77,11 @@ def collect(coverage, sources):
             raise ValueError(f"No functions found: {source}")
         if source not in coverage:
             raise ValueError(f"Missing exact-path LCOV coverage: {source}")
-        hits = coverage[source]
-        if any(line > len(code.splitlines()) for line in hits):
+        hits, branch_hits = coverage[source]["lines"], coverage[source]["branches"]
+        if any(line > len(code.splitlines()) for line in [*hits, *(key[0] for key in branch_hits)]):
             raise ValueError(f"LCOV line outside source: {source}")
+        lines.extend(hits.values())
+        branches.extend(branch_hits.values())
         previous_end = 0
         for function in functions:
             # ponytail: reject nested/shared-line ranges; use a language-aware adapter if needed.
@@ -75,7 +97,7 @@ def collect(coverage, sources):
                            "complexity": function.cyclomatic_complexity,
                            "covered": sum(count > 0 for count in counts),
                            "total": len(counts), "coverageKind": "line"})
-    return {"functions": result}
+    return {"functions": result, "coverage": {"line": summarize(lines), "branch": summarize(branches)}}
 
 
 def main():

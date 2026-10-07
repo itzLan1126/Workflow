@@ -10,16 +10,18 @@ import subprocess
 import sys
 
 
+def invalid_constant(value):
+    raise ValueError(f"Non-finite JSON number: {value}")
+
+
+def finite_float(value):
+    number = float(value)
+    if not math.isfinite(number):
+        invalid_constant(value)
+    return number
+
+
 def read_json(path):
-    def invalid_constant(value):
-        raise ValueError(f"Non-finite JSON number: {value}")
-
-    def finite_float(value):
-        number = float(value)
-        if not math.isfinite(number):
-            invalid_constant(value)
-        return number
-
     return json.loads(Path(path).read_text(encoding="utf-8"),
                       parse_constant=invalid_constant, parse_float=finite_float)
 

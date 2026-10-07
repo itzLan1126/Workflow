@@ -1,3 +1,4 @@
+coverage==7.16.2
 strictyaml==1.7.3
 lizard==1.17.31
 mutmut==3.8.0

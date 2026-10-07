@@ -13,8 +13,8 @@ python /path/to/workflow/scripts/mutation.py /path/to/mutation-config.json
 
 Both execute a trusted project's `command` argument array without implicit shell evaluation, then validate the newly generated JSON `report`. Command output goes to stderr; the calculated result goes to stdout. Config `cwd` is relative to the config file; `report` is relative to `cwd`. Commands resolve as they normally do in that working directory. Use absolute tool paths for virtual environments.
 
-- Exit **0**: measured scope passes the configured CRAP threshold, or assessed mutants are killed.
-- Exit **1**: CRAP threshold exceeded, or mutation survivors, uncovered mutants, or timeouts require review.
+- Exit **0**: measured scope meets the CRAP standard, or assessed mutants are killed.
+- Exit **1**: CRAP standard not met, or mutation survivors, uncovered mutants, or timeouts require review.
 - Exit **2**: invalid/missing/empty report, missing tool, command failure, incomplete run, or no assessable mutants. This is not a quality pass.
 
 Reports must not exist before execution, including symlinks. Choose a new run directory/report path; preserve old evidence rather than overwriting it. `timeoutMs` is optional (default one hour). A command's nonzero exit fails except cargo-mutants finding exits handled by the adapter. Stryker exit 1 is ambiguous (threshold failure or operational error), so it produces exit 2 for inspection; do not silently lower its configured thresholds. These are executable configs: inspect them before running. The scripts do not sandbox commands or prove that a supplied report describes all relevant code.
@@ -23,9 +23,15 @@ Use an isolated project copy for mutation execution, including the accepted unco
 
 ## CRAP
 
-The script computes `C² × (1 − covered / total)³ + C` for each function and compares the unrounded value to `maxCrap`. Choose the limit from project policy or an explicitly justified decision; there is no universal default.
+Every CRAP run in this skill uses one fixed standard, which configs cannot change:
 
-The bundled [collector](../scripts/lizard-metrics.py) measures complexity with Lizard and joins it to LCOV **line** coverage for the same source snapshot. Lizard supports Python, JavaScript/TypeScript, Rust, Swift, and other languages. Use a real project coverage command that emits LCOV with unexecuted lines included; do not handwrite metrics or let an agent estimate them.
+- each function's CRAP < 6;
+- aggregate line coverage ≥ 95%;
+- aggregate branch coverage ≥ 90%.
+
+The script computes `C² × (1 − covered / total)³ + C` for each function and fails any unrounded value of 6 or more. Because CRAP is at least `C`, this also caps each function's cyclomatic complexity at 5. Aggregate coverage is compared exactly over the measured scope. A config containing `maxCrap` is rejected so that an old per-project limit cannot apply silently.
+
+The bundled [collector](../scripts/lizard-metrics.py) measures complexity with Lizard and joins it to LCOV coverage for the same source snapshot: per-function **line** coverage from `DA` records, and aggregate line and branch coverage over the source files in scope from `DA` and `BRDA` records. Lizard supports Python, JavaScript/TypeScript, Rust, Swift, and other languages. Use a real project coverage command that emits LCOV with unexecuted lines and branch records included (for example, coverage.py with `branch = true`); do not handwrite metrics or let an agent estimate them. A report without branch records fails with exit 2 rather than passing.
 
 ```sh
 python /path/to/workflow/scripts/lizard-metrics.py coverage.lcov measurements.json src/example.rs
@@ -33,24 +39,24 @@ python /path/to/workflow/scripts/lizard-metrics.py coverage.lcov measurements.js
 
 Pass the source files in scope explicitly. Coverage `SF` paths must resolve to those exact files from the command's working directory; basenames are never guessed. The collector rejects missing coverage, no detected functions, and nested/overlapping/shared-line function ranges. For those cases use an existing language-aware metrics exporter, rather than silently dropping functions. Record selected files and exclusions.
 
-A project-owned Python script can run its coverage command and then the collector with `subprocess.run(..., check=True)`. Configure that script as the command below so coverage and metrics are regenerated together. `measurements.json` must be written at the configured report path. The number 30 below is an example policy, not a recommendation for every project.
+A project-owned Python script can run its coverage command and then the collector with `subprocess.run(..., check=True)`. Configure that script as the command below so coverage and metrics are regenerated together. `measurements.json` must be written at the configured report path.
 
 ```json
 {
   "cwd": "/absolute/isolated-project-copy",
   "command": ["python", "/absolute/project-analysis/collect-crap.py"],
-  "report": "measurements.json",
-  "maxCrap": 30
+  "report": "measurements.json"
 }
 ```
 
 Alternative tool-backed exporters must emit:
 
 ```json
-{"functions":[{"file":"src/example.rs","name":"choose","line":1,"complexity":4,"covered":1,"total":2,"coverageKind":"line"}]}
+{"functions":[{"file":"src/example.rs","name":"choose","line":1,"complexity":4,"covered":1,"total":2,"coverageKind":"line"}],
+ "coverage":{"line":{"covered":95,"total":100},"branch":{"covered":9,"total":10}}}
 ```
 
-`coverageKind` must be `line`, `branch`, `statement`, or `basis-path`. The original CRAP1 formula used basis-path coverage; line/branch/statement variants are proxies and must be labeled when comparing scores. Lizard is a lightweight source analyzer, not a compiler. A valid report proves its arithmetic, not complete coverage mapping or correct behavior.
+`coverage.line` and `coverage.branch` are aggregate counts for the whole measured scope; each needs `1 <= total` and `covered <= total`. `coverageKind` must be `line`, `branch`, `statement`, or `basis-path`. The original CRAP1 formula used basis-path coverage; line/branch/statement variants are proxies and must be labeled when comparing scores. Lizard is a lightweight source analyzer, not a compiler. A valid report proves its arithmetic, not complete coverage mapping or correct behavior.
 
 ## Mutation testing
 

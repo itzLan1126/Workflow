@@ -40,6 +40,8 @@ class LizardMetricsTests(unittest.TestCase):
         for function in functions:
             self.assertEqual((function["complexity"], function["covered"], function["total"]), (2, 1, 2))
             self.assertEqual(function["coverageKind"], "line")
+        self.assertEqual(json.loads(self.output.read_text())["coverage"],
+                         {"line": {"covered": 4, "total": 8}, "branch": {"covered": 0, "total": 0}})
         result = self.run_metrics(*samples)
         self.assertEqual(result.returncode, 2)
         self.assertEqual(json.loads(self.output.read_text())["functions"], functions)
@@ -57,6 +59,11 @@ class LizardMetricsTests(unittest.TestCase):
             "SF:sample.py\nend_of_record\n",
             "SF:sample.py\nDA:2,1\n",
             "DA:2,1\n",
+            "BRDA:2,0,jump,1\n",
+            "SF:sample.py\nDA:2,1\nBRDA:3,0,jump,1\nend_of_record\n",
+            "SF:sample.py\nDA:2,1\nBRDA:2,0,jump,1\nBRDA:2,0,jump,0\nend_of_record\n",
+            *(f"SF:sample.py\nDA:2,1\n{record}\nend_of_record\n" for record in [
+                "BRDA:0,0,jump,1", "BRDA:2,0,jump,-1", "BRDA:2,0,jump,x", "BRDA:2,,jump,1", "BRDA:2,0,1"]),
         ]
         for report in cases:
             with self.subTest(report=report):
@@ -91,6 +98,20 @@ class LizardMetricsTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         functions = json.loads(self.output.read_text())["functions"]
         self.assertEqual([(item["covered"], item["total"]) for item in functions], [(1, 1), (0, 1)])
+
+    def test_aggregates_line_and_branch_coverage_in_scope(self):
+        (self.root / "sample.py").write_text("def choice(x):\n    if x:\n        return 1\n    return 0\n")
+        (self.root / "other.py").write_text("def other():\n    return 1\n")
+        self.coverage.write_text(
+            "SF:sample.py\nDA:2,1\nDA:3,0\nDA:4,1\n"
+            "BRDA:2,0,jump to line 3,0\nBRDA:2,0,jump to line 4,1\nBRDA:2,e1,raise, with comma,-\nend_of_record\n"
+            "SF:sample.py\nDA:3,1\nBRDA:2,0,jump to line 3,2\nend_of_record\n"
+            "SF:other.py\nDA:2,0\nBRDA:2,0,out of scope,0\nend_of_record\n")
+        result = self.run_metrics("sample.py")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        metrics = json.loads(self.output.read_text())
+        self.assertEqual(metrics["coverage"], {"line": {"covered": 3, "total": 3}, "branch": {"covered": 2, "total": 3}})
+        self.assertEqual([(f["covered"], f["total"]) for f in metrics["functions"]], [(3, 3)])
 
 
 if __name__ == "__main__":
