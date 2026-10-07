@@ -1,0 +1,96 @@
+# Deterministic quality tools
+
+Use these after conventional review findings are resolved. Requires Python 3.10+; CRAP's bundled multi-language collector also requires `lizard==1.17.31` in the analysis environment. The bundled runners use only the Python standard library; external mutation engines retain their own runtime requirements. Install tools only under the project's permissions. The scripts never install tools automatically.
+
+## Execution contract
+
+Run from any directory, using the installed skill's absolute script paths:
+
+```sh
+python /path/to/workflow/scripts/crap.py /path/to/crap-config.json
+python /path/to/workflow/scripts/mutation.py /path/to/mutation-config.json
+```
+
+Both execute a trusted project's `command` argument array without implicit shell evaluation, then validate the newly generated JSON `report`. Command output goes to stderr; the calculated result goes to stdout. Config `cwd` is relative to the config file; `report` is relative to `cwd`. Commands resolve as they normally do in that working directory. Use absolute tool paths for virtual environments.
+
+- Exit **0**: measured scope passes the configured CRAP threshold, or assessed mutants are killed.
+- Exit **1**: CRAP threshold exceeded, or mutation survivors, uncovered mutants, or timeouts require review.
+- Exit **2**: invalid/missing/empty report, missing tool, command failure, incomplete run, or no assessable mutants. This is not a quality pass.
+
+Reports must not exist before execution, including symlinks. Choose a new run directory/report path; preserve old evidence rather than overwriting it. `timeoutMs` is optional (default one hour). A command's nonzero exit fails except cargo-mutants finding exits handled by the adapter. Stryker exit 1 is ambiguous (threshold failure or operational error), so it produces exit 2 for inspection; do not silently lower its configured thresholds. These are executable configs: inspect them before running. The scripts do not sandbox commands or prove that a supplied report describes all relevant code.
+
+Use an isolated project copy for mutation execution, including the accepted uncommitted changes and necessary test resources. Exclude credentials and production access. Run baseline tests there. The runner does not create that copy or verify its isolation; do not point mutation commands at the user's working checkout.
+
+## CRAP
+
+The script computes `C² × (1 − covered / total)³ + C` for each function and compares the unrounded value to `maxCrap`. Choose the limit from project policy or an explicitly justified decision; there is no universal default.
+
+The bundled [collector](../scripts/lizard-metrics.py) measures complexity with Lizard and joins it to LCOV **line** coverage for the same source snapshot. Lizard supports Python, JavaScript/TypeScript, Rust, Swift, and other languages. Use a real project coverage command that emits LCOV with unexecuted lines included; do not handwrite metrics or let an agent estimate them.
+
+```sh
+python /path/to/workflow/scripts/lizard-metrics.py coverage.lcov measurements.json src/example.rs
+```
+
+Pass the source files in scope explicitly. Coverage `SF` paths must resolve to those exact files from the command's working directory; basenames are never guessed. The collector rejects missing coverage, no detected functions, and nested/overlapping/shared-line function ranges. For those cases use an existing language-aware metrics exporter, rather than silently dropping functions. Record selected files and exclusions.
+
+A project-owned Python script can run its coverage command and then the collector with `subprocess.run(..., check=True)`. Configure that script as the command below so coverage and metrics are regenerated together. `measurements.json` must be written at the configured report path. The number 30 below is an example policy, not a recommendation for every project.
+
+```json
+{
+  "cwd": "/absolute/isolated-project-copy",
+  "command": ["python", "/absolute/project-analysis/collect-crap.py"],
+  "report": "measurements.json",
+  "maxCrap": 30
+}
+```
+
+Alternative tool-backed exporters must emit:
+
+```json
+{"functions":[{"file":"src/example.rs","name":"choose","line":1,"complexity":4,"covered":1,"total":2,"coverageKind":"line"}]}
+```
+
+`coverageKind` must be `line`, `branch`, `statement`, or `basis-path`. The original CRAP1 formula used basis-path coverage; line/branch/statement variants are proxies and must be labeled when comparing scores. Lizard is a lightweight source analyzer, not a compiler. A valid report proves its arithmetic, not complete coverage mapping or correct behavior.
+
+## Mutation testing
+
+Configure a real installed mutation engine and a new output path. Set engine test commands and mutation scope in the target project before running. Supported report adapters:
+
+| Format | Engine and report | Example command argv |
+| --- | --- | --- |
+| `cargo-mutants` | Rust cargo-mutants `mutants.out/outcomes.json` | `["cargo", "mutants"]` |
+| `stryker` | JS/TS Stryker JSON reporter | `["./node_modules/.bin/stryker", "run", "--reporters", "json"]` |
+| `muter` | Swift Muter JSON report | `["muter", "run", "--format", "json", "--output", "mutation.json", "--skip-update-check"]` |
+| `normalized` | Other engines, including Python, through a project-owned exporter | `["python", "/absolute/project-analysis/run-mutation.py"]` |
+
+For example, in a fresh Rust analysis copy with cargo-mutants already installed:
+
+```json
+{
+  "cwd": "/absolute/isolated-project-copy",
+  "command": ["cargo", "mutants"],
+  "report": "mutants.out/outcomes.json",
+  "format": "cargo-mutants",
+  "timeoutMs": 3600000
+}
+```
+
+Do not use cargo-mutants `--check` or skip its baseline. Stryker and Muter must run their normal baseline/test flow. Use Stryker's completed JSON reporter output, never its incremental cache or a partial report. Configure their JSON output to match `report`; do not enable network dashboard upload as part of this workflow.
+
+The normalized adapter requires real engine output converted by executable code, not a prompt-generated summary:
+
+```json
+{"baselinePassed":true,"mutants":[{"id":"example","status":"killed"}]}
+```
+
+Allowed statuses are `killed`, `survived`, `noCoverage`, `timeout`, `unviable`, `ignored`, and `error`. Only actual failing tests count as kills; compile failures and ignored mutants are excluded. Runtime errors and unfinished runs produce exit 2. Timeouts require investigation instead of being counted as kills. Equivalent survivors require an evidence-backed disposition; do not rewrite the report to get exit 0. Preserve a nonzero result and explain any justified exception.
+
+There is no built-in Python-engine exporter yet. Other languages are supported through this explicit adapter contract, not automatic engine discovery. Native adapters are covered by report fixtures and subprocess tests; validate the installed engine version and its report format on each target project.
+
+## Sources
+
+- [Original CRAP1 formula](https://testing.googleblog.com/2011/02/this-code-is-crap.html)
+- [Lizard languages and analysis](https://github.com/terryyin/lizard)
+- [cargo-mutants reports](https://mutants.rs/mutants-out.html)
+- [Stryker usage](https://stryker-mutator.io/docs/stryker-js/usage/) and [mutant states](https://stryker-mutator.io/docs/mutation-testing-elements/mutant-states-and-metrics/)
+- [Muter](https://github.com/muter-mutation-testing/muter)

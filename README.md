@@ -1,107 +1,95 @@
 # Agent Development Workflow
 
-A portable set of five [Agent Skills](https://agentskills.io/) for moving a software change from an unclear request to an independently reviewed implementation.
+Delegate outcomes to capable agents. Keep prompts short, iterate with the user, and let executable checks provide evidence.
 
-Each phase has a separate responsibility and is intentionally user-invoked. Skills never start one another automatically. A skill stops at its own completion gate; the user decides whether to continue, repeat, or skip a phase. Some phases still consume earlier artifacts: `/improve`, for example, requires a confirmed design.
+One [workflow skill](skills/workflow/SKILL.md) coordinates discussion, implementation, independent quality checks, and real-user acceptance. It replaces the former `discuss`, `design`, `improve`, `implement`, and `review` skills.
 
-## Installation
+## How it works
 
-Install the skills for the current project with:
+```mermaid
+flowchart TD
+    U[User] <--> D[Discussion agent]
+    D --> B[Short agreed brief]
+    B --> M[Main agent]
+    M --> I[Implementation agent]
+    I --> F[Working version and basic checks]
+    F --> A{User satisfied?}
+    A -->|Feedback| I
+    A -->|Yes| Q[Independent quality agent]
+    Q --> R{Material issues?}
+    R -->|Yes| X[Implementation agent fixes]
+    X --> Q
+    R -->|No| V[Main agent tries real user scenarios]
+    V -->|Behavior mismatch| I
+    V -->|Verified| E[Delivery with evidence and remaining gaps]
+```
+
+The main agent owns delegation, scope, feedback, and final acceptance. Subagents own detailed investigation, implementation, and quality work. Use fresh subagent contexts when supported; reuse the implementer during feedback and repairs. Do not run multiple writers against the same files.
+
+### Discuss and hand off
+
+The discussion agent investigates facts, offers at least three meaningful choices with its own recommendation, and challenges the user when evidence supports a better direction. It may create UI comparisons or disposable prototypes outside the repository; discussion does not change project code. It then writes a short brief. Delegate as you would to a capable colleague: explain the problem, desired outcome, relevant context, constraints, and open questions. Put important information first. Preserve the reasons behind consequential decisions, not the conversation transcript.
+
+There is no mandatory template, file-by-file plan, or draft/confirmed/completed state machine. Save the brief at an agreed project location, preferably an existing task-document directory, without overwriting unrelated work. The user reviews it and authorizes implementation; an existing agreed brief can be used directly.
+
+**Context isolation depends on the host.** A discussion subagent needs its own user-facing conversation to keep that exchange out of the main agent's context. If unavailable, use a separate discussion chat and start an execution chat from the brief. If the user prefers one chat, relay the exchange and disclose that it does not provide full isolation. A skill cannot erase messages already received or create host capabilities. Without subagent support, report the limitation and offer separate chats or a single-agent fallback rather than claiming independent work occurred.
+
+### Build, show, and revise
+
+The implementation agent chooses the technical approach and scales execution to the brief. Small work stays with one agent. Large work is split into demonstrable end-to-end slices with explicit dependencies; ready independent slices run concurrently with clear write ownership. The implementation lead integrates and verifies the whole experience before presenting a version the user can try. Run basic checks throughout: relevant tests, build or type checks, and safeguards against regressions, data loss, and security problems. Report how to try the result and what is not yet verified.
+
+Keep implementing user feedback until the user explicitly accepts the behavior. Update the brief only when the agreed outcome or constraints change. Silence, passing tests, and the agent's own confidence do not count as user acceptance. Defer the expensive quality pass until then.
+
+### Check quality and repair
+
+After user acceptance, an independent quality agent performs conventional code review first. Resolve and recheck material findings before running the more expensive deterministic tools. Basic tests and safety checks remain active throughout implementation.
+
+The bundled [CRAP and mutation tool guide](skills/workflow/references/quality-tools.md) provides executable scripts, report formats, and setup instructions. CRAP combines measured per-function complexity and coverage. Mutation testing invokes a real language-specific engine and parses its report. Missing tools, stale or empty reports, and command failures cannot produce a pass. Reports include scope and gaps; scores cannot establish that the user wanted the resulting behavior.
+
+Use the target project's justified thresholds and relevant code scope. Surviving mutants require investigation; some are equivalent. Do not weaken assertions, exclusions, or thresholds merely to obtain a pass. The runner does not install dependencies or make an isolated copy automatically; use a disposable project copy containing the exact accepted changes for mutation runs.
+
+The main agent validates actionable findings and sends them to the implementer, then requests verification of repairs and affected behavior. Stop when material issues are resolved. If the loop repeats without progress or a required check is blocked, report the blocker and evidence rather than looping forever or declaring success. Repairs preserve the accepted behavior; behavior-changing proposals return to the user.
+
+### Try it as a user
+
+The main agent uses the actual UI, CLI, or API to exercise the intended outcome, including meaningful failure or recovery scenarios. Read the current brief and inspect evidence as needed; do not rely solely on a subagent's completion claim or quality scores.
+
+A mismatch returns to implementation. Recheck affected quality evidence after fixes; return to user feedback if accepted behavior changes. Unavailable runtime access means acceptance is incomplete, not passed. Deliver the outcome, checks actually performed, and material gaps.
+
+## Install and use
 
 ```sh
 npx skills add itzLan1126/Workflow
 ```
 
-Add `--global` to install them for the current user instead.
-
-The specifications use slash names such as `/discuss`. Invoke the installed skill with the syntax supported by your agent; for example, Codex uses `$discuss`, `$design`, `$improve`, `$implement`, and `$review`.
-
-## Architecture
-
-```mermaid
-%%{init: { "flowchart": { "diagramPadding": 200 } } }%%
-flowchart LR
-    A["/discuss<br/>Shared understanding"] -->|manual| B["/design<br/>Confirmed design"]
-    B -->|manual| C["/improve<br/>Improved design"]
-    C -->|manual| D["/implement<br/>Code and tests"]
-    D -->|manual| E["/review<br/>Validated findings"]
-
-    B -. creates .-> F["docs/designs/<br/>status: confirmed"]
-    C -. updates the same file .-> F
-    D -. follows when present .-> F
-    F -->|user confirms implementation| G["same design file<br/>status: completed"]
-```
-
-The arrows show the full workflow, not a required pipeline. A small, clear change can start at `/implement`; a design can go directly from `/design` to `/implement`; a high-risk change can use all five phases.
-
-## Skills
-
-| Skill | Responsibility | Workspace effect | Completion gate |
-| --- | --- | --- | --- |
-| [`discuss`](skills/discuss/SKILL.md) | Investigate facts and resolve product intent, scope, constraints, and high-level direction one decision at a time. | Read-only. | The user confirms the shared understanding and no material product decision remains open. |
-| [`design`](skills/design/SKILL.md) | Turn clear requirements and real repository evidence into an implementation-ready design. | Creates a dated Markdown design using the bundled [template](skills/design/assets/design.md). | The user confirms the design and its status becomes `confirmed`. |
-| [`improve`](skills/improve/SKILL.md) | Independently challenge a confirmed design, validate useful suggestions, and simplify or strengthen it. | Updates the same design file only when a material improvement is found. | The improved design is reconfirmed, or the confirmed design is left unchanged when no improvement survives validation. |
-| [`implement`](skills/implement/SKILL.md) | Produce the smallest correct production change, behavioral tests, and proportionate verification. | Modifies task-related production, test, generated, or directly affected documentation files. | The user confirms the verified implementation; a related `status: confirmed` design becomes `status: completed`. |
-| [`review`](skills/review/SKILL.md) | Perform one independent, read-only, defect-first review of a specific change. | Read-only. | The complete target is covered and only evidence-backed findings and material verification gaps are reported. |
-
-All five skills use `disable-model-invocation: true` for Claude Code and `policy.allow_implicit_invocation: false` in `agents/openai.yaml` for Codex. They do not automatically invoke one another, commit, push, open pull requests, or merge changes.
-
-## Typical paths
+Add `--global` for a user-wide installation. Use your client's explicit invocation syntax, for example:
 
 ```text
-Small, clear change:       /implement -> /review
-Clear feature:            /design -> /implement -> /review
-Important or unclear work: /discuss -> /design -> /improve -> /implement -> /review
+$workflow Help me make the export flow easier to use.
+$workflow Implement the agreed brief at docs/tasks/export.md.
 ```
 
-`/discuss`, `/design`, `/improve`, and `/implement` include explicit user-confirmation gates. `/implement` reports and waits for confirmation before marking a related design completed; `/review` stops after reporting its result. Fixes and re-reviews always begin as new user-invoked phases, and a completed design is background context rather than a contract for later `/implement` work.
+The entrypoint preserves the repository's explicit-only invocation policy. It delegates short role references on demand instead of loading all role instructions into the main agent. Give agents the brief, relevant paths, the review target, and concise results; retain full logs outside the conversation and inspect them only when needed.
 
-## Repository layout
+Existing installations may retain the five old skill folders. Remove those obsolete installed copies when migrating; changing this repository does not uninstall them from a client. Existing design documents remain useful context and can serve as briefs without converting their status fields.
 
-```text
-.
-├── .github/workflows/validate.yml
-├── docs/
-│   ├── discuss Skill Specification.md
-│   ├── design Skill Specification.md
-│   ├── improve Skill Specification.md
-│   ├── implement Skill Specification.md
-│   └── review Skill Specification.md
-├── scripts/
-│   └── validation.py
-├── tests/
-│   └── test_validation.py
-├── skills/
-│   ├── discuss/SKILL.md
-│   ├── design/
-│   │   ├── SKILL.md
-│   │   ├── agents/openai.yaml
-│   │   └── assets/
-│   │       ├── design.md
-│   │       └── design.zh-CN.md
-│   ├── improve/SKILL.md
-│   ├── implement/SKILL.md
-│   └── review/SKILL.md
-├── LICENSE
-└── README.md
-```
+Invoking the workflow permits its local implementation and repair loop once implementation is authorized. It does not authorize commits, pushes, pull requests, publishing, destructive operations, or production access. Respect existing user permissions and preserve unrelated work.
 
-Each skill lives in its own directory under `skills/`. A skill may use only `scripts/`, `references/`, `assets/`, and `agents/` as direct subdirectories. Supporting files exist only when the workflow needs them; currently only `/design` needs templates.
-
-## Validation
-
-Install the validation dependency, then run the same checks used by CI:
+## Repository validation
 
 ```sh
-python3 -m pip install strictyaml==1.7.3
-python3 -m unittest discover -s tests
-python3 scripts/validation.py
+python3 -m venv .venv
+.venv/bin/python -m pip install -r requirements-dev.txt
+.venv/bin/python -m unittest discover -s tests
+.venv/bin/python scripts/validation.py
 ```
 
-The project-specific validator parses YAML frontmatter and checks its allowed fields and constraints, required manual-invocation policies for Claude Code and Codex, supported direct subdirectories, a 500-line maximum, non-empty instructions, local resource references, and agreement between the README skill list and the directories under `skills/`.
-
-Passing CI proves these static repository contracts. It does not launch an agent client or prove runtime invocation behavior.
+The existing validator and CI check skill packaging, YAML, references, README consistency, and explicit invocation policies. These are deterministic checks of this repository, not proof that an agent host implements the workflow correctly or that a target application meets its requirements. CI and release validation run all script tests with Python unittest. The bundled scripts require Python 3.10+; target mutation engines retain their own runtime requirements.
 
 ## License
 
-Licensed under the [MIT License](LICENSE).
+[MIT](LICENSE).
+
+## Design references
+
+The lightweight dependency-based implementation approach draws on Matt Pocock's [to-tickets](https://github.com/mattpocock/skills/blob/main/skills/engineering/to-tickets/SKILL.md) and [implement-spec](https://github.com/mattpocock/skills/blob/main/skills/engineering/implement-spec/SKILL.md): independently verifiable slices, explicit blockers, concurrent ready work, and sparse context pointers. It does not require their tracker, publishing, or commit workflow.

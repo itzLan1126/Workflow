@@ -1,0 +1,2 @@
+strictyaml==1.7.3
+lizard==1.17.31
