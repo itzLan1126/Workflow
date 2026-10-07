@@ -23,15 +23,17 @@ def report(*functions, **coverage):
 
 
 class CrapTests(unittest.TestCase):
-    def test_formula_and_strict_crap_standard(self):
+    def test_formula_and_crap_standard(self):
         result = calculate(report(MEASURED, {**MEASURED, 'name': 'uncovered', 'covered': 0}))
         self.assertEqual([f['crap'] for f in result['functions']], [20, 6])
         self.assertEqual([f['coverage'] for f in result['functions']], [0, 0.5])
-        self.assertEqual([f['exceedsThreshold'] for f in result['functions']], [True, True])
-        self.assertEqual(result['findings'], 2)
-        self.assertEqual(result['standard'], {'crapBelow': 6, 'minCoveragePercent': {'line': 95, 'branch': 90}})
+        self.assertEqual([f['exceedsThreshold'] for f in result['functions']], [True, False])
+        self.assertEqual(result['findings'], 1)
+        self.assertEqual(result['standard'], {'maxCrap': 6, 'minCoveragePercent': {'line': 95, 'branch': 90}})
         self.assertEqual(calculate(report({**MEASURED, 'covered': 2}))['findings'], 0)
-        self.assertEqual(calculate(report({**MEASURED, 'complexity': 6, 'covered': 2}))['findings'], 1)
+        self.assertEqual(calculate(report({**MEASURED, 'complexity': 6, 'covered': 2}))['findings'], 0)
+        self.assertEqual(calculate(report({**MEASURED, 'complexity': 7, 'covered': 2}))['findings'], 1)
+        self.assertEqual(calculate(report({**MEASURED, 'complexity': 6, 'covered': 99, 'total': 100}))['findings'], 1)
         self.assertEqual(calculate(report({**MEASURED, 'complexity': 5, 'covered': 19, 'total': 20}))['findings'], 0)
 
     def test_aggregate_coverage_standard(self):
@@ -45,7 +47,7 @@ class CrapTests(unittest.TestCase):
                 result = calculate(report(covered, **{kind: counts}))
                 self.assertFalse(result['coverage'][kind]['meetsStandard'])
                 self.assertEqual(result['findings'], 1)
-        self.assertEqual(calculate(report(MEASURED, line={'covered': 0, 'total': 1}))['findings'], 2)
+        self.assertEqual(calculate(report(MEASURED, line={'covered': 0, 'total': 1}))['findings'], 1)
 
     def test_accepts_boundary_values_and_every_coverage_kind(self):
         largest = 2**53 - 1
@@ -103,13 +105,13 @@ class CrapTests(unittest.TestCase):
                 return exit_code, stdout.getvalue(), stderr.read()
 
     def test_cli_exit_codes_and_json_output(self):
-        for measured, expected, crap in [(report({**MEASURED, 'covered': 2}), 0, 4), (report(MEASURED), 1, 6)]:
+        for measured, expected, crap in [(report({**MEASURED, 'covered': 2}), 0, 4), (report({**MEASURED, 'covered': 0}), 1, 20)]:
             with self.subTest(expected=expected):
                 exit_code, stdout, stderr = self.run_main(measured)
                 self.assertEqual(exit_code, expected, stderr)
                 self.assertEqual(json.loads(stdout)['functions'][0]['crap'], crap)
         self.assertEqual(self.run_main(report({**MEASURED, 'covered': 2}), maxCrap=30),
-                         (2, '', 'CRAP: maxCrap is not configurable; the skill standard is CRAP < 6\n'))
+                         (2, '', 'CRAP: maxCrap is not configurable; the skill standard is CRAP <= 6\n'))
         self.assertEqual(self.run_main({'functions': [MEASURED]}),
                          (2, '', 'CRAP: Missing aggregate coverage: require line and branch counts\n'))
         with redirect_stderr(io.StringIO()) as stderr, mock.patch.object(sys, 'argv', ['crap.py']):

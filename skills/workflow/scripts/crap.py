@@ -6,11 +6,11 @@ import sys
 
 from run_report import run_report
 
-# The skill's fixed standard: every function's CRAP < 6, aggregate line coverage >= 95%,
+# The skill's fixed standard: every function's CRAP <= 6, aggregate line coverage >= 95%,
 # and aggregate branch coverage >= 90%. Coverage is compared exactly in integers.
-CRAP_BELOW = 6
+MAX_CRAP = 6
 MIN_COVERAGE_PERCENT = {'line': 95, 'branch': 90}
-STANDARD = {'crapBelow': CRAP_BELOW, 'minCoveragePercent': MIN_COVERAGE_PERCENT}
+STANDARD = {'maxCrap': MAX_CRAP, 'minCoveragePercent': MIN_COVERAGE_PERCENT}
 
 
 def is_count(value):
@@ -39,7 +39,7 @@ def score_functions(measurements):
         seen.add(identity)
         coverage = f['covered'] / f['total']
         crap = f['complexity'] ** 2 * (1 - coverage) ** 3 + f['complexity']
-        functions.append({**f, 'coverage': coverage, 'crap': crap, 'exceedsThreshold': crap >= CRAP_BELOW})
+        functions.append({**f, 'coverage': coverage, 'crap': crap, 'exceedsThreshold': crap > MAX_CRAP})
     functions.sort(key=lambda f: f['crap'], reverse=True)
     return functions
 
@@ -71,7 +71,7 @@ def main():
             raise ValueError('Usage: python crap.py CONFIG.json')
         execution = run_report(sys.argv[1])
         if 'maxCrap' in execution['config']:
-            raise ValueError('maxCrap is not configurable; the skill standard is CRAP < 6')
+            raise ValueError('maxCrap is not configurable; the skill standard is CRAP <= 6')
         result = calculate(execution['report'])
         print(json.dumps(result, indent=2, allow_nan=False))
         return 1 if result['findings'] else 0
