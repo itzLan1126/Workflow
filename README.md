@@ -32,7 +32,7 @@ The discussion agent investigates facts, offers at least three meaningful choice
 
 There is no mandatory template, file-by-file plan, or draft/confirmed/completed state machine. Save the brief at an agreed project location, preferably an existing task-document directory, without overwriting unrelated work. The user reviews it and authorizes implementation; an existing agreed brief can be used directly.
 
-**Context isolation depends on the host.** A discussion subagent needs its own user-facing conversation to keep that exchange out of the main agent's context. If unavailable, use a separate discussion chat and start an execution chat from the brief. If the user prefers one chat, relay the exchange and disclose that it does not provide full isolation. A skill cannot erase messages already received or create host capabilities. Without subagent support, report the limitation and offer separate chats or a single-agent fallback rather than claiming independent work occurred.
+**Context isolation depends on the host.** When direct subagent interaction or delegation is unavailable, follow [host compatibility](skills/workflow/references/host-compatibility.md). An already agreed brief can go straight to implementation.
 
 ### Build, show, and revise
 
@@ -48,13 +48,13 @@ The bundled [CRAP and mutation tool guide](skills/workflow/references/quality-to
 
 Use the target project's justified thresholds and relevant code scope. Surviving mutants require investigation; some are equivalent. Do not weaken assertions, exclusions, or thresholds merely to obtain a pass. The runner does not install dependencies or make an isolated copy automatically; use a disposable project copy containing the exact accepted changes for mutation runs.
 
-The main agent validates actionable findings and sends them to the implementer, then requests verification of repairs and affected behavior. Stop when material issues are resolved. If the loop repeats without progress or a required check is blocked, report the blocker and evidence rather than looping forever or declaring success. Repairs preserve the accepted behavior; behavior-changing proposals return to the user.
+The main agent validates actionable findings and sends them to the implementer, then requests verification of repairs and affected behavior. The quality stage passes when required checks are complete and material issues are resolved. If the loop repeats without progress or a required check is blocked, report the evidence and wait for the user's decision before advancing. A user-accepted gap remains unverified. Repairs preserve the accepted behavior; behavior-changing proposals return to the user.
 
 ### Try it as a user
 
 The main agent uses the actual UI, CLI, or API to exercise the intended outcome, including meaningful failure or recovery scenarios. Read the current brief and inspect evidence as needed; do not rely solely on a subagent's completion claim or quality scores.
 
-A mismatch returns to implementation. Recheck affected quality evidence after fixes; return to user feedback if accepted behavior changes. Unavailable runtime access means acceptance is incomplete, not passed. Deliver the outcome, checks actually performed, and material gaps.
+A mismatch returns to implementation. Recheck affected quality evidence after fixes; return to user feedback if accepted behavior changes. Completion requires actual verification evidence for each key user outcome in the brief. Unavailable runtime access and user-accepted gaps remain unverified; they do not count as completed acceptance. Deliver the outcome, checks actually performed, and material gaps.
 
 ## Install and use
 
