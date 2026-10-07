@@ -8,14 +8,14 @@ One [workflow skill](skills/workflow/SKILL.md) coordinates discussion, implement
 
 ```mermaid
 flowchart TD
-    U[User] <--> D[Discussion agent]
-    D --> B[Short agreed brief]
-    B --> M[Main agent]
-    M --> I[Implementation agent]
+    U[User] <--> M[Main agent discusses]
+    M --> B[Short agreed brief]
+    B --> I[Implementation agent]
     I --> F[Working version and basic checks]
     F --> A{User satisfied?}
     A -->|Feedback| I
-    A -->|Yes| Q[Independent quality agent]
+    A -->|Yes| L[Acceptance tests and recorded baseline]
+    L --> Q[Independent quality agent]
     Q --> R{Material issues?}
     R -->|Yes| X[Implementation agent fixes]
     X --> Q
@@ -24,21 +24,29 @@ flowchart TD
     V -->|Verified| E[Delivery with evidence and remaining gaps]
 ```
 
-The main agent owns delegation, scope, feedback, and final acceptance. Subagents own detailed investigation, implementation, and quality work. Use fresh subagent contexts when supported; reuse the implementer during feedback and repairs. Do not run multiple writers against the same files.
+The main agent owns the discussion, delegation, scope, feedback, and final acceptance. Subagents own implementation and quality work. Use fresh subagent contexts when supported; reuse the implementer during feedback and repairs. Do not run multiple writers against the same files.
+
+### Right-size the run
+
+Depth matches the request. Trivial changes skip discovery, confirm a one-paragraph brief, and get review without CRAP or mutation testing. Logic-free changes (docs, copy, configuration, styling) get conventional review only. Everything else runs the full workflow. The main agent states the chosen depth so the user can change it.
 
 ### Discuss and hand off
 
-The discussion agent investigates facts, offers at least three meaningful choices with its own recommendation, and challenges the user when evidence supports a better direction. It may create UI comparisons or disposable prototypes outside the repository; discussion does not change project code. It then writes a short brief. Delegate as you would to a capable colleague: explain the problem, desired outcome, relevant context, constraints, and open questions. Put important information first. Preserve the reasons behind consequential decisions, not the conversation transcript.
+The main agent holds the discussion itself, because that context is what final acceptance depends on. It investigates facts, offers at least three meaningful choices with its own recommendation, and challenges the user when evidence supports a better direction. It may create UI comparisons or disposable prototypes outside the repository; discussion does not change project code. It then writes a short brief. Delegate as you would to a capable colleague: explain the problem, desired outcome, relevant context, constraints, and open questions. Put important information first. Preserve the reasons behind consequential decisions, not the conversation transcript.
 
 There is no mandatory template, file-by-file plan, or draft/confirmed/completed state machine. Save the brief at an agreed project location, preferably an existing task-document directory, without overwriting unrelated work. The user reviews it and authorizes implementation; an existing agreed brief can be used directly.
 
-**Context isolation depends on the host.** When direct subagent interaction or delegation is unavailable, follow [host compatibility](skills/workflow/references/host-compatibility.md). An already agreed brief can go straight to implementation.
+When the host cannot delegate to subagents, follow [host compatibility](skills/workflow/references/host-compatibility.md). An already agreed brief can go straight to implementation.
 
 ### Build, show, and revise
 
 The implementation agent chooses the technical approach and scales execution to the brief. Small work stays with one agent. Large work is split into demonstrable end-to-end slices with explicit dependencies; ready independent slices run concurrently with clear write ownership. The implementation lead integrates and verifies the whole experience before presenting a version the user can try. Run basic checks throughout: relevant tests, build or type checks, and safeguards against regressions, data loss, and security problems. Report how to try the result and what is not yet verified.
 
 Keep implementing user feedback until the user explicitly accepts the behavior. Update the brief only when the agreed outcome or constraints change. Silence, passing tests, and the agent's own confidence do not count as user acceptance. Defer the expensive quality pass until then.
+
+### Lock in acceptance
+
+On acceptance, the implementer turns the scenarios the user tried into automated acceptance or regression tests where practical and lists those that remain manual. The main agent records the accepted baseline as a saved patch including new files, or a commit if the user authorizes one. Quality repairs must keep the acceptance tests passing, and their diffs are compared against the baseline.
 
 ### Check quality and repair
 
@@ -52,7 +60,7 @@ The main agent validates actionable findings and sends them to the implementer, 
 
 ### Try it as a user
 
-The main agent uses the actual UI, CLI, or API to exercise the intended outcome, including meaningful failure or recovery scenarios. Read the current brief and inspect evidence as needed; do not rely solely on a subagent's completion claim or quality scores.
+The main agent runs the acceptance tests, then uses the actual UI, CLI, or API to exercise the remaining manual scenarios, including meaningful failure or recovery scenarios. Read the current brief and inspect evidence as needed; do not rely solely on a subagent's completion claim or quality scores.
 
 A mismatch returns to implementation. Recheck affected quality evidence after fixes; return to user feedback if accepted behavior changes. Completion requires actual verification evidence for each key user outcome in the brief. Unavailable runtime access and user-accepted gaps remain unverified; they do not count as completed acceptance. Deliver the outcome, checks actually performed, and material gaps.
 
