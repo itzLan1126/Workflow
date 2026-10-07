@@ -52,7 +52,7 @@ On acceptance, the implementer turns the scenarios the user tried into automated
 
 After user acceptance, an independent quality agent performs conventional code review first. Resolve and recheck material findings before running the more expensive deterministic tools. Basic tests and safety checks remain active throughout implementation.
 
-The bundled [CRAP and mutation tool guide](skills/workflow/references/quality-tools.md) provides executable scripts, report formats, and setup instructions. CRAP combines measured per-function complexity and coverage, gated by one standard for every run: each function's CRAP < 6, aggregate line coverage ≥ 95%, and aggregate branch coverage ≥ 90%. Mutation testing invokes a real language-specific engine and parses its report. Missing tools, stale or empty reports, and command failures cannot produce a pass. Reports include scope and gaps; scores cannot establish that the user wanted the resulting behavior.
+The bundled [CRAP and mutation tool guide](skills/workflow/references/quality-tools.md) provides executable scripts, report formats, and setup instructions. CRAP combines measured per-function complexity and coverage, gated by one standard for every run: each function's CRAP ≤ 6, aggregate line coverage ≥ 95%, and aggregate branch coverage ≥ 90%. Mutation testing invokes a real language-specific engine and parses its report. Missing tools, stale or empty reports, and command failures cannot produce a pass. Reports include scope and gaps; scores cannot establish that the user wanted the resulting behavior.
 
 CRAP always uses the standard above. Use the target project's justified mutation thresholds and relevant code scope. Mutation testing targets the changed code by default through each engine's diff or file filters. Python projects can use mutmut 3 through the bundled exporter. Surviving mutants require investigation; some are equivalent. Do not weaken assertions, exclusions, or thresholds merely to obtain a pass. The runner does not install dependencies or make an isolated copy automatically; use a disposable project copy containing the exact accepted changes for mutation runs.
 
@@ -98,7 +98,7 @@ CRAP-test the skill's own scripts against that standard with its bundled collect
 .venv/bin/python scripts/self_crap.py
 ```
 
-It currently exits 1. Line coverage (96%) and branch coverage (93%) meet the standard, but 8 of 24 functions score CRAP ≥ 6 because their cyclomatic complexity exceeds 5: `mutation.summarize`, `run_report.run_report`, `lizard-metrics.read_lcov` and `collect`, and four `crap.py` functions.
+It currently exits 1. Line coverage (96%) and branch coverage (93%) meet the standard, but 5 of 24 functions score CRAP above 6: `mutation.summarize`, `run_report.run_report`, `lizard-metrics.read_lcov` and `collect`, and `crap.is_measurement`.
 
 Mutation-test the skill's own scripts with its bundled runner and mutmut exporter. The script builds a fresh analysis copy in a temporary directory and prints its path for the evidence:
 

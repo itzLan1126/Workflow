@@ -25,11 +25,11 @@ Use an isolated project copy for mutation execution, including the accepted unco
 
 Every CRAP run in this skill uses one fixed standard, which configs cannot change:
 
-- each function's CRAP < 6;
+- each function's CRAP ≤ 6;
 - aggregate line coverage ≥ 95%;
 - aggregate branch coverage ≥ 90%.
 
-The script computes `C² × (1 − covered / total)³ + C` for each function and fails any unrounded value of 6 or more. Because CRAP is at least `C`, this also caps each function's cyclomatic complexity at 5. Aggregate coverage is compared exactly over the measured scope. A config containing `maxCrap` is rejected so that an old per-project limit cannot apply silently.
+The script computes `C² × (1 − covered / total)³ + C` for each function and fails any unrounded value above 6. Because CRAP is at least `C`, this also caps each function's cyclomatic complexity at 6, and a function at 6 needs full coverage. Aggregate coverage is compared exactly over the measured scope. A config containing `maxCrap` is rejected so that an old per-project limit cannot apply silently.
 
 The bundled [collector](../scripts/lizard-metrics.py) measures complexity with Lizard and joins it to LCOV coverage for the same source snapshot: per-function **line** coverage from `DA` records, and aggregate line and branch coverage over the source files in scope from `DA` and `BRDA` records. Lizard supports Python, JavaScript/TypeScript, Rust, Swift, and other languages. Use a real project coverage command that emits LCOV with unexecuted lines and branch records included (for example, coverage.py with `branch = true`); do not handwrite metrics or let an agent estimate them. A report without branch records fails with exit 2 rather than passing.
 
