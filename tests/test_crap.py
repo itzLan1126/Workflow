@@ -133,6 +133,17 @@ class CrapTests(unittest.TestCase):
         result = subprocess.run([sys.executable, str(SCRIPTS / 'crap.py')], capture_output=True, text=True)
         self.assertEqual((result.returncode, result.stderr), (2, 'CRAP: Usage: python crap.py CONFIG.json\n'))
 
+    def test_forbidden_option_is_rejected_before_command_side_effects(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            command = [sys.executable, '-c', "from pathlib import Path; Path('started').touch()"]
+            path = root / 'config.json'
+            path.write_text(json.dumps(dict(cwd='.', command=command, report='report.json', maxCrap=6)))
+            with mock.patch.object(sys, 'argv', ['crap.py', str(path)]), redirect_stderr(io.StringIO()) as stderr:
+                self.assertEqual(main(), 2)
+            self.assertIn('maxCrap is not configurable', stderr.getvalue())
+            self.assertFalse((root / 'started').exists())
+
 
 if __name__ == '__main__':
     unittest.main()

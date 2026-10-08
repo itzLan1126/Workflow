@@ -21,6 +21,8 @@ Reports must not exist before execution, including symlinks. Choose a new run di
 
 Use an isolated project copy for mutation execution, including the accepted uncommitted changes and necessary test resources. Exclude credentials and production access. Run baseline tests there. The runner does not create that copy or verify its isolation; do not point mutation commands at the user's working checkout.
 
+On Windows, the [job helper](../scripts/windows_job.py) holds a bootstrap behind a pipe until it is assigned to a kill-on-close Job Object. The tool and its descendants then inherit that job. Cleanup owns the job rather than looking up a potentially exited root PID; timeout failures retain their timeout classification even if cleanup also reports an error.
+
 ## CRAP
 
 Every CRAP run in this skill uses one fixed standard, which configs cannot change:

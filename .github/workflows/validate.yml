@@ -21,3 +21,13 @@ jobs:
         run: python -m unittest discover -s tests
       - name: Validate skills
         run: python scripts/validation.py
+
+  windows-process-cleanup:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.x"
+      - name: Test native job ownership and timeout cleanup
+        run: python -m unittest discover -s tests -p test_windows_job.py -v
