@@ -8,14 +8,17 @@ import sys
 
 # Keys are mutmut's own status names. Anything else (suspicious, segfault, interrupted,
 # not checked) is abnormal or unfinished and must be investigated rather than scored.
-STATUSES = {"killed": "killed", "survived": "survived", "no tests": "noCoverage",
+STATUSES = {"survived": "survived", "no tests": "noCoverage",
             "timeout": "timeout", "skipped": "ignored", "caught by type check": "unviable"}
+PYTEST_EXITS = {0: "survived", 1: "killed", 2: "error", 3: "error", 4: "error", 5: "noCoverage"}
 
 
 def classify(code, status_by_exit_code):
-    # pytest exit 3 is INTERNAL_ERROR, even though mutmut 3.8 labels it "killed".
-    if code == 3:
+    # Only pytest exit 1 proves a test failure, regardless of mutmut's display labels.
+    if type(code) is not int:
         return "error"
+    if code in PYTEST_EXITS:
+        return PYTEST_EXITS[code]
     return STATUSES.get(status_by_exit_code.get(code), "error")
 
 

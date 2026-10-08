@@ -12,7 +12,7 @@ from unittest import mock
 
 SCRIPTS = Path(__file__).resolve().parents[1] / "skills/workflow/scripts"
 sys.path.insert(0, str(SCRIPTS))
-from mutmut_export import collect, main
+from mutmut_export import classify, collect, main
 from mutation import summarize
 
 # A subset of mutmut 3's status table; collect() receives the installed table at runtime.
@@ -52,12 +52,25 @@ class MutmutExportTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "^Unrecognized mutmut metadata: .*a.py.meta$"):
             collect(self.root / "mutants", TABLE)
 
-    def test_pytest_internal_error_cannot_pass_mutation_gate(self):
-        meta(self.root, "src/a.py.meta", {"a.x_f__mutmut_1": 3})
-        # mutmut 3.8 calls pytest's internal-error exit a kill; it is not a failing assertion.
-        mutants = collect(self.root / "mutants", {**TABLE, 3: "killed"})
-        self.assertEqual(mutants, [{"id": "a.x_f__mutmut_1", "status": "error"}])
-        self.assertEqual(summarize({"baselinePassed": True, "mutants": mutants}, "normalized")["exitCode"], 2)
+    def test_only_pytest_test_failure_can_count_as_a_kill(self):
+        # These semantics must not change even if a display table mislabels operational failures.
+        table = {code: "killed" for code in (0, 1, 2, 3, 4, 5, 99)}
+        for code, status, gate in ((0, "survived", 1), (1, "killed", 0), (2, "error", 2),
+                                   (3, "error", 2), (4, "error", 2), (5, "noCoverage", 1), (99, "error", 2)):
+            with self.subTest(code=code):
+                meta(self.root, "src/a.py.meta", {"a.x_f__mutmut_1": code})
+                mutants = collect(self.root / "mutants", table)
+                self.assertEqual(mutants, [{"id": "a.x_f__mutmut_1", "status": status}])
+                self.assertEqual(summarize({"baselinePassed": True, "mutants": mutants}, "normalized")["exitCode"], gate)
+        for code in (True, False, 1.0, "1", None, []):
+            with self.subTest(code=code):
+                self.assertEqual(classify(code, table), "error")
+
+    @unittest.skipUnless(HAS_MUTMUT, "mutmut is not installed")
+    def test_installed_mutmut_table_preserves_pytest_errors(self):
+        from mutmut.stats import status_by_exit_code
+        self.assertEqual([classify(code, status_by_exit_code) for code in range(6)],
+                         ["survived", "killed", "error", "error", "error", "noCoverage"])
 
     def run_main(self, argv=None):
         self.addCleanup(os.chdir, os.getcwd())
