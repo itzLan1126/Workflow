@@ -13,6 +13,7 @@ from unittest import mock
 SCRIPT = Path(__file__).resolve().parents[1] / "skills/workflow/scripts/lizard_metrics.py"
 sys.path.insert(0, str(SCRIPT.parent))
 import lizard_metrics
+from coverage.lcovreport import line_hash
 
 
 class LizardMetricsTests(unittest.TestCase):
@@ -107,7 +108,7 @@ class LizardMetricsTests(unittest.TestCase):
         source = self.root / "sample.py"
         source.write_text("def example():\n    return 1\n\ndef uncovered():\n    return 0\n")
         report = ("SF:sample.py\nDA:2,0\nend_of_record\n"
-                  f"SF:{source}\nDA:2,1,checksum\nend_of_record\n")
+                  f"SF:{source}\nDA:2,1,{line_hash('    return 1')}\nend_of_record\n")
         self.coverage.write_text(report)
         self.assertEqual(self.run_metrics("sample.py").returncode, 2)
         self.assertFalse(self.output.exists())
@@ -116,6 +117,33 @@ class LizardMetricsTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         functions = json.loads(self.output.read_text())["functions"]
         self.assertEqual([(item["covered"], item["total"]) for item in functions], [(1, 1), (0, 1)])
+
+    def test_rejects_conflicting_or_stale_line_checksums(self):
+        (self.root / "sample.py").write_text("def example():\n    return 1\n")
+        current = line_hash("    return 1")
+        old = line_hash("    return 0")
+        for records, message in (
+            (f"SF:sample.py\nDA:2,1,{old}\nend_of_record\n"
+             f"SF:sample.py\nDA:2,0,{current}\nend_of_record\n", "Conflicting LCOV checksums"),
+            (f"SF:sample.py\nDA:2,1,{old}\nend_of_record\n", "does not match source"),
+            ("SF:sample.py\nDA:2,1,\nend_of_record\n", "does not match source"),
+        ):
+            with self.subTest(records=records):
+                self.coverage.write_text(records)
+                result = self.run_metrics("sample.py")
+                self.assertEqual(result.returncode, 2)
+                self.assertIn(message, result.stderr)
+                self.assertFalse(self.output.exists())
+
+    def test_matching_checksums_merge_unicode_crlf_source(self):
+        line = '    return "你好"'
+        (self.root / "sample.py").write_bytes(f"def example():\r\n{line}\r\n".encode("utf-8"))
+        checksum = line_hash(line)
+        self.coverage.write_text(f"SF:sample.py\nDA:2,0,{checksum}\nend_of_record\n"
+                                 f"SF:sample.py\nDA:2,1,{checksum}\nend_of_record\n")
+        result = self.run_metrics("sample.py")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(json.loads(self.output.read_text())["coverage"]["line"], {"covered": 1, "total": 1})
 
     def test_aggregates_line_and_branch_coverage_in_scope(self):
         (self.root / "sample.py").write_text("def choice(x):\n    if x:\n        return 1\n    return 0\n")

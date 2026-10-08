@@ -39,7 +39,7 @@ The bundled [collector](../scripts/lizard_metrics.py) measures complexity with L
 python /path/to/workflow/scripts/lizard_metrics.py coverage.lcov measurements.json src/example.rs
 ```
 
-Pass the source files in scope explicitly. Coverage `SF` paths must resolve to those exact files from the command's working directory; basenames are never guessed. The collector rejects missing coverage, no detected functions, and nested/overlapping/shared-line function ranges. For those cases use an existing language-aware metrics exporter, rather than silently dropping functions. Record selected files and exclusions.
+Pass the source files in scope explicitly. Coverage `SF` paths must resolve to those exact files from the command's working directory; basenames are never guessed. Optional `DA` checksums must agree across sections and match the analyzed UTF-8 source lines (LCOV's unpadded base64 MD5). Reports without checksums still require a fresh coverage run for the same source snapshot. The collector rejects missing coverage, no detected functions, and nested/overlapping/shared-line function ranges. For those cases use an existing language-aware metrics exporter, rather than silently dropping functions. Record selected files and exclusions.
 
 A project-owned Python script can run its coverage command and then the collector with `subprocess.run(..., check=True)`. Configure that script as the command below so coverage and metrics are regenerated together. `measurements.json` must be written at the configured report path.
 
@@ -93,7 +93,9 @@ Mutate the changed code by default; whole-project runs can take hours. Widen the
 | cargo-mutants | `--in-diff changes.diff`, using a diff of the accepted change |
 | Stryker | `--mutate "src/a.ts:10-40"` file and line ranges; do not use `--incremental`, which reuses earlier results |
 | Muter | `--files-to-mutate` with the changed files |
-| mutmut | `only_mutate` globs in the analysis copy's `[tool.mutmut]` configuration |
+| mutmut 3.8 | Set `source_paths = ["src/"]` and `only_mutate = ["src/changed.py"]` in the analysis copy's `[tool.mutmut]` configuration |
+
+For the pinned mutmut 3.8 release, `only_mutate` is a supported file-glob filter within `source_paths`; `paths_to_mutate` is the deprecated name for `source_paths`, not that filter. See the [3.8 configuration implementation](https://github.com/boxed/mutmut/blob/3.8.0/src/mutmut/configuration.py). The integration test runs the real engine with an extra out-of-scope source file and verifies that only the selected module produces mutants. Check installed versions before applying these settings to other releases.
 
 Do not use cargo-mutants `--check` or skip its baseline. Stryker and Muter must run their normal baseline/test flow. Use Stryker's completed JSON reporter output, never its incremental cache or a partial report. Configure their JSON output to match `report`; do not enable network dashboard upload as part of this workflow.
 
