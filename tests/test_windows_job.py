@@ -93,10 +93,29 @@ class WindowsJobTests(unittest.TestCase):
                 self.assertIs(raised.exception.__cause__, timeout)
                 if cleanup_fails:
                     self.assertIsInstance(timeout.__cause__, OSError)
-                    child.kill.assert_called_once_with()
-                else:
-                    child.kill.assert_not_called()
+                child.kill.assert_called_once_with()
                 self.assertEqual(child.wait.call_args_list, [mock.call(timeout=1.0), mock.call()])
+
+    def test_assignment_failure_reaps_real_gated_bootstrap(self):
+        # Portable subprocess test: no Win32 API is needed to verify the gated bootstrap cleanup.
+        with tempfile.TemporaryDirectory() as directory:
+            marker = Path(directory) / "started"
+            command = [sys.executable, "-c", "from pathlib import Path; Path('started').touch()"]
+            processes = []
+            popen = subprocess.Popen
+
+            def start(*args, **kwargs):
+                child = popen(*args, **kwargs)
+                processes.append(child)
+                return child
+
+            with mock.patch.object(windows_job.WindowsJob, "assign", side_effect=OSError("assignment failed")), \
+                    mock.patch.object(windows_job.subprocess, "Popen", side_effect=start), \
+                    self.assertRaisesRegex(OSError, "assignment failed"):
+                windows_job.run(command, directory, 1000)
+            self.assertEqual(len(processes), 1)
+            self.assertIsNotNone(processes[0].poll())
+            self.assertFalse(marker.exists())
 
     def test_normal_completion_closes_job_and_preserves_exit(self):
         process = mock.MagicMock()
