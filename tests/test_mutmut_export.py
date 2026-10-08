@@ -108,10 +108,12 @@ class MutmutExportTests(unittest.TestCase):
         (self.root / "src/calc/__init__.py").write_text(
             "def choose(a, b):\n    if a > b:\n        return a\n    return b\n\n\n"
             "def untested(x):\n    return x + 1\n")
+        (self.root / "src/unchanged.py").write_text("def unchanged(x):\n    return x + 1\n")
         test = self.root / "tests/test_calc.py"
         test.write_text("from calc import choose\n\n\ndef test_choose():\n    assert choose(2, 1) == 2\n")
         (self.root / "pyproject.toml").write_text(
-            '[tool.mutmut]\npaths_to_mutate = ["src/"]\npytest_add_cli_args_test_selection = ["tests/"]\n')
+            '[tool.mutmut]\nsource_paths = ["src/"]\nonly_mutate = ["src/calc/*.py"]\n'
+            'pytest_add_cli_args_test_selection = ["tests/"]\n')
         config = self.root / "mutation-config.json"
         config.write_text(json.dumps({"cwd": ".", "report": "mutation.json", "format": "normalized",
                                       "command": [sys.executable, str(SCRIPTS / "mutmut_export.py"),
@@ -126,6 +128,9 @@ class MutmutExportTests(unittest.TestCase):
         self.assertEqual(result.returncode, 1, result.stderr)
         self.assertEqual(json.loads(result.stdout)["counts"]["survived"], 1)
         self.assertEqual(json.loads(result.stdout)["counts"]["noCoverage"], 2)
+        mutants = json.loads((self.root / "mutation.json").read_text())["mutants"]
+        self.assertTrue(mutants)
+        self.assertTrue(all(m["id"].startswith("calc.") for m in mutants), mutants)
 
         test.write_text("from calc import choose\n\n\ndef test_choose():\n    assert choose(2, 1) == 1\n")
         for path in ("mutants", "mutation.json"):
