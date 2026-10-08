@@ -81,10 +81,9 @@ class WindowsJob:
 def stop(child, job):
     try:
         job.terminate()
-    except OSError:
-        child.kill()  # Reap the bootstrap even when job termination failed; never claim success.
-        raise
     finally:
+        # Assignment may have failed: the gated bootstrap is then outside the job.
+        child.kill()
         child.wait()
 
 
