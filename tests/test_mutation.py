@@ -15,7 +15,7 @@ from unittest import mock
 SCRIPTS = Path(__file__).resolve().parents[1] / "skills/workflow/scripts"
 sys.path.insert(0, str(SCRIPTS))
 from mutation import main, run_mutation, summarize
-from run_report import read_json, run_report, stop
+from run_report import read_json, run_report, run_command
 
 REQUIRE = r"^Require cwd, report, nonempty command argv and positive timeoutMs \(max 2147483647\)$"
 NO_BASELINE = r"^cargo-mutants requires a successful baseline test \(do not use --check or --baseline skip\)$"
@@ -220,14 +220,10 @@ class MutationTests(unittest.TestCase):
             time.sleep(0.05)
         self.assertFalse(alive(pid), "a grandchild process outlived the timeout")
 
-    def test_windows_cleanup_targets_descendants(self):
-        child = mock.Mock(pid=123)
-        with mock.patch("run_report.os.name", "nt"), mock.patch("run_report.subprocess.run") as run:
-            stop(child)
-        run.assert_called_once_with(["taskkill", "/PID", "123", "/T", "/F"], check=True,
-                                    stdin=subprocess.DEVNULL, stdout=sys.stderr, stderr=sys.stderr)
-        child.kill.assert_not_called()
-        child.wait.assert_called_once_with()
+    def test_windows_commands_use_job_lifetime_tracking(self):
+        with mock.patch("run_report.os.name", "nt"), mock.patch("run_report.run_windows", return_value=17) as run:
+            self.assertEqual(run_command(["tool"], "directory", 1234), 17)
+        run.assert_called_once_with(["tool"], "directory", 1234)
 
     def test_json_rejects_nonfinite_numbers(self):
         path = self.fixture({})

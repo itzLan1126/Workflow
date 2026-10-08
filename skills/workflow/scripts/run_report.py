@@ -9,6 +9,8 @@ import stat
 import subprocess
 import sys
 
+from windows_job import run as run_windows
+
 
 def invalid_constant(value):
     raise ValueError(f"Non-finite JSON number: {value}")
@@ -69,13 +71,7 @@ def fresh_report_path(config_path, config):
 
 def stop(child):
     try:
-        if os.name == "posix":
-            os.killpg(child.pid, signal.SIGKILL)
-        else:
-            # kill() only terminates the root on Windows; /T includes its descendants.
-            subprocess.run(["taskkill", "/PID", str(child.pid), "/T", "/F"],
-                           check=True, stdin=subprocess.DEVNULL,
-                           stdout=sys.stderr, stderr=sys.stderr)
+        os.killpg(child.pid, signal.SIGKILL)
     except ProcessLookupError:
         pass
     child.wait()
@@ -83,9 +79,11 @@ def stop(child):
 
 def run_command(command, cwd, timeout):
     # The caller supplies an isolated copy; this runner does not sandbox commands.
+    if os.name == "nt":
+        return run_windows(command, cwd, timeout)
     with subprocess.Popen(command, cwd=cwd, shell=False, stdin=subprocess.DEVNULL,
                           stdout=sys.stderr, stderr=sys.stderr,
-                          start_new_session=os.name == "posix") as child:
+                          start_new_session=True) as child:
         try:
             return child.wait(timeout=timeout / 1000)
         except BaseException as error:
