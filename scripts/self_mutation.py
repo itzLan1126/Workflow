@@ -12,7 +12,7 @@ import tempfile
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPTS = ROOT / "skills/workflow/scripts"
 SOURCES = ("crap.py", "lizard_metrics.py", "mutation.py", "mutation_report.py", "mutmut_export.py", "run_report.py", "windows_job.py")
-TESTS = ("test_crap.py", "test_lizard_metrics.py", "test_mutation.py", "test_mutmut_export.py", "test_windows_job.py")
+TESTS = ("test_run_report.py", "test_crap.py", "test_lizard_metrics.py", "test_mutation.py", "test_mutmut_export.py", "test_windows_job.py")
 # mutmut names mutants by path from the project root, while the tests import the scripts
 # as top-level modules, so the analysis copy places them under src/. The script-entrypoint
 # smoke tests run scripts by repository path, which does not exist in the copy, and the

@@ -16,10 +16,17 @@ import windows_job
 
 class WindowsJobTests(unittest.TestCase):
     def setUp(self):
-        self.api = mock.Mock()
+        self.api = mock.Mock(spec=["CreateJobObjectW", "SetInformationJobObject", "AssignProcessToJobObject",
+                                   "TerminateJobObject", "CloseHandle"])
         self.api.CreateJobObjectW.return_value = 123
         self.addCleanup(mock.patch.stopall)
-        mock.patch.object(windows_job.ctypes, "WinDLL", return_value=self.api, create=True).start()
+
+        def load_library(name, *, use_last_error=False):
+            self.assertEqual(name.lower(), "kernel32")
+            self.assertIs(use_last_error, True)
+            return self.api
+
+        mock.patch.object(windows_job.ctypes, "WinDLL", side_effect=load_library, create=True).start()
         mock.patch.object(windows_job.ctypes, "WinError", side_effect=lambda code: OSError(code, "win32 failure"), create=True).start()
         mock.patch.object(windows_job.ctypes, "get_last_error", return_value=5, create=True).start()
 
@@ -50,6 +57,12 @@ class WindowsJobTests(unittest.TestCase):
         with self.assertRaises(OSError):
             windows_job.WindowsJob()
         self.api.CloseHandle.assert_called_once_with(123)
+
+    def test_win32_failure_preserves_cached_error_code(self):
+        with self.assertRaises(OSError) as raised:
+            windows_job.checked(False)
+        self.assertEqual(raised.exception.errno, 5)
+        self.assertEqual(windows_job.checked(123), 123)
 
     def test_close_failure_does_not_mask_original_error(self):
         self.api.CloseHandle.return_value = False
@@ -122,8 +135,16 @@ class WindowsJobTests(unittest.TestCase):
         child = process.__enter__.return_value
         child._handle = 456
         child.wait.return_value = 17
-        with mock.patch.object(windows_job.subprocess, "Popen", return_value=process):
-            self.assertEqual(windows_job.run(["tool", "arg"], ".", 1000), 17)
+        command = ["tool", "argument with spaces", "$(literal)"]
+        with mock.patch.object(windows_job.subprocess, "Popen", return_value=process) as start:
+            self.assertEqual(windows_job.run(command, "analysis-directory", 1000), 17)
+        self.assertEqual(start.call_count, 1)
+        self.assertEqual(start.call_args.args,
+                         ([sys.executable, str(Path(windows_job.__file__).resolve()), *command],))
+        options = dict(start.call_args.kwargs)
+        self.assertFalse(options.pop("shell", False))
+        self.assertEqual(options, dict(cwd="analysis-directory", stdin=subprocess.PIPE,
+                                       stdout=sys.stderr, stderr=sys.stderr))
         self.api.CloseHandle.assert_called_once_with(123)
 
     def test_bootstrap_needs_release_and_disconnects_tool_stdin(self):
