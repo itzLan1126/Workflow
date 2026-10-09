@@ -11,7 +11,7 @@ import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPTS = ROOT / "skills/workflow/scripts"
-SOURCES = ("crap.py", "lizard_metrics.py", "mutation.py", "mutmut_export.py", "run_report.py", "windows_job.py")
+SOURCES = ("crap.py", "lizard_metrics.py", "mutation.py", "mutation_report.py", "mutmut_export.py", "run_report.py", "windows_job.py")
 TESTS = ("test_crap.py", "test_lizard_metrics.py", "test_mutation.py", "test_mutmut_export.py", "test_windows_job.py")
 # mutmut names mutants by path from the project root, while the tests import the scripts
 # as top-level modules, so the analysis copy places them under src/. The script-entrypoint
@@ -37,7 +37,7 @@ def main():
     (copy / "mutation-config.json").write_text(json.dumps(config), encoding="utf-8")
     print(f"Evidence: {copy}", file=sys.stderr)
     return subprocess.run([sys.executable, str(SCRIPTS / "mutation.py"),
-                           str(copy / "mutation-config.json")]).returncode
+                           str(copy / "mutation-config.json"), *sys.argv[1:]]).returncode
 
 
 if __name__ == "__main__":

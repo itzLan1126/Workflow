@@ -101,4 +101,5 @@ def run_report(config_path, accepted_exit_codes=(0,)):
         raise ValueError(f"Tool failed: exit {exit_code}")
     if not stat.S_ISREG(report_path.lstat().st_mode):
         raise ValueError("Report must be a regular file")
-    return {"config": config, "report": read_json(report_path), "exitCode": exit_code}
+    return {"config": config, "report": read_json(report_path), "reportPath": report_path.resolve(),
+            "exitCode": exit_code}

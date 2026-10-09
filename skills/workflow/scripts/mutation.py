@@ -5,6 +5,7 @@ import json
 import sys
 
 from run_report import read_json, run_report
+from mutation_report import render_report, report_details
 
 
 STATUSES = ("killed", "survived", "noCoverage", "timeout", "unviable", "ignored", "error")
@@ -125,16 +126,21 @@ def run_mutation(config_path):
     result = summarize(run["report"], format)
     if run["exitCode"] != 0 and result["exitCode"] == 0:
         raise ValueError(f"Tool exited {run['exitCode']} without reported findings")
-    return {**result, "toolExitCode": run["exitCode"]}
+    return {**result, "toolExitCode": run["exitCode"], "reportPath": str(run["reportPath"]),
+            "mutants": report_details(run["report"], format, run["reportPath"], MAPS)}
 
 
 def main(argv=None):
     args = sys.argv[1:] if argv is None else argv
     try:
+        as_json = "--json" in args
+        args = list(args)
+        if as_json:
+            args.remove("--json")
         if len(args) != 1:
-            raise ValueError("Usage: python mutation.py CONFIG.json")
+            raise ValueError("Usage: python mutation.py [--json] CONFIG.json")
         result = run_mutation(args[0])
-        print(json.dumps(result, indent=2, allow_nan=False))
+        print(json.dumps(result, indent=2, allow_nan=False) if as_json else render_report(result))
         return result["exitCode"]
     except (OSError, ValueError) as error:
         print(f"mutation: {error}", file=sys.stderr)

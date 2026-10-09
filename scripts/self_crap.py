@@ -10,7 +10,7 @@ import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPTS = ROOT / "skills/workflow/scripts"
-SOURCES = ("crap.py", "lizard_metrics.py", "mutation.py", "mutmut_export.py", "run_report.py", "windows_job.py")
+SOURCES = ("crap.py", "lizard_metrics.py", "mutation.py", "mutation_report.py", "mutmut_export.py", "run_report.py", "windows_job.py")
 # Several tests run the scripts as subprocesses, so coverage patches subprocess to measure them.
 COVERAGE_CONFIG = """[run]
 branch = true
