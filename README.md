@@ -106,7 +106,7 @@ Mutation-test the skill's own scripts with its bundled runner and mutmut exporte
 .venv/bin/python scripts/self_mutation.py
 ```
 
-The analysis copy includes all six bundled scripts, including the Lizard/LCOV collector, and imports them under their real module names so mutmut can associate tests with each function. Entrypoint smoke tests and the nested real-mutmut integration test are excluded from the inner run. Inspect the current report and preserved per-mutant evidence: survivors and timeouts need investigation, and pytest internal errors must remain errors. A nonzero result is not a pass; do not reuse historical survivor counts or assume survivors are equivalent.
+The analysis copy includes all seven bundled scripts, including the Lizard/LCOV collector and mutation report renderer, and imports them under their real module names so mutmut can associate tests with each function. Entrypoint smoke tests and the nested real-mutmut integration test are excluded from the inner run. The default output groups actionable mutants by function, with numbered code differences and a summary; add `--json` for machine-readable output. Inspect the current report and preserved per-mutant evidence: survivors and timeouts need investigation, and pytest internal errors must remain errors. A nonzero result is not a pass; do not reuse historical survivor counts or assume survivors are equivalent.
 
 The Windows runner assigns a gated bootstrap to a kill-on-close job before releasing the tool. Its native timeout and root-exit behavior is tested by the Windows CI job; Linux self-tests exercise API contracts but do not establish native Windows behavior.
 

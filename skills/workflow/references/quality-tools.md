@@ -1,6 +1,6 @@
 # Deterministic quality tools
 
-Use these after conventional review findings are resolved. Requires Python 3.10+; CRAP's bundled multi-language collector also requires `lizard==1.17.31` in the analysis environment. The bundled runners use only the Python standard library; external mutation engines retain their own runtime requirements. Install tools only under the project's permissions. The scripts never install tools automatically.
+Use these after conventional review findings are resolved. Requires Python 3.10+; CRAP's bundled multi-language collector also requires `lizard==1.17.31` in the analysis environment. The bundled runners use only the Python standard library, except that the mutation report optionally uses Lizard, when installed, to name the functions containing Stryker mutants; external mutation engines retain their own runtime requirements. Install tools only under the project's permissions. The scripts never install tools automatically.
 
 ## Execution contract
 
@@ -9,9 +9,10 @@ Run from any directory, using the installed skill's absolute script paths:
 ```sh
 python /path/to/workflow/scripts/crap.py /path/to/crap-config.json
 python /path/to/workflow/scripts/mutation.py /path/to/mutation-config.json
+python /path/to/workflow/scripts/mutation.py --json /path/to/mutation-config.json
 ```
 
-Both execute a trusted project's `command` argument array without implicit shell evaluation, then validate the newly generated JSON `report`. Command output goes to stderr; the calculated result goes to stdout. Config `cwd` is relative to the config file; `report` is relative to `cwd`. Commands resolve as they normally do in that working directory. Use absolute tool paths for virtual environments.
+Both execute a trusted project's `command` argument array without implicit shell evaluation, then validate the newly generated JSON `report`. Command output goes to stderr; the calculated result goes to stdout. CRAP emits JSON. Mutation emits a human-readable report by default; `--json` emits the summary fields plus actionable `mutants` and `reportPath`. Config `cwd` is relative to the config file; `report` is relative to `cwd`. Commands resolve as they normally do in that working directory. Use absolute tool paths for virtual environments.
 
 - Exit **0**: measured scope meets the CRAP standard, or assessed mutants are killed.
 - Exit **1**: CRAP standard not met, or mutation survivors, uncovered mutants, or timeouts require review.
@@ -62,6 +63,10 @@ Alternative tool-backed exporters must emit:
 
 ## Mutation testing
 
+The default report groups survivors, uncovered mutants, timeouts, and errors separately by function and shows each mutant's ID and numbered `-`/`+` code differences. It ends with all status counts, the exit code, and the original report path. JSON consumers must use `--json`. Presentation does not change the gate or classify timeouts as kills.
+
+The Python exporter preserves function names, source positions, and mutmut's real diffs for actionable mutants. Cargo uses function metadata and saved `diff_path` files relative to the report directory. Stryker reconstructs diffs from its embedded original source, location, and replacement; Lizard supplies function grouping when installed. Muter provides positioned before/after snippets, which are labeled as snippets; its report does not supply function names. Missing details are marked explicitly with IDs and available evidence paths, without inventing source or treating a detail gap as a pass.
+
 Configure a real installed mutation engine and a new output path. Set engine test commands and mutation scope in the target project before running. Supported report adapters:
 
 | Format | Engine and report | Example command argv |
@@ -106,6 +111,8 @@ The normalized adapter requires real engine output converted by executable code,
 ```
 
 Allowed statuses are `killed`, `survived`, `noCoverage`, `timeout`, `unviable`, `ignored`, and `error`. Only actual failing tests count as kills; compile failures and ignored mutants are excluded. Runtime errors and unfinished runs produce exit 2. Timeouts require investigation instead of being counted as kills. Equivalent survivors require an evidence-backed disposition; do not rewrite the report to get exit 0. Preserve a nonzero result and explain any justified exception.
+
+Normalized exporters may include `file`, `function`, `line` (the function declaration line), `diff` (unified diff), and `diffOffset` (zero by default, added to function-relative diff line numbers). `detailGap` and `evidence` describe unavailable details and supporting evidence paths. Existing status-only reports remain valid and display explicit unavailable-detail markers.
 
 The mutmut exporter runs `mutmut run` with the interpreter that runs the exporter, so use the analysis environment's Python. It refuses an existing `mutants/` directory because mutmut would reuse stale results, writes no report when mutmut's clean baseline fails, and maps abnormal or unfinished mutants (suspicious, segfault, interrupted, not checked) to `error`. mutmut derives module names from file paths relative to the project root (dropping a leading `src/`), so tests must import the code under those names; code started as a subprocess from another directory is not associated with tests. Other languages are supported through this explicit adapter contract, not automatic engine discovery. Native adapters are covered by report fixtures and subprocess tests; validate the installed engine version and its report format on each target project.
 
