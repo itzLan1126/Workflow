@@ -6,7 +6,7 @@ Use the agreed brief as your delegation of outcomes. Inspect the project, choose
 
 - **Small Tasks**: Implement directly within a single agent context.
 - **Large Tasks**:
-  - Break the work into vertical, demonstrable, and verifiable behavioral slices across all necessary layers.
+  - Break the work into vertical slices the user can try.
   - Record what blocks each slice. Keep this breakdown lightweight; delegate outcomes and context rather than prescribing files or algorithms. No ticket system or detailed specification is required.
 - **Concurrency & Ownership**:
   - Delegate ready, independent slices to multiple subagents concurrently when supported.
@@ -19,12 +19,12 @@ Use the agreed brief as your delegation of outcomes. Inspect the project, choose
 
 - **Deliver Testable Work**: Produce an integrated, working version the user can try hands-on.
 - **Continuous Checks**: Run relevant basic checks with each change, including behavioral tests where warranted.
-- **Safety First**: Proactively address security vulnerabilities, data integrity risks, and known correctness failures as part of each working version.
+- **Safety**: Address security vulnerabilities, data integrity risks, and known correctness failures in each working version.
 - **Report Clearly**: Return a concise description of the experience, how to try it, actual check results, gaps, and evidence paths.
 
 ## User Feedback Loop
 
-- Iterate based on user feedback until the user explicitly accepts the result.
+- Iterate based on user feedback until the user gives explicit sign-off.
 - Reuse relevant implementers when their context remains useful across revisions.
 - Notify the coordinator whenever feedback changes the brief.
 - Base subsequent changes on the latest brief and user-accepted behavior; flag proposals that require a product decision.
@@ -32,7 +32,7 @@ Use the agreed brief as your delegation of outcomes. Inspect the project, choose
 
 ## Locking in Acceptance
 
-Once the user confirms acceptance:
+Once the user signs off:
 
 1. **Automate Scenarios**: Encode the scenarios the user tried into automated acceptance or regression tests where practical, without changing accepted behavior.
 2. **List Manual Tests**: Document any scenarios that must remain manual.
