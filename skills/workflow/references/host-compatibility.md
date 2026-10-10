@@ -13,8 +13,4 @@ Explain the limitation to the user and let them choose one of two options:
   - Execute roles step-by-step within the same conversation.
   - Transparently describe sequential work as such, rather than claiming independent review.
 
-## Core Requirements
-
-Whichever route is chosen:
-- Preserve the exact same user-acceptance and verification requirements.
-- Follow the host's authorization rules for creating or messaging chats.
+Whichever route is chosen, preserve the exact same user-acceptance and verification requirements, and follow the host's authorization rules for creating or messaging chats.
