@@ -24,45 +24,69 @@ flowchart TD
     V -->|Verified| E[Delivery with evidence and remaining gaps]
 ```
 
-The main agent owns the discussion, delegation, scope, feedback, and final acceptance. Subagents own implementation and quality work. Use fresh subagent contexts when supported; reuse the implementer during feedback and repairs. Do not run multiple writers against the same files.
+### Core Roles & Ownership
+
+- **Main Agent**: Owns the discussion, delegation, scope boundaries, feedback coordination, and final acceptance.
+- **Implementation Agent**: Owns technical decisions, code changes, and bug fixes.
+- **Quality Agent**: Performs independent code review and deterministic checks (CRAP and mutation testing).
+- **Rule**: Start subagents with fresh contexts where supported. Reuse the implementer across feedback and repairs. Never run multiple writers against the same files concurrently.
+
+---
 
 ### Right-size the run
 
-Depth matches the request. Trivial changes skip discovery, confirm a one-paragraph brief, and get review without CRAP or mutation testing. Logic-free changes (docs, copy, configuration, styling) get conventional review only. Everything else runs the full workflow. The main agent states the chosen depth so the user can change it.
+Match workflow depth to the task before starting, and state the chosen depth so the user can change it:
 
-### Discuss and hand off
+- **Trivial** (typos, renames, single obvious fix): Skip discovery. Confirm a one-paragraph brief inline. Run conventional review; skip CRAP and mutation testing (say so explicitly). Personally verify the result.
+- **Logic-free** (docs, copy, configuration, styling): Discuss only if direction is unclear. Run conventional review only; report CRAP and mutation testing as not applicable.
+- **Standard / Complex**: Follow the full 5-stage workflow below.
 
-The main agent holds the discussion itself, because that context is what final acceptance depends on. It investigates facts, offers at least three meaningful choices with its own recommendation, and challenges the user when evidence supports a better direction. It may create UI comparisons or disposable prototypes outside the repository; discussion does not change project code. It then writes a short brief. Delegate as you would to a capable colleague: explain the problem, desired outcome, relevant context, constraints, and open questions. Put important information first. Preserve the reasons behind consequential decisions, not the conversation transcript.
+When in doubt, propose a depth and let the user choose. Escalate if the work turns out larger than expected.
 
-There is no mandatory template, file-by-file plan, or draft/confirmed/completed state machine. Save the brief at an agreed project location, preferably an existing task-document directory, without overwriting unrelated work. The user reviews it and authorizes implementation; an existing agreed brief can be used directly.
+---
 
-When the host cannot delegate to subagents, follow [host compatibility](skills/workflow/references/host-compatibility.md). An already agreed brief can go straight to implementation.
+### The 5 Workflow Stages
 
-### Build, show, and revise
+#### 1. Discuss and hand off
 
-The implementation agent chooses the technical approach and scales execution to the brief. Small work stays with one agent. Large work is split into demonstrable end-to-end slices with explicit dependencies; ready independent slices run concurrently with clear write ownership. The implementation lead integrates and verifies the whole experience before presenting a version the user can try. Run basic checks throughout: relevant tests, build or type checks, and safeguards against regressions, data loss, and security problems. Report how to try the result and what is not yet verified.
+- **Investigate & Advise**: The main agent holds the discussion directly, as this context is essential for final acceptance. Investigate facts directly; delegate only bulky background research. Offer at least 3 distinct options with tradeoffs, your recommendation, and welcome another answer. Respectfully challenge assumptions when evidence supports a better direction.
+- **Keep Repo Clean**: Keep project code untouched during discussion. Disposable prototypes, mockups, and UI comparisons live in an external temporary or chat directory outside the repository. Label prototypes as illustrative and state their assumptions.
+- **Write a Short Brief**: Summarize the problem, desired outcomes, relevant context, constraints, decisions with reasons, and open questions. Put critical information first. There is no mandatory template, file-by-file plan, or draft/confirmed/completed state machine.
+- **Handoff**: Save the brief in an agreed project directory (e.g., `docs/tasks/`) without overwriting unrelated work. When the user authorizes implementation, proceed. An already agreed brief can skip discovery and go straight to implementation.
+- _Host limitations_: When the host cannot delegate to subagents, follow [host compatibility](skills/workflow/references/host-compatibility.md).
 
-Keep implementing user feedback until the user explicitly accepts the behavior. Update the brief only when the agreed outcome or constraints change. Silence, passing tests, and the agent's own confidence do not count as user acceptance. Defer the expensive quality pass until then.
+#### 2. Build, show, and revise
 
-### Lock in acceptance
+- **Scale Execution**: Handle small tasks with a single implementer. Split large tasks into demonstrable end-to-end slices with explicit dependencies. Run ready, independent slices concurrently with clear write ownership; sequence overlapping edits or use isolated worktrees so agents never overwrite each other's work.
+- **Continuous Checks**: Run basic checks throughout: relevant tests, build and type checks, and proactive safeguards against regressions, data loss, and security issues.
+- **Show Early**: The implementation lead integrates and verifies the whole user experience before presenting a testable version. Report how to try the result, actual check results, and what is not yet verified.
+- **Iterate on Feedback**: Continue revising until the user explicitly accepts the behavior. Reuse relevant implementers to preserve context. Silence, passing tests, and the agent's own confidence do not count as acceptance. Update the brief only when goals or constraints change. Defer the expensive quality pass until user acceptance.
 
-On acceptance, the implementer turns the scenarios the user tried into automated acceptance or regression tests where practical and lists those that remain manual. The main agent records the accepted baseline as a saved patch including new files, or a commit if the user authorizes one. Quality repairs must keep the acceptance tests passing, and their diffs are compared against the baseline.
+#### 3. Lock in acceptance
 
-### Check quality and repair
+Once the user explicitly accepts the behavior:
 
-After user acceptance, an independent quality agent performs conventional code review first. Resolve and recheck material findings before running the more expensive deterministic tools. Basic tests and safety checks remain active throughout implementation.
+- **Automate Scenarios**: The implementer turns the scenarios the user tried into automated acceptance or regression tests where practical (without changing accepted behavior), and lists remaining manual scenarios.
+- **Snapshot Baseline**: The main agent records the accepted baseline as a saved patch (including untracked files) or a commit if the user authorizes one. Add both to the brief's evidence. All subsequent quality repairs are compared against this baseline to ensure behavior does not change.
 
-The bundled [CRAP and mutation tool guide](skills/workflow/references/quality-tools.md) provides executable scripts, report formats, and setup instructions. CRAP combines measured per-function complexity and coverage, gated by one standard for every run: each function's CRAP ≤ 6, aggregate line coverage ≥ 95%, and aggregate branch coverage ≥ 90%. Mutation testing invokes a real language-specific engine and parses its report. Missing tools, stale or empty reports, and command failures cannot produce a pass. Reports include scope and gaps; scores cannot establish that the user wanted the resulting behavior.
+#### 4. Check quality and repair
 
-CRAP always uses the standard above. Use the target project's justified mutation thresholds and relevant code scope. Mutation testing targets the changed code by default through each engine's diff or file filters. Python projects can use mutmut 3 through the bundled exporter. Surviving mutants require investigation; some are equivalent. Do not weaken assertions, exclusions, or thresholds merely to obtain a pass. The runner does not install dependencies or make an isolated copy automatically; use a disposable project copy containing the exact accepted changes for mutation runs.
+- **Step 1 - Conventional Review**: An independent quality agent reviews the full change and affected callers against the brief. Verify actionable defects; do not manufacture style issues. The implementer fixes substantiated findings and the quality agent rechecks them before running deterministic tools.
+- **Step 2 - Deterministic Quality Checks**: Follow the [CRAP and mutation tool guide](skills/workflow/references/quality-tools.md):
+  - **CRAP Standard**: Every function must meet CRAP ≤ 6, aggregate line coverage ≥ 95%, and aggregate branch coverage ≥ 90%.
+  - **Mutation Testing**: Run real language-specific mutation engines scoped to changed code by default (using engine diff or file filters).
+  - **Environment**: Execute mutation testing in an isolated disposable copy containing the exact accepted changes (including uncommitted files). The runner does not install dependencies or create this copy automatically.
+  - **Integrity**: Missing tools, stale or empty reports, and command failures cannot produce a pass. Surviving mutants require investigation; some are equivalent. Never weaken assertions, exclusions, or thresholds merely to obtain a pass.
+- **Repair Loop**: The main agent validates findings and sends them to the implementer, then verifies repairs against the accepted baseline. Repairs must keep acceptance tests green. If checks are blocked or the loop stalls without progress, report evidence and wait for the user's decision. User-accepted gaps remain unverified. Behavior-changing proposals return to the user.
 
-The main agent validates actionable findings and sends them to the implementer, then requests verification of repairs and affected behavior. The quality stage passes when required checks are complete and material issues are resolved. If the loop repeats without progress or a required check is blocked, report the evidence and wait for the user's decision before advancing. A user-accepted gap remains unverified. Repairs preserve the accepted behavior; behavior-changing proposals return to the user.
+#### 5. Try it as a user
 
-### Try it as a user
+- **Direct Acceptance**: The main agent runs automated acceptance tests, then directly exercises remaining manual scenarios via the actual UI, CLI, or API (including meaningful error and recovery paths).
+- **Inspect Evidence**: Read the brief and inspect real evidence; do not rely solely on subagent completion claims or quality scores.
+- **Handle Mismatches**: Return behavioral mismatches to implementation. Recheck affected quality evidence after fixes; return to user feedback if accepted behavior changes.
+- **Delivery**: Completion requires actual verification evidence for each key user outcome in the brief. Deliver the outcome, checks actually performed, and material gaps. Unavailable runtime access or user-accepted gaps remain unverified.
 
-The main agent runs the acceptance tests, then uses the actual UI, CLI, or API to exercise the remaining manual scenarios, including meaningful failure or recovery scenarios. Read the current brief and inspect evidence as needed; do not rely solely on a subagent's completion claim or quality scores.
-
-A mismatch returns to implementation. Recheck affected quality evidence after fixes; return to user feedback if accepted behavior changes. Completion requires actual verification evidence for each key user outcome in the brief. Unavailable runtime access and user-accepted gaps remain unverified; they do not count as completed acceptance. Deliver the outcome, checks actually performed, and material gaps.
+---
 
 ## Install and use
 
@@ -77,11 +101,14 @@ $workflow Help me make the export flow easier to use.
 $workflow Implement the agreed brief at docs/tasks/export.md.
 ```
 
-The entrypoint preserves the repository's explicit-only invocation policy. It delegates short role references on demand instead of loading all role instructions into the main agent. Give agents the brief, relevant paths, the review target, and concise results; retain full logs outside the conversation and inspect them only when needed.
+### Operational Guardrails
 
-Existing installations may retain the five old skill folders. Remove those obsolete installed copies when migrating; changing this repository does not uninstall them from a client. Existing design documents remain useful context and can serve as briefs without converting their status fields.
+- **Explicit Invocation**: Preserves the repository's explicit-only invocation policy. Delegates short role references on demand instead of loading all role instructions into the main agent at once.
+- **Minimal Context**: Pass only the brief, relevant paths, the review target, and concise results. Retain full logs outside the conversation and inspect them only when needed.
+- **Safe Permissions**: Workflow invocation permits local implementation and repairs once authorized. It does _not_ authorize commits, pushes, pull requests, publishing, destructive operations, or production access without explicit user approval.
+- **Migration & Existing Docs**: Existing design documents remain useful context and can serve as briefs without converting their status fields. If migrating from older versions, delete any leftover legacy skill folders (`discuss`, `design`, `improve`, `implement`, `review`).
 
-Invoking the workflow permits its local implementation and repair loop once implementation is authorized. It does not authorize commits, pushes, pull requests, publishing, destructive operations, or production access. Respect existing user permissions and preserve unrelated work.
+---
 
 ## Repository validation
 
@@ -92,25 +119,31 @@ python3 -m venv .venv
 .venv/bin/python scripts/validation.py
 ```
 
-CRAP-test the skill's own scripts against that standard with its bundled collector and gate. The script runs the test suite under branch coverage, keeps the coverage data, LCOV, measurements, and config in a fresh temporary directory, and prints its path for the evidence:
+### Self-Quality Verification
 
-```sh
-.venv/bin/python scripts/self_crap.py
-```
+- **CRAP Check**:
 
-The command exits 0 only when the current measurements meet the standard. Read its JSON output for exact counts and per-function scores; results depend on the source snapshot and checks actually run. The threshold comparison uses exact rational arithmetic, even when a displayed score rounds to 6.
+  ```sh
+  .venv/bin/python scripts/self_crap.py
+  ```
 
-Mutation-test the skill's own scripts with its bundled runner and mutmut exporter. The script builds a fresh analysis copy in a temporary directory and prints its path for the evidence:
+  Runs the test suite under branch coverage, keeps coverage data, LCOV, measurements, and config in a fresh temporary directory, and prints its path for evidence. Exits 0 only when current measurements meet the standard. The threshold comparison uses exact rational arithmetic, even when a displayed score rounds to 6. Read its JSON output for exact counts and per-function scores.
 
-```sh
-.venv/bin/python scripts/self_mutation.py
-```
+- **Mutation Check**:
 
-The analysis copy includes all seven bundled scripts, including the Lizard/LCOV collector and mutation report renderer, and imports them under their real module names so mutmut can associate tests with each function. Entrypoint smoke tests and the nested real-mutmut integration test are excluded from the inner run. The default output groups actionable mutants by function, with numbered code differences and a summary; add `--json` for machine-readable output. Inspect the current report and preserved per-mutant evidence: survivors and timeouts need investigation, and pytest internal errors must remain errors. A nonzero result is not a pass; do not reuse historical survivor counts or assume survivors are equivalent.
+  ```sh
+  .venv/bin/python scripts/self_mutation.py
+  ```
 
-The Windows runner assigns a gated bootstrap to a kill-on-close job before releasing the tool. Its native timeout and root-exit behavior is tested by the Windows CI job; Linux self-tests exercise API contracts but do not establish native Windows behavior.
+  Builds a fresh analysis copy in a temporary directory containing all seven bundled scripts (including the Lizard/LCOV collector and mutation report renderer) and imports them under their real module names for test association. Entrypoint smoke tests and the nested real-mutmut integration test are excluded from the inner run. Actionable mutants are grouped by function with numbered diffs and summary; add `--json` for machine-readable output. Survivors and timeouts require investigation; pytest internal errors must remain errors. A nonzero result is not a pass; do not reuse historical survivor counts or assume equivalence.
 
-The existing validator and CI check skill packaging, YAML, references, README consistency, and explicit invocation policies. These are deterministic checks of this repository, not proof that an agent host implements the workflow correctly or that a target application meets its requirements. CI and release validation run all script tests with Python unittest. The bundled scripts require Python 3.10+; target mutation engines retain their own runtime requirements.
+- **Platform Support & Windows Job Cleanup**:
+  The Windows runner assigns a gated bootstrap to a kill-on-close Job Object before releasing the tool (`scripts/windows_job.py`). Native timeout and root-exit cleanup behavior is verified in Windows CI; Linux self-tests exercise API contracts. Bundled scripts require Python 3.10+.
+
+- **Deterministic Repository CI**:
+  The validator and CI check skill packaging, YAML frontmatter, references, README consistency, and explicit invocation policies. These are deterministic checks of this repository, not proof that an agent host implements the workflow correctly or that a target application meets requirements.
+
+---
 
 ## License
 

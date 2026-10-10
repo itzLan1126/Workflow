@@ -1,10 +1,19 @@
-# Deterministic quality tools
+# Deterministic Quality Tools
 
-Use these after conventional review findings are resolved. Requires Python 3.10+; CRAP's bundled multi-language collector also requires `lizard==1.17.31` in the analysis environment. The bundled runners use only the Python standard library, except that the mutation report optionally uses Lizard, when installed, to name the functions containing Stryker mutants; external mutation engines retain their own runtime requirements. Install tools only under the project's permissions. The scripts never install tools automatically.
+Use these deterministic quality tools after conventional code review findings are resolved.
 
-## Execution contract
+## Prerequisites
 
-Run from any directory, using the installed skill's absolute script paths:
+- **Python**: Requires Python 3.10+.
+- **Lizard**: Multi-language CRAP metrics collection requires `lizard==1.17.31` in the analysis environment.
+- **Standard Library**: Bundled runners use only the Python standard library, except that mutation reporting optionally uses Lizard (when installed) to name functions containing Stryker mutants.
+- **External Tools**: External mutation engines retain their own runtime requirements. Install tools only under project permissions; scripts never install dependencies automatically.
+
+---
+
+## Execution Contract
+
+Run from any directory using absolute paths to the installed skill scripts:
 
 ```sh
 python /path/to/workflow/scripts/crap.py /path/to/crap-config.json
@@ -12,37 +21,58 @@ python /path/to/workflow/scripts/mutation.py /path/to/mutation-config.json
 python /path/to/workflow/scripts/mutation.py --json /path/to/mutation-config.json
 ```
 
-Both execute a trusted project's `command` argument array without implicit shell evaluation, then validate the newly generated JSON `report`. Command output goes to stderr; the calculated result goes to stdout. CRAP emits JSON. Mutation emits a human-readable report by default; `--json` emits the summary fields plus actionable `mutants` and `reportPath`. Config `cwd` is relative to the config file; `report` is relative to `cwd`. Commands resolve as they normally do in that working directory. Use absolute tool paths for virtual environments.
+### Protocol & Exit Codes
 
-- Exit **0**: measured scope meets the CRAP standard, or assessed mutants are killed.
-- Exit **1**: CRAP standard not met, or mutation survivors, uncovered mutants, or timeouts require review.
-- Exit **2**: invalid/missing/empty report, missing tool, command failure, incomplete run, or no assessable mutants. This is not a quality pass.
+- **Execution**: Runs a trusted project's `command` argument array directly without implicit shell evaluation.
+- **Streams**: Command output streams to `stderr`; calculated result (CRAP JSON or mutation report) outputs to `stdout`.
+- **Paths**: `cwd` is relative to the configuration file; `report` path is relative to `cwd`. Use absolute tool paths for virtual environments.
+- **Timeout**: `timeoutMs` is optional (defaults to one hour / 3,600,000 ms).
+- **Reports**: Reports must not exist prior to execution (including symlinks). Always specify a fresh run directory / report path to preserve historical evidence rather than overwriting it.
+- **Config Inspection**: These are executable configurations; inspect them before running. Scripts do not sandbox commands or prove that a supplied report covers all relevant code.
 
-Reports must not exist before execution, including symlinks. Choose a new run directory/report path; preserve old evidence rather than overwriting it. `timeoutMs` is optional (default one hour). A command's nonzero exit fails except cargo-mutants finding exits handled by the adapter. Stryker exit 1 is ambiguous (threshold failure or operational error), so it produces exit 2 for inspection; do not silently lower its configured thresholds. These are executable configs: inspect them before running. The scripts do not sandbox commands or prove that a supplied report describes all relevant code.
+| Exit Code | Meaning |
+| :--- | :--- |
+| **0** | **Pass**: Measured scope meets the CRAP standard, or all assessed mutants are killed. |
+| **1** | **Review Needed**: CRAP standard unmet, or surviving mutants, uncovered mutants, or timeouts require review. |
+| **2** | **Tool / Run Failure**: Invalid/missing/empty report, missing tool, command crash, incomplete run, runtime error, or no assessable mutants. **Never counts as a quality pass.** |
 
-Use an isolated project copy for mutation execution, including the accepted uncommitted changes and necessary test resources. Exclude credentials and production access. Run baseline tests there. The runner does not create that copy or verify its isolation; do not point mutation commands at the user's working checkout.
+#### Engine Exit Code Handling
+- A command's nonzero exit fails the run with exit 2, except cargo-mutants finding exits handled by its adapter.
+- Stryker exit 1 is ambiguous (threshold failure or operational error), so it produces exit 2 for manual inspection; do not silently lower its configured thresholds.
 
-On Windows, the [job helper](../scripts/windows_job.py) holds a bootstrap behind a pipe until it is assigned to a kill-on-close Job Object. The tool and its descendants then inherit that job. Cleanup owns the job rather than looking up a potentially exited root PID; timeout failures retain their timeout classification even if cleanup also reports an error.
+### Isolation & Platform Safety
 
-## CRAP
+- **Isolated Project Copy**: Always run mutation commands in an isolated disposable copy of the project containing the accepted uncommitted changes and necessary test resources. Exclude credentials and production access. Run baseline tests there. The runner does not create that copy or verify its isolation; never point mutation commands at the user's active checkout.
+- **Windows Process Management**: On Windows, the [job helper](../scripts/windows_job.py) holds a bootstrap behind a pipe until assigned to a kill-on-close Job Object. The tool and all descendants inherit that job. Cleanup owns the job rather than looking up a potentially exited root PID; timeout failures retain their timeout classification even if cleanup reports an error.
 
-Every CRAP run in this skill uses one fixed standard, which configs cannot change:
+---
 
-- each function's CRAP ≤ 6;
-- aggregate line coverage ≥ 95%;
-- aggregate branch coverage ≥ 90%.
+## CRAP Metrics
 
-The script computes `C² × (1 − covered / total)³ + C` for each function and compares it to 6 using exact rational arithmetic before converting scores to JSON numbers. Because CRAP is at least `C`, this also caps each function's cyclomatic complexity at 6, and a function at 6 needs full coverage. Aggregate coverage is compared exactly over the measured scope. A config containing `maxCrap` is rejected so that an old per-project limit cannot apply silently.
+### Fixed Quality Standard
+Every CRAP run strictly enforces one fixed standard that configs cannot alter:
+- **Per-function CRAP** ≤ 6
+- **Aggregate line coverage** ≥ 95%
+- **Aggregate branch coverage** ≥ 90%
 
-The bundled [collector](../scripts/lizard_metrics.py) measures complexity with Lizard and joins it to LCOV coverage for the same source snapshot: per-function **line** coverage from `DA` records, and aggregate line and branch coverage over the source files in scope from `DA` and `BRDA` records. Lizard supports Python, JavaScript/TypeScript, Rust, Swift, and other languages. Use a real project coverage command that emits LCOV with unexecuted lines and branch records included (for example, coverage.py with `branch = true`); do not handwrite metrics or let an agent estimate them. A report without branch records fails with exit 2 rather than passing.
+> **Formula**: `CRAP = C² × (1 − covered / total)³ + C` (where `C` is cyclomatic complexity).  
+> The script computes this using exact rational arithmetic before converting scores to JSON. Because CRAP is always ≥ `C`, cyclomatic complexity is capped at 6, and a function at 6 requires 100% coverage. Configurations containing `maxCrap` are rejected so old per-project limits cannot apply silently.
+
+### Generating Metrics with Lizard & LCOV
+Use the bundled [metrics collector](../scripts/lizard_metrics.py) to measure complexity with Lizard and join it to LCOV coverage for the exact same source snapshot:
 
 ```sh
 python /path/to/workflow/scripts/lizard_metrics.py coverage.lcov measurements.json src/example.rs
 ```
 
-Pass the source files in scope explicitly. Coverage `SF` paths must resolve to those exact files from the command's working directory; basenames are never guessed. Optional `DA` checksums must agree across sections and match the analyzed UTF-8 source lines (LCOV's unpadded base64 MD5). Reports without checksums still require a fresh coverage run for the same source snapshot. The collector rejects missing coverage, no detected functions, and nested/overlapping/shared-line function ranges. For those cases use an existing language-aware metrics exporter, rather than silently dropping functions. Record selected files and exclusions.
+- **Scope & Resolution**: Pass target source files explicitly. Coverage `SF` paths must resolve to those exact files from the command's working directory; basenames are never guessed.
+- **Branch Records Required**: Coverage LCOV must include branch records (`BRDA`, e.g. coverage.py with `branch = true`). A report without branch records fails with exit 2 rather than passing. Do not handwrite metrics or let an agent estimate them.
+- **Checksums**: Optional `DA` checksums must agree across sections and match analyzed UTF-8 source lines (LCOV's unpadded base64 MD5). Reports without checksums still require a fresh coverage run for the same source snapshot.
+- **Function Ranges**: The collector rejects missing coverage, no detected functions, and nested/overlapping/shared-line function ranges. For those cases, use an existing language-aware metrics exporter rather than silently dropping functions. Record selected files and exclusions.
 
-A project-owned Python script can run its coverage command and then the collector with `subprocess.run(..., check=True)`. Configure that script as the command below so coverage and metrics are regenerated together. `measurements.json` must be written at the configured report path.
+### CRAP Configuration Example
+
+A project-owned script can run its coverage tool and then the collector with `subprocess.run(..., check=True)`:
 
 ```json
 {
@@ -52,32 +82,71 @@ A project-owned Python script can run its coverage command and then the collecto
 }
 ```
 
-Alternative tool-backed exporters must emit:
+### Exporter Schema & Constraints
+Alternative tool-backed exporters must output:
 
 ```json
-{"functions":[{"file":"src/example.rs","name":"choose","line":1,"complexity":4,"covered":1,"total":2,"coverageKind":"line"}],
- "coverage":{"line":{"covered":95,"total":100},"branch":{"covered":9,"total":10}}}
+{
+  "functions": [
+    {
+      "file": "src/example.rs",
+      "name": "choose",
+      "line": 1,
+      "complexity": 4,
+      "covered": 1,
+      "total": 2,
+      "coverageKind": "line"
+    }
+  ],
+  "coverage": {
+    "line": { "covered": 95, "total": 100 },
+    "branch": { "covered": 9, "total": 10 }
+  }
+}
 ```
 
-`coverage.line` and `coverage.branch` are aggregate counts for the whole measured scope; each needs `1 <= total` and `covered <= total`. `coverageKind` must be `line`, `branch`, `statement`, or `basis-path`. The original CRAP1 formula used basis-path coverage; line/branch/statement variants are proxies and must be labeled when comparing scores. Lizard is a lightweight source analyzer, not a compiler. A valid report proves its arithmetic, not complete coverage mapping or correct behavior.
+- **Counts**: `coverage.line` and `coverage.branch` are aggregate counts for the whole measured scope; each requires `1 <= total` and `covered <= total`.
+- **Kinds**: `coverageKind` must be `line`, `branch`, `statement`, or `basis-path`.
+- **Proxies**: The original CRAP1 formula used basis-path coverage; line/branch/statement variants are proxies and must be labeled when comparing scores.
+- **Analyzer Scope**: Lizard is a lightweight source analyzer, not a compiler. A valid report proves its arithmetic, not complete coverage mapping or correct behavior.
 
-## Mutation testing
+---
 
-The default report groups survivors, uncovered mutants, timeouts, and errors separately by function and shows each mutant's ID and numbered `-`/`+` code differences. It ends with all status counts, the exit code, and the original report path. JSON consumers must use `--json`. Presentation does not change the gate or classify timeouts as kills.
+## Mutation Testing
 
-The Python exporter preserves function names, source positions, and mutmut's real diffs for actionable mutants. Cargo uses function metadata and saved `diff_path` files relative to the report directory. Stryker reconstructs diffs from its embedded original source, location, and replacement; Lizard supplies function grouping when installed. Muter provides positioned before/after snippets, which are labeled as snippets; its report does not supply function names. Missing details are marked explicitly with IDs and available evidence paths, without inventing source or treating a detail gap as a pass.
+Mutation testing validates test sensitivity by injecting real code faults.
 
-Configure a real installed mutation engine and a new output path. Set engine test commands and mutation scope in the target project before running. Supported report adapters:
+### Report Presentation
+- **Default Output**: Groups survivors, uncovered mutants, timeouts, and errors separately by function, displaying mutant IDs and numbered `-`/`+` code diffs. Ends with status counts, exit code, and original report path.
+- **Machine Output**: Use `--json` to output summary fields plus actionable `mutants` and `reportPath`.
+- **Integrity**: Presentation formatting does not alter the gate or classify timeouts as kills.
 
-| Format | Engine and report | Example command argv |
-| --- | --- | --- |
-| `cargo-mutants` | Rust cargo-mutants `mutants.out/outcomes.json` | `["cargo", "mutants"]` |
-| `stryker` | JS/TS Stryker JSON reporter | `["./node_modules/.bin/stryker", "run", "--reporters", "json"]` |
-| `muter` | Swift Muter JSON report | `["muter", "run", "--format", "json", "--output", "mutation.json", "--skip-update-check"]` |
-| `normalized` | Python mutmut 3 through the bundled [exporter](../scripts/mutmut_export.py) | `["/absolute/venv/bin/python", "/path/to/workflow/scripts/mutmut_export.py", "mutation.json"]` |
-| `normalized` | Other engines through a project-owned exporter | `["python", "/absolute/project-analysis/run-mutation.py"]` |
+### Scope to Changed Code
+Mutate only changed code by default; whole-project runs can take hours. Widen scope only with a stated reason, and record the scope with the result:
 
-For example, in a fresh Rust analysis copy with cargo-mutants already installed:
+| Engine | Scoping Flag & Instructions |
+| :--- | :--- |
+| **cargo-mutants** (Rust) | `--in-diff changes.diff` using a diff of accepted changes. Do not use `--check` or skip baseline. |
+| **Stryker** (JS/TS) | `--mutate "src/a.ts:10-40"` file/line ranges. Do not use `--incremental` (reuses old cache). |
+| **Muter** (Swift) | `--files-to-mutate <files>` with changed files. Must run normal baseline and test flow. |
+| **mutmut 3.8** (Python) | In `[tool.mutmut]`: `source_paths = ["src/"]` and `only_mutate = ["src/changed.py"]`. |
+
+#### Scoping & Engine Warnings
+- **mutmut 3.8**: `only_mutate` is a supported file-glob filter within `source_paths`; `paths_to_mutate` is the deprecated name for `source_paths`, not that filter. Check installed versions before applying to other releases.
+- **Stryker**: Use Stryker's completed JSON reporter output, never its incremental cache or a partial report. Configure output path to match `report`; do not enable network dashboard upload.
+- **Muter**: Provides positioned before/after snippets labeled as snippets; its report does not supply function names. Missing details are marked explicitly with IDs and evidence paths without inventing source or treating detail gaps as passes.
+
+### Supported Adapters
+
+| Format | Engine and Report | Example Command argv |
+| :--- | :--- | :--- |
+| `cargo-mutants` | Rust `mutants.out/outcomes.json` | `["cargo", "mutants"]` |
+| `stryker` | JS/TS JSON reporter | `["./node_modules/.bin/stryker", "run", "--reporters", "json"]` |
+| `muter` | Swift JSON report | `["muter", "run", "--format", "json", "--output", "mutation.json", "--skip-update-check"]` |
+| `normalized` | Python mutmut 3 via bundled [exporter](../scripts/mutmut_export.py) | `["/absolute/venv/bin/python", "/path/to/workflow/scripts/mutmut_export.py", "mutation.json"]` |
+| `normalized` | Custom project exporter | `["python", "/absolute/project-analysis/run-mutation.py"]` |
+
+#### Configuration Example (`cargo-mutants`)
 
 ```json
 {
@@ -89,32 +158,34 @@ For example, in a fresh Rust analysis copy with cargo-mutants already installed:
 }
 ```
 
-### Scope to the change
-
-Mutate the changed code by default; whole-project runs can take hours. Widen the scope only with a stated reason, and record the scope with the result.
-
-| Engine | Changed-code scope |
-| --- | --- |
-| cargo-mutants | `--in-diff changes.diff`, using a diff of the accepted change |
-| Stryker | `--mutate "src/a.ts:10-40"` file and line ranges; do not use `--incremental`, which reuses earlier results |
-| Muter | `--files-to-mutate` with the changed files |
-| mutmut 3.8 | Set `source_paths = ["src/"]` and `only_mutate = ["src/changed.py"]` in the analysis copy's `[tool.mutmut]` configuration |
-
-For the pinned mutmut 3.8 release, `only_mutate` is a supported file-glob filter within `source_paths`; `paths_to_mutate` is the deprecated name for `source_paths`, not that filter. See the [3.8 configuration implementation](https://github.com/boxed/mutmut/blob/3.8.0/src/mutmut/configuration.py). The integration test runs the real engine with an extra out-of-scope source file and verifies that only the selected module produces mutants. Check installed versions before applying these settings to other releases.
-
-Do not use cargo-mutants `--check` or skip its baseline. Stryker and Muter must run their normal baseline/test flow. Use Stryker's completed JSON reporter output, never its incremental cache or a partial report. Configure their JSON output to match `report`; do not enable network dashboard upload as part of this workflow.
+### Normalized Report Schema
 
 The normalized adapter requires real engine output converted by executable code, not a prompt-generated summary:
 
 ```json
-{"baselinePassed":true,"mutants":[{"id":"example","status":"killed"}]}
+{
+  "baselinePassed": true,
+  "mutants": [
+    { "id": "example-1", "status": "killed" }
+  ]
+}
 ```
 
-Allowed statuses are `killed`, `survived`, `noCoverage`, `timeout`, `unviable`, `ignored`, and `error`. Only actual failing tests count as kills; compile failures and ignored mutants are excluded. Runtime errors and unfinished runs produce exit 2. Timeouts require investigation instead of being counted as kills. Equivalent survivors require an evidence-backed disposition; do not rewrite the report to get exit 0. Preserve a nonzero result and explain any justified exception.
+- **Allowed Statuses**: `killed`, `survived`, `noCoverage`, `timeout`, `unviable`, `ignored`, `error`.
+- **Kill Classification**: Only actual failing tests count as kills; compile failures and ignored mutants are excluded.
+- **Errors & Timeouts**: Runtime errors and unfinished runs produce exit 2. Timeouts require investigation and never count as kills.
+- **Equivalent Mutants**: Equivalent survivors require an evidence-backed disposition; do not rewrite reports to get exit 0. Preserve a nonzero result and explain justified exceptions.
+- **Optional Metadata**: Exporters may include `file`, `function`, `line` (declaration line), `diff` (unified diff), and `diffOffset` (default 0). `detailGap` and `evidence` describe unavailable details and evidence paths. Existing status-only reports remain valid and display explicit unavailable-detail markers.
 
-Normalized exporters may include `file`, `function`, `line` (the function declaration line), `diff` (unified diff), and `diffOffset` (zero by default, added to function-relative diff line numbers). `detailGap` and `evidence` describe unavailable details and supporting evidence paths. Existing status-only reports remain valid and display explicit unavailable-detail markers.
+### Python mutmut 3 Details
+- **Interpreter**: The bundled [mutmut exporter](../scripts/mutmut_export.py) runs `mutmut run` with the interpreter running the exporter; use the analysis environment's Python.
+- **Stale Data Guard**: Refuses an existing `mutants/` directory because mutmut would reuse stale results.
+- **Clean Baseline**: Writes no report when mutmut's clean baseline fails.
+- **Status Mapping**: Maps abnormal or unfinished mutants (suspicious, segfault, interrupted, not checked) to `error`.
+- **Module Names**: mutmut derives module names from file paths relative to project root (dropping a leading `src/`). Tests must import code under those names; code started as a subprocess from another directory is not associated with tests.
+- **Adapter Contract**: Other languages are supported through this explicit adapter contract, not automatic engine discovery. Validate installed engine versions and report formats on target projects.
 
-The mutmut exporter runs `mutmut run` with the interpreter that runs the exporter, so use the analysis environment's Python. It refuses an existing `mutants/` directory because mutmut would reuse stale results, writes no report when mutmut's clean baseline fails, and maps abnormal or unfinished mutants (suspicious, segfault, interrupted, not checked) to `error`. mutmut derives module names from file paths relative to the project root (dropping a leading `src/`), so tests must import the code under those names; code started as a subprocess from another directory is not associated with tests. Other languages are supported through this explicit adapter contract, not automatic engine discovery. Native adapters are covered by report fixtures and subprocess tests; validate the installed engine version and its report format on each target project.
+---
 
 ## Sources
 
