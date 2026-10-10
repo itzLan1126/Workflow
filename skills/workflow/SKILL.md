@@ -12,24 +12,50 @@ Own the outcome; delegate the work. Discuss the need, hand off a short brief, it
 
 Match depth to the request before starting, and state the chosen depth so the user can change it:
 
-- **Trivial** (typo, rename, one obvious fix): skip discovery; confirm a one-paragraph brief inline. Review the change; skip CRAP and mutation testing and say so. Still verify the result yourself.
-- **Logic-free** (docs, copy, configuration, styling): full discussion only if the direction is unclear. Conventional review only; report CRAP and mutation testing as not applicable.
-- **Everything else**: the full workflow below.
+- **Trivial** (typo, rename, single obvious fix): Skip discovery; confirm a one-paragraph brief inline. Review the change; skip CRAP and mutation testing (say so explicitly). Personally verify the result.
+- **Logic-free** (docs, copy, configuration, styling): Full discussion only if direction is unclear. Conventional review only; report CRAP and mutation testing as not applicable.
+- **Standard / Complex**: Follow the full 5-step workflow below.
 
-When unsure, propose a depth and let the user choose. Escalate if the work turns out larger than expected.
+When in doubt, propose a depth and let the user choose. Escalate if the work turns out larger than expected.
 
 ## Keep context focused
 
-Hold the discussion yourself: it is the context you need for final acceptance. Delegate implementation and quality work to subagents, whose detail would otherwise crowd your context. Start them with fresh contexts where supported; pass the relevant role reference, the brief, repository location, and authorization boundaries rather than the full conversation. Read concise results, retrieving code or detailed evidence only when needed. Give agents direction and responsibility, not implementation recipes. Do not load every role reference at once.
-
-If the host cannot delegate, read [host compatibility](references/host-compatibility.md) before choosing a fallback.
+- **Coordinate directly**: Hold the discussion yourself; you need that context for final acceptance.
+- **Delegate work**: Assign implementation and quality checks to subagents so details do not crowd your context.
+- **Start clean**: Use fresh subagent contexts when supported. Provide only the role reference, brief, repository location, and authorization boundaries—not the entire chat history.
+- **No recipes**: Give subagents direction and responsibility, not rigid implementation recipes. Do not load every role reference at once.
+- **Host fallback**: If your host cannot delegate to subagents, read [references/host-compatibility.md](references/host-compatibility.md) before choosing a fallback.
 
 ## Coordinate the work
 
-1. **Discuss and hand off.** Follow [references/discuss.md](references/discuss.md). Obtain the user's agreement to the brief and to proceed. An already agreed brief is enough; do not restart discovery.
-2. **Implement and iterate.** Delegate with [references/implement.md](references/implement.md). Scale implementation to the brief: small work stays with one implementer; large work uses dependency-aware parallel subagents. Let the user try the integrated version, relay feedback, and reuse relevant implementers for revisions. Keep basic verification active. Update the brief when feedback changes goals or constraints. Wait for explicit user satisfaction before commissioning deeper quality checks; silence is not acceptance.
-3. **Lock in acceptance.** When the user accepts, have the implementer turn the scenarios the user tried into automated acceptance or regression tests where practical, and list the scenarios that remain manual. Record the accepted baseline so later changes can be compared with it: a saved patch including new files, or a commit if the user authorizes one. Add both to the brief's evidence.
-4. **Check and repair.** Delegate review and deterministic checks to an independent quality agent using [references/quality.md](references/quality.md), the current brief, and a precise change scope. Coordinate substantiated fixes with the implementer and have the quality agent verify them. Repairs must keep the acceptance tests passing; review any repair diff against the accepted baseline for behavior changes. Advance when required checks are complete and material issues are resolved. If required checks are blocked or repairs repeatedly make no progress, report the evidence and wait for the user's decision; any accepted gap remains unverified. Changes to accepted behavior or scope also require the user's decision.
-5. **Personally accept.** Run the acceptance tests, then exercise the remaining manual scenarios through the real UI, CLI, or API, including relevant failure and recovery paths. Delegate fixes and ask the quality agent to recheck affected evidence before repeating affected scenarios. Completion requires actual verification evidence for each key user outcome. Report outcomes, evidence, and gaps separately; unavailable execution or a user-accepted gap does not count as verified completion.
+1. **Discuss and hand off** ([references/discuss.md](references/discuss.md))
+   - Clarify needs, evaluate options, and obtain the user's agreement to the brief and to proceed.
+   - If a valid brief already exists, skip discovery and proceed directly to implementation.
 
-Keep agent reports short: outcome, actual checks and results, unresolved issues, and paths to supporting evidence. Preserve unrelated user work and avoid concurrent writers touching the same files. Workflow invocation does not authorize commits, pushes, publication, or other external actions beyond the user's request.
+2. **Implement and iterate** ([references/implement.md](references/implement.md))
+   - Scale execution: use a single implementer for small tasks, or parallel subagents with clear write boundaries for independent slices.
+   - Deliver an integrated testable version early, relay user feedback, and reuse relevant implementers for revisions.
+   - Keep basic verification (tests, linting, typechecks) active throughout.
+   - Update the brief when feedback changes goals or constraints.
+   - **Rule**: Explicit user satisfaction is required before deep quality checks; silence or passing tests do not count as acceptance.
+
+3. **Lock in acceptance**
+   - Have the implementer turn user-tested scenarios into automated acceptance or regression tests where practical, and list remaining manual scenarios.
+   - Record the accepted baseline: a saved patch (including untracked files) or a commit if authorized by the user. Add both to the brief's evidence.
+
+4. **Check and repair** ([references/quality.md](references/quality.md))
+   - Delegate to an independent quality agent using the brief and a precise change scope.
+   - Run conventional code review first; resolve material issues before running deterministic tools (CRAP and mutation testing).
+   - The implementer fixes substantiated issues; the quality agent verifies repairs against the accepted baseline to prevent regressions.
+   - If required checks are blocked or repairs repeatedly make no progress, report evidence and wait for the user's decision; any accepted gap remains unverified. Changes to accepted behavior or scope require the user's decision.
+
+5. **Personally accept**
+   - Run automated acceptance tests, then personally exercise remaining manual scenarios through the real UI, CLI, or API (including error and recovery paths).
+   - Delegate fixes and ask the quality agent to recheck affected evidence before repeating affected scenarios.
+   - Completion requires actual verification evidence for each key user outcome. Report outcomes, evidence, and gaps separately; unavailable execution or a user-accepted gap does not count as verified completion.
+
+## Operating guardrails
+
+- Keep agent reports short: outcome, actual checks and results, unresolved issues, and paths to supporting evidence.
+- Prevent file write conflicts: never allow concurrent agents to edit the same files.
+- Protect the environment: workflow invocation permits local edits and repairs once authorized, but never authorizes commits, pushes, publication, or destructive actions without explicit user permission. Preserve unrelated work.
