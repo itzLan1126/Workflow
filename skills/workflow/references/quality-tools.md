@@ -30,13 +30,14 @@ python /path/to/workflow/scripts/mutation.py --json /path/to/mutation-config.jso
 - **Reports**: Reports must not exist prior to execution (including symlinks). Always specify a fresh run directory / report path to preserve historical evidence rather than overwriting it.
 - **Config Inspection**: These are executable configurations; inspect them before running. Scripts do not sandbox commands or prove that a supplied report covers all relevant code.
 
-| Exit Code | Meaning |
-| :--- | :--- |
-| **0** | **Pass**: Measured scope meets the CRAP standard, or all assessed mutants are killed. |
-| **1** | **Review Needed**: CRAP standard unmet, or surviving mutants, uncovered mutants, or timeouts require review. |
-| **2** | **Tool / Run Failure**: Invalid/missing/empty report, missing tool, command crash, incomplete run, runtime error, or no assessable mutants. **Never counts as a quality pass.** |
+| Exit Code | Meaning                                                                                                                                                                         |
+| :-------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **0**     | **Pass**: Measured scope meets the CRAP standard, or all assessed mutants are killed.                                                                                           |
+| **1**     | **Review Needed**: CRAP standard unmet, or surviving mutants, uncovered mutants, or timeouts require review.                                                                    |
+| **2**     | **Tool / Run Failure**: Invalid/missing/empty report, missing tool, command crash, incomplete run, runtime error, or no assessable mutants. **Never counts as a quality pass.** |
 
 #### Engine Exit Code Handling
+
 - A command's nonzero exit fails the run with exit 2, except cargo-mutants finding exits handled by its adapter.
 - Stryker exit 1 is ambiguous (threshold failure or operational error), so it produces exit 2 for manual inspection; do not silently lower its configured thresholds.
 
@@ -50,7 +51,9 @@ python /path/to/workflow/scripts/mutation.py --json /path/to/mutation-config.jso
 ## CRAP Metrics
 
 ### Fixed Quality Standard
+
 Every CRAP run strictly enforces one fixed standard that configs cannot alter:
+
 - **Per-function CRAP** ≤ 6
 - **Aggregate line coverage** ≥ 95%
 - **Aggregate branch coverage** ≥ 90%
@@ -59,6 +62,7 @@ Every CRAP run strictly enforces one fixed standard that configs cannot alter:
 > The script computes this using exact rational arithmetic before converting scores to JSON. Because CRAP is always ≥ `C`, cyclomatic complexity is capped at 6, and a function at 6 requires 100% coverage. Configurations containing `maxCrap` are rejected so old per-project limits cannot apply silently.
 
 ### Generating Metrics with Lizard & LCOV
+
 Use the bundled [metrics collector](../scripts/lizard_metrics.py) to measure complexity with Lizard and join it to LCOV coverage for the exact same source snapshot:
 
 ```sh
@@ -83,6 +87,7 @@ A project-owned script can run its coverage tool and then the collector with `su
 ```
 
 ### Exporter Schema & Constraints
+
 Alternative tool-backed exporters must output:
 
 ```json
@@ -117,34 +122,37 @@ Alternative tool-backed exporters must output:
 Mutation testing validates test sensitivity by injecting real code faults.
 
 ### Report Presentation
+
 - **Default Output**: Groups survivors, uncovered mutants, timeouts, and errors separately by function, displaying mutant IDs and numbered `-`/`+` code diffs. Ends with status counts, exit code, and original report path.
 - **Machine Output**: Use `--json` to output summary fields plus actionable `mutants` and `reportPath`.
 - **Integrity**: Presentation formatting does not alter the gate or classify timeouts as kills.
 
 ### Scope to Changed Code
+
 Mutate only changed code by default; whole-project runs can take hours. Widen scope only with a stated reason, and record the scope with the result:
 
-| Engine | Scoping Flag & Instructions |
-| :--- | :--- |
+| Engine                   | Scoping Flag & Instructions                                                                       |
+| :----------------------- | :------------------------------------------------------------------------------------------------ |
 | **cargo-mutants** (Rust) | `--in-diff changes.diff` using a diff of accepted changes. Do not use `--check` or skip baseline. |
-| **Stryker** (JS/TS) | `--mutate "src/a.ts:10-40"` file/line ranges. Do not use `--incremental` (reuses old cache). |
-| **Muter** (Swift) | `--files-to-mutate <files>` with changed files. Must run normal baseline and test flow. |
-| **mutmut 3.8** (Python) | In `[tool.mutmut]`: `source_paths = ["src/"]` and `only_mutate = ["src/changed.py"]`. |
+| **Stryker** (JS/TS)      | `--mutate "src/a.ts:10-40"` file/line ranges. Do not use `--incremental` (reuses old cache).      |
+| **Muter** (Swift)        | `--files-to-mutate <files>` with changed files. Must run normal baseline and test flow.           |
+| **mutmut 3.8** (Python)  | In `[tool.mutmut]`: `source_paths = ["src/"]` and `only_mutate = ["src/changed.py"]`.             |
 
 #### Scoping & Engine Warnings
+
 - **mutmut 3.8**: `only_mutate` is a supported file-glob filter within `source_paths`; `paths_to_mutate` is the deprecated name for `source_paths`, not that filter. Check installed versions before applying to other releases.
 - **Stryker**: Use Stryker's completed JSON reporter output, never its incremental cache or a partial report. Configure output path to match `report`; do not enable network dashboard upload.
 - **Muter**: Provides positioned before/after snippets labeled as snippets; its report does not supply function names. Missing details are marked explicitly with IDs and evidence paths without inventing source or treating detail gaps as passes.
 
 ### Supported Adapters
 
-| Format | Engine and Report | Example Command argv |
-| :--- | :--- | :--- |
-| `cargo-mutants` | Rust `mutants.out/outcomes.json` | `["cargo", "mutants"]` |
-| `stryker` | JS/TS JSON reporter | `["./node_modules/.bin/stryker", "run", "--reporters", "json"]` |
-| `muter` | Swift JSON report | `["muter", "run", "--format", "json", "--output", "mutation.json", "--skip-update-check"]` |
-| `normalized` | Python mutmut 3 via bundled [exporter](../scripts/mutmut_export.py) | `["/absolute/venv/bin/python", "/path/to/workflow/scripts/mutmut_export.py", "mutation.json"]` |
-| `normalized` | Custom project exporter | `["python", "/absolute/project-analysis/run-mutation.py"]` |
+| Format          | Engine and Report                                                   | Example Command argv                                                                           |
+| :-------------- | :------------------------------------------------------------------ | :--------------------------------------------------------------------------------------------- |
+| `cargo-mutants` | Rust `mutants.out/outcomes.json`                                    | `["cargo", "mutants"]`                                                                         |
+| `stryker`       | JS/TS JSON reporter                                                 | `["./node_modules/.bin/stryker", "run", "--reporters", "json"]`                                |
+| `muter`         | Swift JSON report                                                   | `["muter", "run", "--format", "json", "--output", "mutation.json", "--skip-update-check"]`     |
+| `normalized`    | Python mutmut 3 via bundled [exporter](../scripts/mutmut_export.py) | `["/absolute/venv/bin/python", "/path/to/workflow/scripts/mutmut_export.py", "mutation.json"]` |
+| `normalized`    | Custom project exporter                                             | `["python", "/absolute/project-analysis/run-mutation.py"]`                                     |
 
 #### Configuration Example (`cargo-mutants`)
 
@@ -165,9 +173,7 @@ The normalized adapter requires real engine output converted by executable code,
 ```json
 {
   "baselinePassed": true,
-  "mutants": [
-    { "id": "example-1", "status": "killed" }
-  ]
+  "mutants": [{ "id": "example-1", "status": "killed" }]
 }
 ```
 
@@ -178,19 +184,10 @@ The normalized adapter requires real engine output converted by executable code,
 - **Optional Metadata**: Exporters may include `file`, `function`, `line` (declaration line), `diff` (unified diff), and `diffOffset` (default 0). `detailGap` and `evidence` describe unavailable details and evidence paths. Existing status-only reports remain valid and display explicit unavailable-detail markers.
 
 ### Python mutmut 3 Details
+
 - **Interpreter**: The bundled [mutmut exporter](../scripts/mutmut_export.py) runs `mutmut run` with the interpreter running the exporter; use the analysis environment's Python.
 - **Stale Data Guard**: Refuses an existing `mutants/` directory because mutmut would reuse stale results.
 - **Clean Baseline**: Writes no report when mutmut's clean baseline fails.
 - **Status Mapping**: Maps abnormal or unfinished mutants (suspicious, segfault, interrupted, not checked) to `error`.
 - **Module Names**: mutmut derives module names from file paths relative to project root (dropping a leading `src/`). Tests must import code under those names; code started as a subprocess from another directory is not associated with tests.
 - **Adapter Contract**: Other languages are supported through this explicit adapter contract, not automatic engine discovery. Validate installed engine versions and report formats on target projects.
-
----
-
-## Sources
-
-- [Original CRAP1 formula](https://testing.googleblog.com/2011/02/this-code-is-crap.html)
-- [Lizard languages and analysis](https://github.com/terryyin/lizard)
-- [cargo-mutants reports](https://mutants.rs/mutants-out.html)
-- [Stryker usage](https://stryker-mutator.io/docs/stryker-js/usage/) and [mutant states](https://stryker-mutator.io/docs/mutation-testing-elements/mutant-states-and-metrics/)
-- [Muter](https://github.com/muter-mutation-testing/muter)
