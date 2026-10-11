@@ -2,90 +2,42 @@
 """Compute CRAP scores and gate them, with aggregate coverage, against the skill's standard."""
 
 import json
-from fractions import Fraction
+from pathlib import Path
+from shared_crap import calculate, collect, score_functions, gate_coverage, STANDARD, MAX_CRAP, MIN_COVERAGE_PERCENT
+from coverage_lcov import read
 import sys
 
 from shared_runner import read_config, run_report
 
-# The skill's fixed standard: every function's CRAP <= 6, aggregate line coverage >= 95%,
-# and aggregate branch coverage >= 90%. Coverage is compared exactly in integers.
-MAX_CRAP = 6
-MIN_COVERAGE_PERCENT = {'line': 95, 'branch': 90}
-STANDARD = {'maxCrap': MAX_CRAP, 'minCoveragePercent': MIN_COVERAGE_PERCENT}
+def collect_main(args):
+    if len(args) < 3:
+        raise ValueError('Usage: crap.py collect COVERAGE.lcov OUTPUT.json SOURCE_FILE...')
+    sources = {Path(source).resolve(strict=True): Path(source).read_text(encoding='utf-8')
+               for source in args[2:]}
+    metrics = collect(read(args[0], sources), args[2:])
+    with Path(args[1]).open('x', encoding='utf-8') as output:
+        output.write(json.dumps(metrics, indent=2) + '\n')
+    return 0
 
 
-def is_count(value):
-    return type(value) is int and 0 <= value <= 2**53 - 1
-
-
-def is_text(value):
-    return isinstance(value, str) and value.strip() != ''
-
-
-def has_fields(f):
-    return (all(is_text(f.get(key)) for key in ('file', 'name'))
-            and all(is_count(f.get(key)) for key in ('line', 'complexity', 'total', 'covered')))
-
-
-def is_measurement(f):
-    return (isinstance(f, dict) and has_fields(f)
-            and min(f['line'], f['complexity'], f['total']) >= 1
-            and f['covered'] <= f['total']
-            and f.get('coverageKind') in ('line', 'branch', 'statement', 'basis-path'))
-
-
-def score_functions(measurements):
-    if not isinstance(measurements, list) or not measurements:
-        raise ValueError('No function measurements')
-    seen, functions = set(), []
-    for f in measurements:
-        if not is_measurement(f):
-            raise ValueError('Invalid function measurement: require file, name, line, complexity, covered, total, coverageKind')
-        identity = (f['file'], f['line'], f['name'])
-        if identity in seen:
-            raise ValueError(f'Duplicate function measurement: {identity}')
-        seen.add(identity)
-        coverage = Fraction(f['covered'], f['total'])
-        crap = f['complexity'] ** 2 * (1 - coverage) ** 3 + f['complexity']
-        functions.append({**f, 'coverage': float(coverage), 'crap': float(crap),
-                          'exceedsThreshold': crap > MAX_CRAP})
-    functions.sort(key=lambda f: f['crap'], reverse=True)
-    return functions
-
-
-def gate_coverage(kind, counts):
-    if (not isinstance(counts, dict) or not is_count(counts.get('covered'))
-            or not is_count(counts.get('total')) or not counts['covered'] <= counts['total']
-            or counts['total'] < 1):
-        raise ValueError(f'Invalid {kind} coverage: require covered and total counts, 1 <= total, covered <= total')
-    covered, total = counts['covered'], counts['total']
-    return {'covered': covered, 'total': total, 'coverage': covered / total,
-            'meetsStandard': covered * 100 >= MIN_COVERAGE_PERCENT[kind] * total}
-
-
-def calculate(report):
-    functions = score_functions(report.get('functions') if isinstance(report, dict) else None)
-    measured = report.get('coverage')
-    if not isinstance(measured, dict):
-        raise ValueError('Missing aggregate coverage: require line and branch counts')
-    coverage = {kind: gate_coverage(kind, measured.get(kind)) for kind in MIN_COVERAGE_PERCENT}
-    findings = (sum(f['exceedsThreshold'] for f in functions)
-                + sum(not c['meetsStandard'] for c in coverage.values()))
-    return {'standard': STANDARD, 'functions': functions, 'coverage': coverage, 'findings': findings}
+def config_result(path):
+    config = read_config(path)
+    if 'maxCrap' in config:
+        raise ValueError('maxCrap is not configurable; the skill standard is CRAP <= 6')
+    execution = run_report(path, config=config)
+    result = calculate(execution['report'])
+    print(json.dumps(result, indent=2, allow_nan=False))
+    return 1 if result['findings'] else 0
 
 
 def main():
     try:
+        if len(sys.argv) > 1 and sys.argv[1] == 'collect':
+            return collect_main(sys.argv[2:])
         if len(sys.argv) != 2:
             raise ValueError('Usage: python crap.py CONFIG.json')
-        config = read_config(sys.argv[1])
-        if 'maxCrap' in config:
-            raise ValueError('maxCrap is not configurable; the skill standard is CRAP <= 6')
-        execution = run_report(sys.argv[1], config=config)
-        result = calculate(execution['report'])
-        print(json.dumps(result, indent=2, allow_nan=False))
-        return 1 if result['findings'] else 0
-    except (OSError, ValueError) as error:
+        return config_result(sys.argv[1])
+    except (OSError, ValueError, ImportError) as error:
         print(f'CRAP: {error}', file=sys.stderr)
         return 2
 

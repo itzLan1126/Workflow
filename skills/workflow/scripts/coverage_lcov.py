@@ -1,13 +1,9 @@
-#!/usr/bin/env python3
-"""Join Lizard function complexity with fresh LCOV line and branch coverage, without guessing."""
+"""Read LCOV evidence and validate its source fingerprints."""
 
 import base64
 import hashlib
-import json
 from pathlib import Path
 import re
-import sys
-
 
 def parse_line(record):
     fields = record[3:].split(",")
@@ -88,24 +84,6 @@ def read_lcov(path):
     return files
 
 
-def summarize(counts):
-    return {"covered": sum(count > 0 for count in counts), "total": len(counts)}
-
-
-def analyze(source):
-    import lizard
-    from lizard_languages import get_reader_for
-
-    if get_reader_for(str(source)) is None:
-        raise ValueError(f"Unsupported source: {source}")
-    code = source.read_text(encoding="utf-8")
-    functions = sorted(lizard.analyze_file.analyze_source_code(
-        str(source), code).function_list, key=lambda function: function.start_line)
-    if not functions:
-        raise ValueError(f"No functions found: {source}")
-    return code, functions
-
-
 def validate_checksums(source, lines, checksums):
     for line, checksum in checksums.items():
         # LCOV fingerprints UTF-8 source lines without their newline, with unpadded base64 MD5.
@@ -127,56 +105,10 @@ def source_coverage(coverage, source, code):
     return hits
 
 
-def measure_function(source, function, hits):
-    counts = [count for line, count in hits.items()
-              if function.start_line <= line <= function.end_line]
-    if not counts:
-        raise ValueError(f"Missing line coverage: {source}:{function.name}")
-    return {"file": str(source), "name": function.name, "line": function.start_line,
-            "complexity": function.cyclomatic_complexity,
-            "covered": sum(count > 0 for count in counts),
-            "total": len(counts), "coverageKind": "line"}
-
-
-def measure_functions(source, functions, hits):
-    result, previous_end = [], 0
-    for function in functions:
-        # ponytail: reject nested/shared-line ranges; use a language-aware adapter if needed.
-        if function.start_line <= previous_end:
-            raise ValueError(f"Overlapping function ranges: {source}:{function.start_line}")
-        previous_end = function.end_line
-        result.append(measure_function(source, function, hits))
-    return result
-
-
-def collect(coverage, sources):
-    result, seen, lines, branches = [], set(), [], []
-    for argument in sources:
-        source = Path(argument).resolve(strict=True)
-        if source in seen:
-            raise ValueError(f"Duplicate source: {source}")
-        seen.add(source)
-        code, functions = analyze(source)
-        hits = source_coverage(coverage, source, code)
-        lines.extend(hits["lines"].values())
-        branches.extend(hits["branches"].values())
-        result.extend(measure_functions(source, functions, hits["lines"]))
-    return {"functions": result, "coverage": {"line": summarize(lines), "branch": summarize(branches)}}
-
-
-def main():
-    if len(sys.argv) < 4:
-        print("Usage: lizard_metrics.py COVERAGE.lcov OUTPUT.json SOURCE_FILE...", file=sys.stderr)
-        return 2
-    try:
-        metrics = collect(read_lcov(sys.argv[1]), sys.argv[3:])
-        with Path(sys.argv[2]).open("x", encoding="utf-8") as output:
-            output.write(json.dumps(metrics, indent=2) + "\n")
-    except (OSError, ValueError, ImportError) as error:
-        print(f"lizard-metrics: {error}", file=sys.stderr)
-        return 2
-    return 0
-
-
-if __name__ == "__main__":
-    sys.exit(main())
+def read(path, source_text_by_path):
+    coverage = read_lcov(path)
+    for source, code in source_text_by_path.items():
+        source_coverage(coverage, source, code)
+    for hits in coverage.values():
+        hits["branchKind"] = "branch"
+    return coverage

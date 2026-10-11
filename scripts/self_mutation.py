@@ -11,7 +11,7 @@ import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPTS = ROOT / "skills/workflow/scripts"
-SOURCES = ("crap.py", "lizard_metrics.py", "mutation.py", "shared_mutation.py", "report_normalized.py", "report_stryker.py", "report_cargo.py", "report_muter.py", "mutmut_export.py", "shared_runner.py")
+SOURCES = ("crap.py", "shared_crap.py", "coverage_lcov.py", "mutation.py", "shared_mutation.py", "report_normalized.py", "report_stryker.py", "report_cargo.py", "report_muter.py", "mutmut_export.py", "shared_runner.py")
 TESTS = ("test_shared_runner.py", "test_crap.py", "test_lizard_metrics.py", "test_mutation.py", "test_mutmut_export.py", "test_shared_runner_windows.py")
 # mutmut names mutants by path from the project root, while the tests import the scripts
 # as top-level modules, so the analysis copy places them under src/. The script-entrypoint

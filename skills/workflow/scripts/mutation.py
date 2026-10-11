@@ -9,13 +9,17 @@ from shared_mutation import adapter, assess, render_report, summarize, object_va
 MAPS = {name: adapter(name).STATUSES for name in ("stryker", "cargo-mutants", "muter")}
 
 
+def execute_config(path, config, codes):
+    if not is_valid_config(config):
+        raise ValueError("Require cwd, report, nonempty command argv and positive timeoutMs (max 2147483647)")
+    return run_report(path, codes, config=config)
+
+
 def run_mutation(config_path):
     config = object_value(read_json(config_path))
     format = config.get("format")
     reader = adapter(format)
-    if not is_valid_config(config):
-        raise ValueError("Require cwd, report, nonempty command argv and positive timeoutMs (max 2147483647)")
-    run = run_report(config_path, reader.ACCEPTED_EXIT_CODES, config=config)
+    run = execute_config(config_path, config, reader.ACCEPTED_EXIT_CODES)
     result = assess(run["report"], format, run["reportPath"])
     if run["exitCode"] != 0 and result["exitCode"] == 0:
         raise ValueError(f"Tool exited {run['exitCode']} without reported findings")

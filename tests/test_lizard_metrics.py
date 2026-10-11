@@ -11,13 +11,23 @@ import unittest
 from unittest import mock
 
 
-SCRIPT = Path(__file__).resolve().parents[1] / "skills/workflow/scripts/lizard_metrics.py"
+SCRIPT = Path(__file__).resolve().parents[1] / "skills/workflow/scripts/crap.py"
 sys.path.insert(0, str(SCRIPT.parent))
-import lizard_metrics
+import crap as lizard_metrics
+from coverage_lcov import open_section
 from coverage.lcovreport import line_hash
 
 
 class LizardMetricsTests(unittest.TestCase):
+    def test_collect_through_check_entry_point(self):
+        source = self.root / "example.py"
+        source.write_text("def example():\n    return 1\n")
+        self.coverage.write_text(f"SF:{source}\nDA:2,1\nend_of_record\n")
+        result = subprocess.run([sys.executable, str(SCRIPT.parent / "crap.py"), "collect",
+                                 str(self.coverage), str(self.output), str(source)], capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(json.loads(self.output.read_text())["functions"][0]["name"], "example")
+
     def setUp(self):
         temporary = tempfile.TemporaryDirectory()
         self.addCleanup(temporary.cleanup)
@@ -27,7 +37,7 @@ class LizardMetricsTests(unittest.TestCase):
 
     def run_metrics(self, *sources):
         # Exercise the imported module so mutmut can associate these tests with its mutants.
-        argv = [str(SCRIPT), str(self.coverage), str(self.output), *sources]
+        argv = [str(SCRIPT), "collect", str(self.coverage), str(self.output), *sources]
         previous = Path.cwd()
         try:
             os.chdir(self.root)
@@ -44,14 +54,14 @@ class LizardMetricsTests(unittest.TestCase):
 
     def test_main_requires_arguments_without_writing_stdout(self):
         stdout, stderr = io.StringIO(), io.StringIO()
-        with mock.patch.object(sys, "argv", [str(SCRIPT)]), redirect_stdout(stdout), redirect_stderr(stderr):
+        with mock.patch.object(sys, "argv", [str(SCRIPT), "collect"]), redirect_stdout(stdout), redirect_stderr(stderr):
             self.assertEqual(lizard_metrics.main(), 2)
         self.assertEqual(stdout.getvalue(), "")
         self.assertIn("COVERAGE.lcov", stderr.getvalue())
         self.assertIn("OUTPUT.json", stderr.getvalue())
 
     def test_accepts_single_character_lcov_source_path(self):
-        source, records = lizard_metrics.open_section(None, "SF:x")
+        source, records = open_section(None, "SF:x")
         self.assertEqual(source, Path("x").resolve())
         self.assertEqual(records, {"lines": {}, "branches": {}, "checksums": {}})
 
