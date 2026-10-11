@@ -100,18 +100,35 @@ def measure_function(source, function, hits):
             "total": len(counts), "coverageKind": "line"}
 
 
+def owner(functions, line):
+    matches = [f for f in functions if f.start_line <= line <= f.end_line]
+    if not matches:
+        return None
+    smallest = min(matches, key=lambda f: f.end_line - f.start_line)
+    if sum(f.start_line == smallest.start_line and f.end_line == smallest.end_line for f in matches) > 1:
+        raise ValueError(f"Overlapping function ranges at line {line}")
+    return smallest
+
+
 def measure_functions(source, functions, hits):
-    result, previous_end = [], 0
-    for function in functions:
-        # ponytail: reject nested/shared-line ranges; use a language-aware adapter if needed.
-        if function.start_line <= previous_end:
-            raise ValueError(f"Overlapping function ranges: {source}:{function.start_line}")
-        previous_end = function.end_line
-        result.append(measure_function(source, function, hits))
-    return result
+    owned = {id(function): {} for function in functions}
+    for line, count in hits.items():
+        function = owner(functions, line)
+        if function is not None:
+            owned[id(function)][line] = count
+    return [measure_function(source, function, owned[id(function)]) for function in functions]
 
 
-def collect(coverage, sources):
+def excluded(line, ranges):
+    return any(start <= line <= end for start, end in ranges)
+
+
+def filter_hits(hits, ranges):
+    return {**hits, 'lines': {line: count for line, count in hits['lines'].items() if not excluded(line, ranges)},
+            'branches': {key: count for key, count in hits['branches'].items() if not excluded(key[0], ranges)}}
+
+
+def collect(coverage, sources, exclude=None):
     result, seen, lines, branches = [], set(), [], []
     for argument in sources:
         source = Path(argument).resolve(strict=True)
@@ -121,7 +138,9 @@ def collect(coverage, sources):
         code, functions = analyze(source)
         if source not in coverage:
             raise ValueError(f"Missing exact-path LCOV coverage: {source}")
-        hits = coverage[source]
+        ranges = exclude(source, code) if exclude else []
+        functions = [f for f in functions if not excluded(f.start_line, ranges)]
+        hits = filter_hits(coverage[source], ranges)
         lines.extend(hits["lines"].values())
         branches.extend(hits["branches"].values())
         result.extend(measure_functions(source, functions, hits["lines"]))
