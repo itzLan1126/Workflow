@@ -47,22 +47,26 @@ def language_result(name, args):
     return result
 
 
+def dispatch(args):
+    if args and args[0] in LANGUAGES:
+        return language_result(args[0], args[1:])
+    if len(args) == 1:
+        return run_mutation(args[0])
+    raise ValueError('Usage: python mutation.py [--json] CONFIG.json')
+
+
 def main(argv=None):
     args = sys.argv[1:] if argv is None else argv
     try:
-        as_json = "--json" in args
         args = list(args)
+        boundary = args.index('--') if '--' in args else len(args)
+        as_json = '--json' in args[:boundary]
         if as_json:
-            args.remove("--json")
-        if args and args[0] in LANGUAGES:
-            result = language_result(args[0], args[1:])
-        elif len(args) == 1:
-            result = run_mutation(args[0])
-        else:
-            raise ValueError("Usage: python mutation.py [--json] CONFIG.json")
+            args.remove('--json')
+        result = dispatch(args)
         print(json.dumps(result, indent=2, allow_nan=False) if as_json else render_report(result))
         return result["exitCode"]
-    except (OSError, ValueError) as error:
+    except (OSError, ValueError, ImportError, KeyError, TypeError) as error:
         print(f"mutation: {error}", file=sys.stderr)
         return 2
 

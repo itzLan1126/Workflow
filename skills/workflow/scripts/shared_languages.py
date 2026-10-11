@@ -31,12 +31,14 @@ def language(name):
     return import_module(LANGUAGES[name])
 
 
-def arguments(args):
-    args = list(args)
-    tool = []
+def split_tool(args):
     if '--' in args:
         index = args.index('--')
-        args, tool = args[:index], args[index + 1:]
+        return args[:index], args[index + 1:]
+    return args, []
+
+
+def take_timeout(args):
     timeout = DEFAULT_TIMEOUT_MS
     if '--timeout-ms' in args:
         index = args.index('--timeout-ms')
@@ -46,6 +48,12 @@ def arguments(args):
         del args[index:index + 2]
     if not is_timeout(timeout):
         raise ValueError('Require positive timeoutMs (max 2147483647)')
+    return timeout
+
+
+def arguments(args):
+    args, tool = split_tool(list(args))
+    timeout = take_timeout(args)
     if not args or any(arg.startswith('--') for arg in args):
         raise ValueError('Require project and source paths, followed by -- tool args')
     project = Path(args[0]).resolve(strict=True)

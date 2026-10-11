@@ -13,7 +13,7 @@ from shared_languages import Crap, Mutation
 
 def coverage_commands(project, evidence, args):
     rcfile = evidence / 'coveragerc'
-    rcfile.write_text('[run]\nbranch = true\npatch = subprocess\ndata_file = ' + str(evidence / '.coverage') + '\n', encoding='utf-8')
+    rcfile.write_text('[run]\nbranch = true\nsource = ' + str(project) + '\npatch = subprocess\ndata_file = ' + str(evidence / '.coverage') + '\n', encoding='utf-8')
     return [[sys.executable, '-m', 'coverage', step[0], f'--rcfile={rcfile}', *step[1:]]
             for step in (['run', *(args or ['-m', 'pytest'])], ['combine'],
                          ['lcov', '-o', str(evidence / 'coverage.lcov')])]

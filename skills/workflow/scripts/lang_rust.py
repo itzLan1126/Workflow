@@ -25,22 +25,24 @@ def exclude_tests(source, code):
     tokens = get_reader_for(str(source)).generate_tokens(code)
     ranges, pending, depth, start, line, target = [], False, 0, None, 1, None
     for token in tokens:
-        if token == '\n':
-            line += 1
+        line += token.count('\n')
         if re.fullmatch(r'#\s*\[\s*cfg\s*\(\s*test\s*\)\s*\]', token):
-            pending = True
-            start = line
+            pending, start = True, line
         if token == '{':
             depth += 1
             if pending:
-                pending = False
-                target = depth
+                pending, target = False, depth
         if token == '}':
-            if start is not None and depth == target:
-                ranges.append((start, line))
-                start = None
+            start = close_test_range(ranges, start, line, depth, target)
             depth -= 1
     return ranges
+
+
+def close_test_range(ranges, start, line, depth, target):
+    if start is not None and depth == target:
+        ranges.append((start, line))
+        return None
+    return start
 
 
 CRAP = Crap('lcov', coverage_commands, 'coverage.lcov', exclude_tests)
