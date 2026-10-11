@@ -125,7 +125,7 @@ class LizardMetricsTests(unittest.TestCase):
         samples = {
             "sample.unknown": "def example():\n    return 1\n",
             "empty.py": "value = 1\n",
-            "nested.py": "def outer():\n    def inner():\n        return 1\n    return inner()\n",
+
             "shared.js": "function a() { return 1; } function b() { return 2; }\n",
         }
         for name, code in samples.items():
@@ -134,6 +134,24 @@ class LizardMetricsTests(unittest.TestCase):
                 self.coverage.write_text(f"SF:{name}\nDA:1,1\nend_of_record\n")
                 self.assertEqual(self.run_metrics(name).returncode, 2)
                 self.assertFalse(self.output.exists())
+
+    def test_nested_functions_receive_only_their_own_lines(self):
+        from shared_crap import collect
+        source = self.root / 'nested.js'
+        source.write_text('function outer() {\n function inner() {\n  return 1;\n }\n return inner();\n}\n')
+        coverage = {source.resolve(): {'lines': {1: 1, 2: 1, 3: 0, 4: 1, 5: 1, 6: 1}, 'branches': {}, 'branchKind': 'branch'}}
+        result = collect(coverage, [str(source)])
+        self.assertEqual([(f['name'], f['covered'], f['total']) for f in result['functions']],
+                         [('outer', 3, 3), ('inner', 2, 3)])
+
+    def test_excluded_ranges_do_not_contribute_to_coverage(self):
+        from shared_crap import collect
+        source = self.root / 'example.js'
+        source.write_text('function production() {\n return 1;\n}\nfunction test() {\n return 0;\n}\n')
+        coverage = {source.resolve(): {'lines': {2: 1, 5: 0}, 'branches': {(2, '0', '0'): 1, (5, '0', '0'): 0}, 'branchKind': 'branch'}}
+        result = collect(coverage, [str(source)], exclude=lambda path, code: [(4, 6)])
+        self.assertEqual([f['name'] for f in result['functions']], ['production'])
+        self.assertEqual(result['coverage'], {'line': {'covered': 1, 'total': 1}, 'branch': {'covered': 1, 'total': 1}})
 
     def test_rejects_duplicate_source_paths(self):
         source = self.root / "sample.py"

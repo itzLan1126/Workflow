@@ -47,7 +47,7 @@ def language_result(name, args):
         os.chdir(project)
         texts = {Path(source).resolve(strict=True): Path(source).read_text(encoding='utf-8') for source in sources}
         coverage = import_module({'lcov': 'coverage_lcov', 'llvm-json': 'coverage_llvm'}[spec.format]).read(evidence / spec.coverage, texts)
-        measurements = collect(coverage, sources)
+        measurements = collect(coverage, sources, exclude=spec.exclude)
     finally:
         os.chdir(previous)
     (evidence / 'measurements.json').write_text(json.dumps(measurements, indent=2), encoding='utf-8')
