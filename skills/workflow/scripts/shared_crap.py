@@ -169,5 +169,3 @@ def collect(coverage, sources, exclude=None):
     if branch_kinds == {'region'}:
         measurements['branchKind'] = 'region'
     return measurements
-
-

@@ -19,12 +19,12 @@ class LanguageEntryPointsTests(unittest.TestCase):
             source = project / 'sample.py'
             source.write_text('def choose(x):\n    if x:\n        return 1\n    return 0\n')
             (project / 'test_sample.py').write_text('from sample import choose\ndef test_choose():\n    assert choose(True) == 1\n    assert choose(False) == 0\n')
-            with redirect_stdout(io.StringIO()) as stdout, redirect_stderr(tempfile.TemporaryFile(mode="w+")):
+            with redirect_stdout(io.StringIO()) as stdout, tempfile.TemporaryFile(mode="w+") as stderr, redirect_stderr(stderr):
                 code = crap.language_result('python', [str(project), 'sample.py'])
             self.assertEqual(code, 0, stdout.getvalue())
             self.assertEqual(json.loads(stdout.getvalue())['findings'], 0)
             engine = [sys.executable, '-c', "import json,pathlib; d=pathlib.Path(__import__('sys').argv[1]); (d/'reports/mutation').mkdir(parents=True); (d/'reports/mutation/mutation.json').write_text(json.dumps({'files':{'sample.js':{'mutants':[{'status':'Killed'}]}}}))", str(project)]
-            with redirect_stderr(tempfile.TemporaryFile(mode="w+")):
+            with tempfile.TemporaryFile(mode="w+") as stderr, redirect_stderr(stderr):
                 result = mutation.language_result('js', [str(project), '--', *engine])
             self.assertEqual(result['exitCode'], 0)
             self.assertTrue(Path(result['reportPath']).is_file())
@@ -36,10 +36,10 @@ class LanguageEntryPointsTests(unittest.TestCase):
                 crap.language_result('python', [directory])
             with self.assertRaisesRegex(ValueError, 'one project'):
                 mutation.language_result('python', [directory, 'extra'])
-            with redirect_stdout(io.StringIO()), redirect_stderr(tempfile.TemporaryFile(mode="w+")):
+            with redirect_stdout(io.StringIO()), tempfile.TemporaryFile(mode="w+") as stderr, redirect_stderr(stderr):
                 self.assertEqual(mutation.main(['--json', 'swift', directory, '--', 'nonexistent']), 2)
 
     def test_failed_coverage_command_is_run_failure(self):
-        with tempfile.TemporaryDirectory() as directory, redirect_stderr(tempfile.TemporaryFile(mode="w+")):
+        with tempfile.TemporaryDirectory() as directory, tempfile.TemporaryFile(mode="w+") as stderr, redirect_stderr(stderr):
             with self.assertRaisesRegex(ValueError, 'Coverage command failed'):
                 crap.language_result('js', [directory, 'sample.js', '--', sys.executable, '-c', 'raise SystemExit(1)'])
