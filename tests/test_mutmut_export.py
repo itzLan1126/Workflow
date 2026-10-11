@@ -14,7 +14,7 @@ SCRIPTS = Path(__file__).resolve().parents[1] / "skills/workflow/scripts"
 sys.path.insert(0, str(SCRIPTS))
 from mutmut_export import add_details, classify, collect, function_position, main
 from mutation import summarize
-from mutation_report import numbered_diff
+from shared_mutation import numbered_diff
 
 # A subset of mutmut 3's status table; collect() receives the installed table at runtime.
 TABLE = {1: "killed", 0: "survived", 33: "no tests", 36: "timeout", 34: "skipped",
