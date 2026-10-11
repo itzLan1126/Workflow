@@ -12,7 +12,7 @@ from unittest import mock
 
 SCRIPTS = Path(__file__).resolve().parents[1] / "skills/workflow/scripts"
 sys.path.insert(0, str(SCRIPTS))
-from mutmut_export import add_details, classify, collect, function_position, main
+from lang_python import add_details, classify, collect, function_position, main
 from mutation import summarize
 from shared_mutation import numbered_diff
 
@@ -156,7 +156,7 @@ class MutmutExportTests(unittest.TestCase):
         def fake_run(command, check):
             generated.extend(self.generated_results())
 
-        with mock.patch("mutmut_export.subprocess.run", side_effect=fake_run) as run:
+        with mock.patch("lang_python.subprocess.run", side_effect=fake_run) as run:
             self.assertEqual(self.run_main(), (0, ""))
         run.assert_called_once_with([sys.executable, "-m", "mutmut", "run"], check=True)
         report = json.loads((self.root / "report.json").read_text(encoding="utf-8"))
@@ -169,11 +169,11 @@ class MutmutExportTests(unittest.TestCase):
 
     @unittest.skipUnless(HAS_MUTMUT, "mutmut is not installed")
     def test_main_rejects_missing_metadata_and_report_write_failure(self):
-        with mock.patch("mutmut_export.subprocess.run"):
+        with mock.patch("lang_python.subprocess.run"):
             self.assertEqual(self.run_main()[0], 2)
         self.assertFalse((self.root / "report.json").exists())
         (self.root / "report.json").mkdir()
-        with mock.patch("mutmut_export.subprocess.run", side_effect=lambda *a, **kw: self.generated_results()):
+        with mock.patch("lang_python.subprocess.run", side_effect=lambda *a, **kw: self.generated_results()):
             self.assertEqual(self.run_main()[0], 2)
         self.assertTrue((self.root / "report.json").is_dir())
 
@@ -192,7 +192,7 @@ class MutmutExportTests(unittest.TestCase):
 
     def test_main_writes_no_report_when_mutmut_fails(self):
         failure = subprocess.CalledProcessError(1, ["mutmut", "run"])
-        with mock.patch("mutmut_export.subprocess.run", side_effect=failure):
+        with mock.patch("lang_python.subprocess.run", side_effect=failure):
             code, stderr = self.run_main()
         self.assertEqual(code, 2)
         self.assertIn("returned non-zero exit status 1", stderr)
@@ -223,7 +223,7 @@ class MutmutExportTests(unittest.TestCase):
             'pytest_add_cli_args_test_selection = ["tests/"]\n')
         config = self.root / "mutation-config.json"
         config.write_text(json.dumps({"cwd": ".", "report": "mutation.json", "format": "normalized",
-                                      "command": [sys.executable, str(SCRIPTS / "mutmut_export.py"),
+                                      "command": [sys.executable, str(SCRIPTS / "lang_python.py"),
                                                   "mutation.json"]}))
 
         def run():

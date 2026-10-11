@@ -7,7 +7,10 @@ from shared_crap import calculate, collect, score_functions, gate_coverage, STAN
 from coverage_lcov import read
 import sys
 
-from shared_runner import read_config, run_report
+from shared_runner import read_config, run_report, run_command
+from shared_languages import LANGUAGES, language, arguments, evidence_directory
+from importlib import import_module
+import os
 
 def collect_main(args):
     if len(args) < 3:
@@ -30,8 +33,33 @@ def config_result(path):
     return 1 if result['findings'] else 0
 
 
+def language_result(name, args):
+    project, sources, timeout, tool = arguments(args)
+    if not sources:
+        raise ValueError('Require at least one source file')
+    spec = language(name).CRAP
+    evidence = evidence_directory()
+    for command in spec.commands(project, evidence, tool):
+        if run_command(command, project, timeout) != 0:
+            raise ValueError('Coverage command failed')
+    previous = Path.cwd()
+    try:
+        os.chdir(project)
+        texts = {Path(source).resolve(strict=True): Path(source).read_text(encoding='utf-8') for source in sources}
+        coverage = import_module({'lcov': 'coverage_lcov', 'llvm-json': 'coverage_llvm'}[spec.format]).read(evidence / spec.coverage, texts)
+        measurements = collect(coverage, sources)
+    finally:
+        os.chdir(previous)
+    (evidence / 'measurements.json').write_text(json.dumps(measurements, indent=2), encoding='utf-8')
+    result = calculate(measurements)
+    print(json.dumps(result, indent=2, allow_nan=False))
+    return 1 if result['findings'] else 0
+
+
 def main():
     try:
+        if len(sys.argv) > 1 and sys.argv[1] in LANGUAGES:
+            return language_result(sys.argv[1], sys.argv[2:])
         if len(sys.argv) > 1 and sys.argv[1] == 'collect':
             return collect_main(sys.argv[2:])
         if len(sys.argv) != 2:

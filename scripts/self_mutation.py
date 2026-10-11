@@ -11,8 +11,8 @@ import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPTS = ROOT / "skills/workflow/scripts"
-SOURCES = ("crap.py", "shared_crap.py", "coverage_lcov.py", "mutation.py", "shared_mutation.py", "report_normalized.py", "report_stryker.py", "report_cargo.py", "report_muter.py", "mutmut_export.py", "shared_runner.py")
-TESTS = ("test_shared_runner.py", "test_crap.py", "test_lizard_metrics.py", "test_mutation.py", "test_mutmut_export.py", "test_shared_runner_windows.py")
+SOURCES = tuple(path.name for path in sorted(SCRIPTS.glob('*.py')))
+TESTS = tuple(path.name for path in sorted((ROOT / 'tests').glob('test_*.py')))
 # mutmut names mutants by path from the project root, while the tests import the scripts
 # as top-level modules, so the analysis copy places them under src/. The script-entrypoint
 # smoke tests run scripts by repository path, which does not exist in the copy, and the
@@ -32,12 +32,11 @@ def main():
     for name in TESTS:
         shutil.copy2(ROOT / "tests" / name, copy / "tests" / name)
     (copy / "pyproject.toml").write_text(MUTMUT_CONFIG, encoding="utf-8")
-    config = {"cwd": ".", "report": "mutation.json", "format": "normalized",
-              "command": [sys.executable, str(copy / "src/mutmut_export.py"), "mutation.json"]}
-    (copy / "mutation-config.json").write_text(json.dumps(config), encoding="utf-8")
-    print(f"Evidence: {copy}", file=sys.stderr)
+    (copy / 'scripts').mkdir()
+    shutil.copy2(ROOT / 'scripts/validation.py', copy / 'scripts/validation.py')
+    print(f"Isolated copy: {copy}", file=sys.stderr)
     return subprocess.run([sys.executable, str(SCRIPTS / "mutation.py"),
-                           str(copy / "mutation-config.json"), *sys.argv[1:]]).returncode
+                           *sys.argv[1:], 'python', str(copy)]).returncode
 
 
 if __name__ == "__main__":

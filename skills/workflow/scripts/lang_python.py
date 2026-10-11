@@ -8,6 +8,27 @@ import subprocess
 import sys
 
 from shared_mutation import ACTIONABLE
+from shared_languages import Crap, Mutation
+
+
+def coverage_commands(project, evidence, args):
+    rcfile = evidence / 'coveragerc'
+    rcfile.write_text('[run]\nbranch = true\npatch = subprocess\ndata_file = ' + str(evidence / '.coverage') + '\n', encoding='utf-8')
+    return [[sys.executable, '-m', 'coverage', step[0], f'--rcfile={rcfile}', *step[1:]]
+            for step in (['run', *(args or ['-m', 'pytest'])], ['combine'],
+                         ['lcov', '-o', str(evidence / 'coverage.lcov')])]
+
+
+def mutation_command(project, evidence, args):
+    return args or [sys.executable, str(Path(__file__).resolve()), str(evidence / 'mutation.json')]
+
+
+def report_path(project, evidence):
+    return evidence / 'mutation.json'
+
+
+CRAP = Crap('lcov', coverage_commands, 'coverage.lcov')
+MUTATION = Mutation('normalized', mutation_command, report_path)
 
 # Keys are mutmut's own status names. Anything else (suspicious, segfault, interrupted,
 # not checked) is abnormal or unfinished and must be investigated rather than scored.
