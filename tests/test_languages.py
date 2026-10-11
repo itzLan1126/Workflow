@@ -24,6 +24,14 @@ class LanguageArgumentsTests(unittest.TestCase):
         self.assertEqual(mutation_command(project, evidence, ['custom']), ['custom'])
         self.assertEqual(report_path(project, evidence), project / 'reports/mutation/mutation.json')
 
+    def test_python_mutation_command_and_report_location(self):
+        import lang_python
+        project, evidence = Path('/project'), Path('/evidence')
+        self.assertEqual(lang_python.mutation_command(project, evidence, []),
+                         [sys.executable, str(Path(lang_python.__file__).resolve()), '/evidence/mutation.json'])
+        self.assertEqual(lang_python.mutation_command(project, evidence, ['custom']), ['custom'])
+        self.assertEqual(lang_python.report_path(project, evidence), evidence / 'mutation.json')
+
     def test_rust_commands_and_report_location(self):
         from lang_rust import coverage_commands, mutation_command, report_path
         from unittest.mock import patch
