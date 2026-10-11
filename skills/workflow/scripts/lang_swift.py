@@ -25,7 +25,8 @@ def export_coverage(project, output):
     if not binaries:
         raise ValueError('Swift test coverage binary not found')
     command = ['xcrun', 'llvm-cov', 'export', str(binaries[0]),
-               f'-instr-profile={directory / "codecov/default.profdata"}']
+               f'-instr-profile={directory / "codecov/default.profdata"}',
+               *(argument for binary in binaries[1:] for argument in ('-object', str(binary)))]
     with Path(output).open('x', encoding='utf-8') as report:
         subprocess.run(command, cwd=project, stdout=report, stderr=sys.stderr, check=True)
 

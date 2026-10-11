@@ -68,6 +68,30 @@ class LanguageArgumentsTests(unittest.TestCase):
         from lang_rust import exclude_tests
         self.assertEqual(exclude_tests('lib.rs', 'fn a() {}\n#[cfg(test)]\nmod tests {\n fn t() { let text = "}"; }\n}\n'), [(2, 5)])
 
+    def test_swift_export_includes_all_test_binaries(self):
+        from lang_swift import export_coverage
+        from unittest.mock import patch
+        import subprocess
+        import tempfile
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            for name in ('First', 'Second'):
+                binary = root / f'{name}.xctest/Contents/MacOS' / name
+                binary.parent.mkdir(parents=True)
+                binary.touch()
+            with patch('lang_swift.subprocess.run', return_value=subprocess.CompletedProcess([], 0, str(root), '')) as run:
+                export_coverage(root, root / 'coverage.json')
+            self.assertIn('-object', run.call_args.args[0])
+            self.assertIn(str(root / 'Second.xctest/Contents/MacOS/Second'), run.call_args.args[0])
+            with patch('lang_swift.subprocess.run', return_value=subprocess.CompletedProcess([], 0, str(root), '')):
+                with self.assertRaises(FileExistsError):
+                    export_coverage(root, root / 'coverage.json')
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            with patch('lang_swift.subprocess.run', return_value=subprocess.CompletedProcess([], 0, str(root), '')):
+                with self.assertRaisesRegex(ValueError, 'binary not found'):
+                    export_coverage(root, root / 'coverage.json')
+
     def test_swift_rejects_other_platforms_for_both_checks(self):
         from lang_swift import coverage_commands, mutation_command
         from unittest.mock import patch

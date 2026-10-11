@@ -154,5 +154,3 @@ def exit_code(counts, assessed):
     if counts["error"] or not assessed:
         return 2
     return 1 if counts["survived"] + counts["noCoverage"] + counts["timeout"] else 0
-
-
