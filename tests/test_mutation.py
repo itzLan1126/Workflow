@@ -15,7 +15,8 @@ from unittest import mock
 SCRIPTS = Path(__file__).resolve().parents[1] / "skills/workflow/scripts"
 sys.path.insert(0, str(SCRIPTS))
 from mutation import MAPS, main, run_mutation, summarize
-from mutation_report import function_at, numbered_diff, report_details, source_offset
+from shared_mutation import function_at, numbered_diff, report_details
+from report_stryker import source_offset
 from shared_runner import read_json, run_report, run_command
 
 REQUIRE = r"^Require cwd, report, nonempty command argv and positive timeoutMs \(max 2147483647\)$"
@@ -456,6 +457,13 @@ class MutationTests(unittest.TestCase):
         self.assertEqual(detail["diff"], diff)
         self.assertEqual(Path(detail["evidence"]), (path.parent / "execution/change.diff").resolve())
         self.assertEqual(Path(result["reportPath"]), (path.parent / "execution/report.json").resolve())
+
+    def test_format_adapter_defers_detail_extraction(self):
+        import report_stryker
+        entries = list(report_stryker.mutants(
+            {"files": {"file.js": {"mutants": [{"id": "1", "status": "Killed"}]}}}, Path("report.json")))
+        self.assertEqual(entries[0][0], "Killed")
+        self.assertTrue(callable(entries[0][1]))
 
     def test_cli_exit_codes_and_json_output(self):
         for statuses, expected in [(("killed",), 0), (("survived",), 1), (("error",), 2)]:

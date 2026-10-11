@@ -7,7 +7,7 @@ from pathlib import Path
 import subprocess
 import sys
 
-from mutation_report import ACTIONABLE
+from shared_mutation import ACTIONABLE
 
 # Keys are mutmut's own status names. Anything else (suspicious, segfault, interrupted,
 # not checked) is abnormal or unfinished and must be investigated rather than scored.
