@@ -41,7 +41,7 @@ def language_result(name, args):
     path = evidence / 'config.json'
     path.write_text(json.dumps(config, indent=2), encoding='utf-8')
     result = run_mutation(path)
-    if not report.resolve().is_relative_to(evidence):
+    if not report.resolve().is_relative_to(evidence.resolve()):
         shutil.copy2(report, evidence / report.name)
         result['reportPath'] = str(evidence / report.name)
     return result

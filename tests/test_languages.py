@@ -36,6 +36,14 @@ class LanguageArgumentsTests(unittest.TestCase):
         from lang_rust import exclude_tests
         self.assertEqual(exclude_tests('lib.rs', 'fn a() {}\n#[cfg(test)]\nmod tests {\n fn t() { let text = "}"; }\n}\n'), [(2, 5)])
 
+    def test_swift_rejects_other_platforms_for_both_checks(self):
+        from lang_swift import coverage_commands, mutation_command
+        from unittest.mock import patch
+        with patch('lang_swift.sys.platform', 'linux'):
+            for command in (coverage_commands, mutation_command):
+                with self.assertRaisesRegex(ValueError, 'require macOS'):
+                    command(Path('.'), Path('/tmp'), [])
+
     def test_invalid_timeout_is_run_failure(self):
         from shared_languages import arguments
         for timeout in ('0', '-1', 'no', '2147483648'):

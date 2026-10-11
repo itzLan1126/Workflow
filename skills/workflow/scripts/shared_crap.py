@@ -66,6 +66,8 @@ def calculate(report):
     if not isinstance(measured, dict):
         raise ValueError('Missing aggregate coverage: require line and branch counts')
     coverage = {kind: gate_coverage(kind, measured.get(kind)) for kind in MIN_COVERAGE_PERCENT}
+    if report.get('branchKind') == 'region':
+        coverage['region'] = coverage.pop('branch')
     findings = (sum(f['exceedsThreshold'] for f in functions)
                 + sum(not c['meetsStandard'] for c in coverage.values()))
     return {'standard': STANDARD, 'functions': functions, 'coverage': coverage, 'findings': findings}
@@ -130,6 +132,7 @@ def filter_hits(hits, ranges):
 
 def collect(coverage, sources, exclude=None):
     result, seen, lines, branches = [], set(), [], []
+    branch_kinds = set()
     for argument in sources:
         source = Path(argument).resolve(strict=True)
         if source in seen:
@@ -141,9 +144,15 @@ def collect(coverage, sources, exclude=None):
         ranges = exclude(source, code) if exclude else []
         functions = [f for f in functions if not excluded(f.start_line, ranges)]
         hits = filter_hits(coverage[source], ranges)
+        branch_kinds.add(hits.get('branchKind', 'branch'))
         lines.extend(hits["lines"].values())
         branches.extend(hits["branches"].values())
         result.extend(measure_functions(source, functions, hits["lines"]))
-    return {"functions": result, "coverage": {"line": summarize(lines), "branch": summarize(branches)}}
+    if len(branch_kinds) != 1:
+        raise ValueError('Cannot combine branch and region coverage')
+    measurements = {"functions": result, "coverage": {"line": summarize(lines), "branch": summarize(branches)}}
+    if branch_kinds == {'region'}:
+        measurements['branchKind'] = 'region'
+    return measurements
 
 
