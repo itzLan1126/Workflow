@@ -10,7 +10,7 @@ import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPTS = ROOT / "skills/workflow/scripts"
-SOURCES = ("crap.py", "lizard_metrics.py", "mutation.py", "shared_mutation.py", "report_normalized.py", "report_stryker.py", "report_cargo.py", "report_muter.py", "mutmut_export.py", "shared_runner.py")
+SOURCES = ("crap.py", "shared_crap.py", "coverage_lcov.py", "mutation.py", "shared_mutation.py", "report_normalized.py", "report_stryker.py", "report_cargo.py", "report_muter.py", "mutmut_export.py", "shared_runner.py")
 # Several tests run the scripts as subprocesses, so coverage patches subprocess to measure them.
 COVERAGE_CONFIG = """[run]
 branch = true
@@ -34,7 +34,7 @@ def main():
     # LCOV paths are relative to the repository root, so the collector runs there and writes its
     # report into the evidence directory.
     config = {"cwd": str(ROOT), "report": str(evidence / "measurements.json"),
-              "command": [sys.executable, str(SCRIPTS / "lizard_metrics.py"), str(lcov),
+              "command": [sys.executable, str(SCRIPTS / "crap.py"), "collect", str(lcov),
                           str(evidence / "measurements.json"), *(str(SCRIPTS / name) for name in SOURCES)]}
     (evidence / "crap-config.json").write_text(json.dumps(config), encoding="utf-8")
     return subprocess.run([sys.executable, str(SCRIPTS / "crap.py"), str(evidence / "crap-config.json")]).returncode
