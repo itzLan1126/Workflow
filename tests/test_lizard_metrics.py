@@ -19,7 +19,7 @@ from coverage.lcovreport import line_hash
 
 
 class LizardMetricsTests(unittest.TestCase):
-    def test_collect_through_check_entry_point(self):
+    def test_script_entrypoint_collect(self):
         source = self.root / "example.py"
         source.write_text("def example():\n    return 1\n")
         self.coverage.write_text(f"SF:{source}\nDA:2,1\nend_of_record\n")

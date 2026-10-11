@@ -117,16 +117,21 @@ def adapter(format):
     return import_module(FORMATS[format])
 
 
+def mutant_status(reader, engine_status):
+    if not isinstance(engine_status, str):
+        raise ValueError(f"Invalid mutation status: {engine_status}")
+    status = reader.STATUSES.get(engine_status)
+    if status not in STATUSES:
+        raise ValueError(f"Unknown mutation status: {engine_status}")
+    return status
+
+
 def assess(report, format, report_path):
     reader = adapter(format)
     counts = dict.fromkeys(STATUSES, 0)
     details = []
     for engine_status, describe in reader.mutants(object_value(report), report_path):
-        if not isinstance(engine_status, str):
-            raise ValueError(f"Invalid mutation status: {engine_status}")
-        status = reader.STATUSES.get(engine_status)
-        if status not in counts:
-            raise ValueError(f"Unknown mutation status: {engine_status}")
+        status = mutant_status(reader, engine_status)
         counts[status] += 1
         if status in ACTIONABLE:
             details.append({**validate_detail(describe()), "status": status})

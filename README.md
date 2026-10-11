@@ -66,6 +66,8 @@ python3 -m venv .venv
 .venv/bin/python scripts/validation.py
 ```
 
+Language commands and prerequisites: [Python](skills/workflow/references/languages/python.md), [JS/TS](skills/workflow/references/languages/js.md), [Rust](skills/workflow/references/languages/rust.md), [Swift](skills/workflow/references/languages/swift.md). The [shared contract](skills/workflow/references/quality-tools.md) defines config mode, evidence, and results.
+
 ### Self-Quality Verification
 
 - **CRAP Check**:
@@ -82,10 +84,10 @@ python3 -m venv .venv
   .venv/bin/python scripts/self_mutation.py
   ```
 
-  Builds a fresh analysis copy in a temporary directory containing all seven bundled scripts (including the Lizard/LCOV collector and mutation report renderer) and imports them under their real module names for test association. Entrypoint smoke tests and the nested real-mutmut integration test are excluded from the inner run. Actionable mutants (survivors, uncovered, timeouts, errors) are grouped by function with IDs, numbered `-`/`+` diffs, status counts, exit code, and the original report path; add `--json` for summary fields plus `mutants` and `reportPath`. Presentation never alters the gate or counts timeouts as kills. Survivors and timeouts require investigation; pytest internal errors must remain errors. A nonzero result is not a pass; do not reuse historical survivor counts or assume equivalence.
+  Builds a fresh analysis copy in a temporary directory containing all bundled scripts and their test files and imports them under their real module names for test association. Entrypoint smoke tests and the nested real-mutmut integration test are excluded from the inner run. Actionable mutants (survivors, uncovered, timeouts, errors) are grouped by function with IDs, numbered `-`/`+` diffs, status counts, exit code, and the original report path; add `--json` for summary fields plus `mutants` and `reportPath`. Presentation never alters the gate or counts timeouts as kills. Survivors and timeouts require investigation; pytest internal errors must remain errors. A nonzero result is not a pass; do not reuse historical survivor counts or assume equivalence.
 
 - **Platform Support & Windows Job Cleanup**:
-  The Windows runner holds a bootstrap behind a pipe until it is assigned to a kill-on-close Job Object, then releases the tool ([job helper](skills/workflow/scripts/windows_job.py)); the tool and all descendants inherit that job. Cleanup owns the job rather than looking up a possibly exited root PID, and timeout failures keep their timeout classification even if cleanup reports an error. Native timeout and root-exit cleanup behavior is verified in Windows CI; Linux self-tests exercise API contracts. Bundled scripts require Python 3.10+.
+  The Windows runner holds a bootstrap behind a pipe until it is assigned to a kill-on-close Job Object, then releases the tool ([shared runner](skills/workflow/scripts/shared_runner.py)); the tool and all descendants inherit that job. Cleanup owns the job rather than looking up a possibly exited root PID, and timeout failures keep their timeout classification even if cleanup reports an error. Native timeout and root-exit cleanup behavior is verified in Windows CI; Linux self-tests exercise API contracts. Bundled scripts require Python 3.10+.
 
 - **Deterministic Repository CI**:
   The validator and CI check skill packaging, YAML frontmatter, references, README consistency, and explicit invocation policies. These are deterministic checks of this repository, not proof that an agent host implements the workflow correctly or that a target application meets requirements.

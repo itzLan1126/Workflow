@@ -19,6 +19,7 @@ TESTS = tuple(path.name for path in sorted((ROOT / 'tests').glob('test_*.py')))
 # nested real-mutmut test would rerun mutmut for every mutant.
 MUTMUT_CONFIG = """[tool.mutmut]
 source_paths = ["src/"]
+also_copy = ["scripts/"]
 pytest_add_cli_args_test_selection = ["tests/", "-k", "not script_entrypoint and not real_mutmut"]
 """
 

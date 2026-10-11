@@ -60,14 +60,19 @@ def gate_coverage(kind, counts):
             'meetsStandard': covered * 100 >= MIN_COVERAGE_PERCENT[kind] * total}
 
 
-def calculate(report):
-    functions = score_functions(report.get('functions') if isinstance(report, dict) else None)
+def aggregate_coverage(report):
     measured = report.get('coverage')
     if not isinstance(measured, dict):
         raise ValueError('Missing aggregate coverage: require line and branch counts')
     coverage = {kind: gate_coverage(kind, measured.get(kind)) for kind in MIN_COVERAGE_PERCENT}
     if report.get('branchKind') == 'region':
         coverage['region'] = coverage.pop('branch')
+    return coverage
+
+
+def calculate(report):
+    functions = score_functions(report.get('functions') if isinstance(report, dict) else None)
+    coverage = aggregate_coverage(report)
     findings = (sum(f['exceedsThreshold'] for f in functions)
                 + sum(not c['meetsStandard'] for c in coverage.values()))
     return {'standard': STANDARD, 'functions': functions, 'coverage': coverage, 'findings': findings}
@@ -103,13 +108,18 @@ def measure_function(source, function, hits):
 
 
 def owner(functions, line):
-    matches = [f for f in functions if f.start_line <= line <= f.end_line]
+    matches = [f for f in functions if line in range(f.start_line, f.end_line + 1)]
     if not matches:
         return None
     smallest = min(matches, key=lambda f: f.end_line - f.start_line)
-    if sum(f.start_line == smallest.start_line and f.end_line == smallest.end_line for f in matches) > 1:
-        raise ValueError(f"Overlapping function ranges at line {line}")
+    ensure_unique_range(matches, smallest, line)
     return smallest
+
+
+def ensure_unique_range(matches, smallest, line):
+    ranges = [(f.start_line, f.end_line) for f in matches]
+    if ranges.count((smallest.start_line, smallest.end_line)) > 1:
+        raise ValueError(f"Overlapping function ranges at line {line}")
 
 
 def measure_functions(source, functions, hits):
@@ -130,6 +140,16 @@ def filter_hits(hits, ranges):
             'branches': {key: count for key, count in hits['branches'].items() if not excluded(key[0], ranges)}}
 
 
+def source_measurements(coverage, source, exclude):
+    code, functions = analyze(source)
+    if source not in coverage:
+        raise ValueError(f"Missing exact-path LCOV coverage: {source}")
+    ranges = exclude(source, code) if exclude else []
+    functions = [f for f in functions if not excluded(f.start_line, ranges)]
+    hits = filter_hits(coverage[source], ranges)
+    return measure_functions(source, functions, hits['lines']), hits
+
+
 def collect(coverage, sources, exclude=None):
     result, seen, lines, branches = [], set(), [], []
     branch_kinds = set()
@@ -138,16 +158,11 @@ def collect(coverage, sources, exclude=None):
         if source in seen:
             raise ValueError(f"Duplicate source: {source}")
         seen.add(source)
-        code, functions = analyze(source)
-        if source not in coverage:
-            raise ValueError(f"Missing exact-path LCOV coverage: {source}")
-        ranges = exclude(source, code) if exclude else []
-        functions = [f for f in functions if not excluded(f.start_line, ranges)]
-        hits = filter_hits(coverage[source], ranges)
+        measured_functions, hits = source_measurements(coverage, source, exclude)
         branch_kinds.add(hits.get('branchKind', 'branch'))
         lines.extend(hits["lines"].values())
         branches.extend(hits["branches"].values())
-        result.extend(measure_functions(source, functions, hits["lines"]))
+        result.extend(measured_functions)
     if len(branch_kinds) != 1:
         raise ValueError('Cannot combine branch and region coverage')
     measurements = {"functions": result, "coverage": {"line": summarize(lines), "branch": summarize(branches)}}

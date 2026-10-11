@@ -12,8 +12,40 @@ class LanguageArgumentsTests(unittest.TestCase):
         self.assertEqual((project, sources, timeout, tool), (Path('.').resolve(), ['source.py'], 1234, ['-m', 'unittest']))
 
     def test_typescript_alias_loads_same_language_module(self):
-        from shared_languages import LANGUAGES
-        self.assertEqual(LANGUAGES['ts'], LANGUAGES['js'])
+        from shared_languages import language
+        self.assertIs(language('ts'), language('js'))
+
+    def test_js_commands_and_report_location(self):
+        from lang_js import coverage_commands, mutation_command, report_path
+        project, evidence = Path('/project'), Path('/evidence')
+        self.assertIn('--test-reporter-destination=/evidence/coverage.lcov', coverage_commands(project, evidence, [])[0])
+        self.assertEqual(coverage_commands(project, evidence, ['custom']), [['custom']])
+        self.assertEqual(mutation_command(project, evidence, [])[-2:], ['--reporters', 'json'])
+        self.assertEqual(mutation_command(project, evidence, ['custom']), ['custom'])
+        self.assertEqual(report_path(project, evidence), project / 'reports/mutation/mutation.json')
+
+    def test_rust_commands_and_report_location(self):
+        from lang_rust import coverage_commands, mutation_command, report_path
+        from unittest.mock import patch
+        import subprocess
+        project, evidence = Path('/project'), Path('/evidence')
+        with patch('lang_rust.subprocess.run', return_value=subprocess.CompletedProcess([], 0, 'rustc nightly', '')):
+            self.assertIn('--branch', coverage_commands(project, evidence, [])[0])
+            self.assertEqual(coverage_commands(project, evidence, ['custom']), [['custom']])
+        self.assertEqual(mutation_command(project, evidence, []), ['cargo', 'mutants', '--output', '/evidence'])
+        self.assertEqual(mutation_command(project, evidence, ['custom']), ['custom'])
+        self.assertEqual(report_path(project, evidence), evidence / 'mutants.out/outcomes.json')
+
+    def test_swift_commands_and_report_location(self):
+        from lang_swift import coverage_commands, mutation_command, report_path
+        from unittest.mock import patch
+        project, evidence = Path('/project'), Path('/evidence')
+        with patch('lang_swift.sys.platform', 'darwin'):
+            self.assertEqual(coverage_commands(project, evidence, [])[0], ['xcrun', 'swift', 'test', '--enable-code-coverage'])
+            self.assertEqual(coverage_commands(project, evidence, ['custom'])[0], ['custom'])
+            self.assertEqual(mutation_command(project, evidence, [])[0], 'muter')
+            self.assertEqual(mutation_command(project, evidence, ['custom']), ['custom'])
+            self.assertEqual(report_path(project, evidence), evidence / 'mutation.json')
 
     def test_python_override_replaces_pytest(self):
         from lang_python import coverage_commands
@@ -43,6 +75,20 @@ class LanguageArgumentsTests(unittest.TestCase):
             for command in (coverage_commands, mutation_command):
                 with self.assertRaisesRegex(ValueError, 'require macOS'):
                     command(Path('.'), Path('/tmp'), [])
+
+    def test_timeout_before_source_preserves_source_and_default(self):
+        from shared_languages import arguments
+        self.assertEqual(arguments(['.', '--timeout-ms', '1234', 'file.py'])[1:], (['file.py'], 1234, []))
+        self.assertEqual(arguments(['.'])[2], 3600000)
+        with self.assertRaisesRegex(ValueError, 'Require --timeout-ms N'):
+            arguments(['.', '--timeout-ms'])
+        for args in ([], ['.', '--unknown']):
+            with self.assertRaisesRegex(ValueError, 'Require project'):
+                arguments(args)
+        import tempfile
+        with tempfile.NamedTemporaryFile() as file:
+            with self.assertRaisesRegex(ValueError, 'project must be a directory'):
+                arguments([file.name])
 
     def test_invalid_timeout_is_run_failure(self):
         from shared_languages import arguments
