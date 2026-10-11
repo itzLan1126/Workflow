@@ -12,10 +12,17 @@ from unittest import mock
 
 SCRIPTS = Path(__file__).resolve().parents[1] / "skills/workflow/scripts"
 sys.path.insert(0, str(SCRIPTS))
-import run_report
+import shared_runner as run_report
 
 
 class CommandRunnerTests(unittest.TestCase):
+    def test_runner_accepts_configuration_already_read_by_caller(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            config = {"cwd": ".", "report": "report.json",
+                      "command": [sys.executable, "-c", "from pathlib import Path; Path('report.json').write_text('{}')"]}
+            self.assertEqual(run_report.run_report(root / "config.json", config=config)["report"], {})
+
     def test_requested_deadline_reaches_tool(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

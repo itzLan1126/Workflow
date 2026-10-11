@@ -16,7 +16,7 @@ SCRIPTS = Path(__file__).resolve().parents[1] / "skills/workflow/scripts"
 sys.path.insert(0, str(SCRIPTS))
 from mutation import MAPS, main, run_mutation, summarize
 from mutation_report import function_at, numbered_diff, report_details, source_offset
-from run_report import read_json, run_report, run_command
+from shared_runner import read_json, run_report, run_command
 
 REQUIRE = r"^Require cwd, report, nonempty command argv and positive timeoutMs \(max 2147483647\)$"
 NO_BASELINE = r"^cargo-mutants requires a successful baseline test \(do not use --check or --baseline skip\)$"
@@ -225,7 +225,7 @@ class MutationTests(unittest.TestCase):
         self.assertFalse(alive(pid), "a grandchild process outlived the timeout")
 
     def test_windows_commands_use_job_lifetime_tracking(self):
-        with mock.patch("run_report.os.name", "nt"), mock.patch("run_report.run_windows", return_value=17) as run:
+        with mock.patch("shared_runner.os.name", "nt"), mock.patch("shared_runner.run_windows", return_value=17) as run:
             self.assertEqual(run_command(["tool"], "directory", 1234), 17)
         run.assert_called_once_with(["tool"], "directory", 1234)
 

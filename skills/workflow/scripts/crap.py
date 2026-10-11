@@ -5,7 +5,7 @@ import json
 from fractions import Fraction
 import sys
 
-from run_report import read_config, run_report
+from shared_runner import read_config, run_report
 
 # The skill's fixed standard: every function's CRAP <= 6, aggregate line coverage >= 95%,
 # and aggregate branch coverage >= 90%. Coverage is compared exactly in integers.
@@ -78,9 +78,10 @@ def main():
     try:
         if len(sys.argv) != 2:
             raise ValueError('Usage: python crap.py CONFIG.json')
-        if 'maxCrap' in read_config(sys.argv[1]):
+        config = read_config(sys.argv[1])
+        if 'maxCrap' in config:
             raise ValueError('maxCrap is not configurable; the skill standard is CRAP <= 6')
-        execution = run_report(sys.argv[1])
+        execution = run_report(sys.argv[1], config=config)
         result = calculate(execution['report'])
         print(json.dumps(result, indent=2, allow_nan=False))
         return 1 if result['findings'] else 0

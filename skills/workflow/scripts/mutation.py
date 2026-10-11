@@ -4,7 +4,7 @@
 import json
 import sys
 
-from run_report import read_json, run_report
+from shared_runner import read_json, is_valid_config, run_report
 from mutation_report import render_report, report_details
 
 
@@ -119,10 +119,13 @@ def summarize(report, format):
 
 
 def run_mutation(config_path):
-    format = object_value(read_json(config_path)).get("format")
+    config = object_value(read_json(config_path))
+    format = config.get("format")
     if not isinstance(format, str) or format not in EXIT_CODES:
         raise ValueError(f"Unsupported mutation format: {format}")
-    run = run_report(config_path, EXIT_CODES[format])
+    if not is_valid_config(config):
+        raise ValueError("Require cwd, report, nonempty command argv and positive timeoutMs (max 2147483647)")
+    run = run_report(config_path, EXIT_CODES[format], config=config)
     result = summarize(run["report"], format)
     if run["exitCode"] != 0 and result["exitCode"] == 0:
         raise ValueError(f"Tool exited {run['exitCode']} without reported findings")
