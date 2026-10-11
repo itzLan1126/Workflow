@@ -11,7 +11,7 @@ from unittest import mock
 
 SCRIPTS = Path(__file__).resolve().parents[1] / "skills/workflow/scripts"
 sys.path.insert(0, str(SCRIPTS))
-import windows_job
+import shared_runner as windows_job
 
 
 class WindowsJobTests(unittest.TestCase):
@@ -102,7 +102,7 @@ class WindowsJobTests(unittest.TestCase):
                 process.__enter__.return_value = child
                 with mock.patch.object(windows_job.subprocess, "Popen", return_value=process), \
                         self.assertRaisesRegex(ValueError, "^Tool exceeded timeoutMs$") as raised:
-                    windows_job.run(["tool"], ".", 1000)
+                    windows_job.run_windows(["tool"], ".", 1000)
                 self.assertIs(raised.exception.__cause__, timeout)
                 if cleanup_fails:
                     self.assertIsInstance(timeout.__cause__, OSError)
@@ -125,7 +125,7 @@ class WindowsJobTests(unittest.TestCase):
             with mock.patch.object(windows_job.WindowsJob, "assign", side_effect=OSError("assignment failed")), \
                     mock.patch.object(windows_job.subprocess, "Popen", side_effect=start), \
                     self.assertRaisesRegex(OSError, "assignment failed"):
-                windows_job.run(command, directory, 1000)
+                windows_job.run_windows(command, directory, 1000)
             self.assertEqual(len(processes), 1)
             self.assertIsNotNone(processes[0].poll())
             self.assertFalse(marker.exists())
@@ -137,7 +137,7 @@ class WindowsJobTests(unittest.TestCase):
         child.wait.return_value = 17
         command = ["tool", "argument with spaces", "$(literal)"]
         with mock.patch.object(windows_job.subprocess, "Popen", return_value=process) as start:
-            self.assertEqual(windows_job.run(command, "analysis-directory", 1000), 17)
+            self.assertEqual(windows_job.run_windows(command, "analysis-directory", 1000), 17)
         self.assertEqual(start.call_count, 1)
         self.assertEqual(start.call_args.args,
                          ([sys.executable, str(Path(windows_job.__file__).resolve()), *command],))
@@ -188,7 +188,7 @@ class NativeWindowsJobTests(unittest.TestCase):
 
     def test_native_timeout_terminates_descendants(self):
         with self.assertRaisesRegex(ValueError, "^Tool exceeded timeoutMs$"):
-            windows_job.run(self.command(wait=True), self.root, 3000)
+            windows_job.run_windows(self.command(wait=True), self.root, 3000)
         handle = self.descendant_handle()
         if handle:
             self.assertEqual(self.api.WaitForSingleObject(handle, 5000), 0)
