@@ -150,6 +150,13 @@ def source_measurements(coverage, source, exclude):
     return measure_functions(source, functions, hits['lines']), hits
 
 
+def coverage_kind(hits):
+    kind = hits.get('branchKind', 'branch')
+    if kind not in ('branch', 'region'):
+        raise ValueError('Invalid coverage kind')
+    return kind
+
+
 def collect(coverage, sources, exclude=None):
     result, seen, lines, branches = [], set(), [], []
     branch_kinds = set()
@@ -159,7 +166,7 @@ def collect(coverage, sources, exclude=None):
             raise ValueError(f"Duplicate source: {source}")
         seen.add(source)
         measured_functions, hits = source_measurements(coverage, source, exclude)
-        branch_kinds.add(hits.get('branchKind', 'branch'))
+        branch_kinds.add(coverage_kind(hits))
         lines.extend(hits["lines"].values())
         branches.extend(hits["branches"].values())
         result.extend(measured_functions)
