@@ -28,6 +28,7 @@ def exclude_tests(source, code):
         line += token.count('\n')
         if re.fullmatch(r'#\s*\[\s*cfg\s*\(\s*test\s*\)\s*\]', token):
             pending, start = True, line
+        pending, start = close_test_declaration(ranges, start, line, pending, token)
         if token == '{':
             depth += 1
             if pending:
@@ -36,6 +37,13 @@ def exclude_tests(source, code):
             start = close_test_range(ranges, start, line, depth, target)
             depth -= 1
     return ranges
+
+
+def close_test_declaration(ranges, start, line, pending, token):
+    if token == ';' and pending:
+        ranges.append((start, line))
+        return False, None
+    return pending, start
 
 
 def close_test_range(ranges, start, line, depth, target):

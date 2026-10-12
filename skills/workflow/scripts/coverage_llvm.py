@@ -1,4 +1,5 @@
 """Read llvm-cov export JSON as line and region coverage."""
+from itertools import groupby
 from pathlib import Path
 from shared_runner import read_json
 
@@ -15,26 +16,40 @@ def segment_values(segment):
     line, column, hits, has_count, entry, gap = segment[:6]
     if count(line) < 1:
         raise ValueError('Invalid LLVM coverage line')
-    return line, count(hits), has_count and not gap
+    return line, count(hits), has_count, entry, gap
 
 
 def extend_lines(hits, previous, line, length):
     if previous is None:
         return
-    first, previous_count, active = previous
-    if active:
-        for covered_line in range(first, min(line, length + 1)):
-            hits[covered_line] = max(hits.get(covered_line, 0), previous_count)
+    first, previous_count, has_count, entry, gap = previous
+    if has_count:
+        for covered_line in range(first + 1, min(line, length + 1)):
+            hits[covered_line] = previous_count
+
+
+def mapped_line(segments, previous):
+    if any(all((has_count, entry)) for line, hits, has_count, entry, gap in segments):
+        return True
+    if previous is None or not previous[2]:
+        return False
+    return segments[0][2] or not segments[0][3]
+
+
+def execution_count(segments, previous):
+    # LLVM maximizes region entries and the wrapped count, not count restorations.
+    counts = [hits for line, hits, has_count, entry, gap in segments if has_count and entry and not gap]
+    return max([previous[1] if previous else 0, *counts])
 
 
 def line_hits(segments, length):
     hits, previous = {}, None
-    for segment in segments:
-        line, hits_count, active = segment_values(segment)
+    for line, group in groupby(map(segment_values, segments), key=lambda value: value[0]):
+        values = list(group)
         extend_lines(hits, previous, line, length)
-        if active and line <= length:
-            hits[line] = max(hits.get(line, 0), hits_count)
-        previous = line, hits_count, active
+        if line <= length and mapped_line(values, previous):
+            hits[line] = execution_count(values, previous)
+        previous = values[-1]
     return hits
 
 

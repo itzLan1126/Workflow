@@ -24,6 +24,18 @@ class LanguageArgumentsTests(unittest.TestCase):
         self.assertEqual(mutation_command(project, evidence, ['custom']), ['custom'])
         self.assertEqual(report_path(project, evidence), project / 'reports/mutation/mutation.json')
 
+    def test_js_mutation_uses_platform_shim_and_preserves_override(self):
+        from lang_js import mutation_command
+        from unittest.mock import patch
+        project, evidence = Path('/project with spaces'), Path('/evidence')
+        for platform, executable in (('posix', 'stryker'), ('nt', 'stryker.cmd')):
+            with self.subTest(platform=platform), patch('os.name', platform):
+                self.assertEqual(mutation_command(project, evidence, []),
+                                 [str(project / 'node_modules/.bin' / executable), 'run',
+                                  '--testRunner', 'command', '--reporters', 'json'])
+                self.assertEqual(mutation_command(project, evidence, ['custom', 'literal argument']),
+                                 ['custom', 'literal argument'])
+
     def test_python_mutation_command_and_report_location(self):
         import lang_python
         project, evidence = Path('/project'), Path('/evidence')
@@ -91,6 +103,24 @@ class LanguageArgumentsTests(unittest.TestCase):
     def test_rust_test_module_excludes_braces_in_strings(self):
         from lang_rust import exclude_tests
         self.assertEqual(exclude_tests('lib.rs', 'fn a() {}\n#[cfg(test)]\nmod tests {\n fn t() { let text = "}"; }\n}\n'), [(2, 5)])
+
+    def test_rust_external_test_module_preserves_production_measurements(self):
+        from lang_rust import exclude_tests
+        from shared_crap import collect
+        import tempfile
+        code = ('#[cfg(test)]\nmod tests;\n'
+                'pub fn production(value: i32) -> i32 {\n'
+                '    if value > 0 { 1 } else { 0 }\n}\n')
+        with tempfile.TemporaryDirectory() as directory:
+            source = (Path(directory) / 'lib.rs').resolve()
+            source.write_text(code, encoding='utf-8')
+            measured = collect({source: {'lines': {3: 1, 4: 1},
+                                        'branches': {(4, '0', '0'): 1, (4, '0', '1'): 0}}},
+                               [source], exclude_tests)
+        self.assertEqual(exclude_tests(source, code), [(1, 2)])
+        self.assertEqual([function['name'] for function in measured['functions']], ['production'])
+        self.assertEqual(measured['coverage'], {'line': {'covered': 2, 'total': 2},
+                                              'branch': {'covered': 1, 'total': 2}})
 
     def test_swift_export_includes_all_test_binaries(self):
         from lang_swift import export_coverage

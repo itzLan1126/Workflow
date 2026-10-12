@@ -19,7 +19,7 @@ class LLVMCoverageTests(unittest.TestCase):
                                'regions': [[1, 1, 3, 1, 2, 0, 0, 0, 'extension'], [2, 1, 2, 5, 0, 0, 0, 0], [2, 1, 2, 2, 5, 0, 0, 1]]}]}]}
             report.write_text(json.dumps(data))
             hits = read(report, {source: 'func example() {\n return 1\n}\n'})[source]
-            self.assertEqual(hits['lines'], {1: 2, 2: 2})
+            self.assertEqual(hits['lines'], {1: 2, 2: 2, 3: 2})
             self.assertEqual(list(hits['branches'].values()), [2, 0])
             self.assertEqual(hits['branchKind'], 'region')
             from shared_crap import calculate, collect
@@ -40,8 +40,30 @@ class LLVMCoverageTests(unittest.TestCase):
         self.assertEqual(line_hits([[1, 1, 0, True, True, False], [4, 1, 0, False, False, False]], 2), {1: 0, 2: 0})
         self.assertEqual(line_hits([[2, 1, 0, True, True, False]], 2), {2: 0})
         self.assertEqual(line_hits([[1, 1, 3, True, True, False], [1, 3, 0, True, True, False],
-                                    [2, 1, 0, False, False, False]], 2), {1: 3})
+                                    [2, 1, 0, False, False, False]], 2), {1: 3, 2: 0})
         self.assertEqual(line_hits([[1, 1, 0, True, True, False, 'extension']], 1), {1: 0})
+
+    def test_swift_export_matches_llvm_cov_line_counts(self):
+        # Captured from llvm-cov 21 for choose(true), whose return 0 is unexecuted.
+        source = ('func choose(_ flag: Bool) -> Int {\n    if flag {\n        return 1\n'
+                  '    }\n    return 0\n}\nprint(choose(true))\n')
+        segments = [[1, 34, 1, True, True, False], [2, 8, 1, True, True, False],
+                    [2, 12, 1, True, False, False], [2, 13, 1, True, True, False],
+                    [4, 6, 0, True, True, False], [5, 13, 1, True, False, False],
+                    [6, 2, 0, False, False, False], [7, 1, 1, True, True, False],
+                    [7, 20, 0, False, False, False]]
+        self.assertEqual(line_hits(segments, len(source.splitlines())),
+                         {1: 1, 2: 1, 3: 1, 4: 1, 5: 0, 6: 1, 7: 1})
+
+    def test_wrapped_gap_and_skipped_regions_follow_llvm_line_mapping(self):
+        self.assertEqual(line_hits([[1, 1, 2, True, True, False], [1, 3, 5, True, False, True],
+                                    [3, 1, 0, False, False, False]], 4), {1: 2, 2: 5, 3: 5})
+        self.assertEqual(line_hits([[1, 1, 3, True, True, False], [2, 1, 0, False, True, False],
+                                    [3, 1, 3, True, False, False], [4, 1, 0, False, False, False]], 4),
+                         {1: 3, 4: 3})
+        self.assertEqual(line_hits([[1, 1, 3, True, True, False], [2, 1, 0, False, True, False],
+                                    [2, 4, 2, True, True, False], [3, 1, 0, False, False, False]], 3),
+                         {1: 3, 2: 3, 3: 2})
 
     def test_invalid_region_ranges_fail_closed(self):
         with tempfile.TemporaryDirectory() as directory:

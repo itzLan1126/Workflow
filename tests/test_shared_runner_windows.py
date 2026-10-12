@@ -186,6 +186,17 @@ class NativeWindowsJobTests(unittest.TestCase):
             self.addCleanup(self.api.CloseHandle, handle)
         return handle
 
+    def test_native_js_mutation_launches_cmd_shim_from_path_with_spaces(self):
+        from lang_js import mutation_command
+        project = self.root / 'project with spaces'
+        shim = project / 'node_modules/.bin/stryker.cmd'
+        shim.parent.mkdir(parents=True)
+        shim.write_text('@echo off\n> arguments.txt echo %*\nexit /b 7\n')
+        command = mutation_command(project, self.root, [])
+        self.assertEqual(windows_job.run_command(command, project, 10000), 7)
+        self.assertEqual((project / 'arguments.txt').read_text().strip(),
+                         'run --testRunner command --reporters json')
+
     def test_native_timeout_terminates_descendants(self):
         with self.assertRaisesRegex(ValueError, "^Tool exceeded timeoutMs$"):
             windows_job.run_windows(self.command(wait=True), self.root, 3000)
