@@ -67,7 +67,7 @@ class CommandRunnerTests(unittest.TestCase):
         options = dict(start.call_args.kwargs)
         self.assertFalse(options.pop("shell", False))
         self.assertEqual(options, dict(cwd="analysis-directory", stdin=subprocess.DEVNULL,
-                                       stdout=sys.stderr, stderr=sys.stderr, start_new_session=True))
+                                       stdout=sys.stderr, stderr=sys.stderr, start_new_session=True, env=None))
         child.wait.assert_called_once_with(timeout=1.234)
 
     @unittest.skipUnless(os.name == "posix", "POSIX process groups")

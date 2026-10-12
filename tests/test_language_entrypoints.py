@@ -13,6 +13,28 @@ import mutation
 
 
 class LanguageEntryPointsTests(unittest.TestCase):
+    def test_custom_coverage_command_receives_fresh_output_path_and_literal_arguments(self):
+        with tempfile.TemporaryDirectory() as directory:
+            project = Path(directory)
+            source = project / 'sample.js'
+            source.write_text('function sample(flag) {\n if (flag) return 1;\n return 0;\n}\n')
+            writer = ('import os,sys; from pathlib import Path; '
+                      'assert sys.argv[1] == "--json"; '
+                      'output = Path(os.environ["WORKFLOW_COVERAGE_FILE"]); '
+                      'assert not output.exists(); '
+                      'output.write_text("SF:" + str(Path("sample.js").resolve()) + '
+                      '"\\nDA:2,1\\nDA:3,1\\nBRDA:2,0,0,1\\nBRDA:2,0,1,1\\nend_of_record\\n")')
+            tool = [sys.executable, '-c', writer, '--json']
+            with redirect_stdout(io.StringIO()) as stdout, tempfile.TemporaryFile(mode='w+') as stderr, redirect_stderr(stderr):
+                self.assertEqual(crap.dispatch(['js', directory, 'sample.js', '--', *tool]), 0)
+                stderr.seek(0)
+                evidence = Path(stderr.readline().removeprefix('Evidence: ').strip())
+            config = json.loads((evidence / 'config.json').read_text())
+            self.assertEqual(config['commands'], [tool])
+            self.assertEqual(config['env'], {'WORKFLOW_COVERAGE_FILE': str(evidence / 'coverage.lcov')})
+            self.assertTrue((evidence / 'coverage.lcov').is_file())
+            self.assertEqual(json.loads(stdout.getvalue())['findings'], 0)
+
     def test_python_coverage_and_mutation_entry_points(self):
         with tempfile.TemporaryDirectory() as directory:
             project = Path(directory)

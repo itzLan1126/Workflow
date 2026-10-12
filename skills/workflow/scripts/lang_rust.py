@@ -1,14 +1,20 @@
 """Rust uses nightly branch coverage and cargo-mutants."""
 import re
+from pathlib import Path
 import subprocess
+import sys
 from shared_languages import Crap, Mutation
 
 
 def coverage_commands(project, evidence, args):
+    return [[sys.executable, str(Path(__file__).resolve())],
+            args or ['cargo', '+nightly', 'llvm-cov', '--branch', '--lcov', '--output-path', str(evidence / 'coverage.lcov')]]
+
+
+def require_nightly():
     probe = subprocess.run(['rustc', '+nightly', '--version'], capture_output=True, text=True)
     if probe.returncode or 'nightly' not in probe.stdout:
         raise ValueError('Rust CRAP check requires a nightly toolchain for branch coverage')
-    return [args or ['cargo', '+nightly', 'llvm-cov', '--branch', '--lcov', '--output-path', str(evidence / 'coverage.lcov')]]
 
 
 def mutation_command(project, evidence, args):
@@ -26,7 +32,7 @@ def exclude_tests(source, code):
     ranges, pending, depth, start, line, target = [], False, 0, None, 1, None
     for token in tokens:
         line += token.count('\n')
-        if re.fullmatch(r'#\s*\[\s*cfg\s*\(\s*test\s*\)\s*\]', token):
+        if starts_test_range(token, start):
             pending, start = True, line
         pending, start = close_test_declaration(ranges, start, line, pending, token)
         if token == '{':
@@ -37,6 +43,10 @@ def exclude_tests(source, code):
             start = close_test_range(ranges, start, line, depth, target)
             depth -= 1
     return ranges
+
+
+def starts_test_range(token, start):
+    return start is None and re.fullmatch(r'#\s*\[\s*cfg\s*\(\s*test\s*\)\s*\]', token)
 
 
 def close_test_declaration(ranges, start, line, pending, token):
@@ -55,3 +65,10 @@ def close_test_range(ranges, start, line, depth, target):
 
 CRAP = Crap('lcov', coverage_commands, 'coverage.lcov', exclude_tests)
 MUTATION = Mutation('cargo-mutants', mutation_command, report_path)
+
+if __name__ == '__main__':
+    try:
+        require_nightly()
+    except (OSError, ValueError) as error:
+        print(f'Rust coverage: {error}', file=sys.stderr)
+        raise SystemExit(2)

@@ -78,13 +78,13 @@ def stop(child):
     child.wait()
 
 
-def run_command(command, cwd, timeout):
+def run_command(command, cwd, timeout, *, env=None):
     # The caller supplies an isolated copy; this runner does not sandbox commands.
     if os.name == "nt":
-        return run_windows(command, cwd, timeout)
+        return run_windows(command, cwd, timeout, env=env)
     with subprocess.Popen(command, cwd=cwd, shell=False, stdin=subprocess.DEVNULL,
                           stdout=sys.stderr, stderr=sys.stderr,
-                          start_new_session=True) as child:
+                          start_new_session=True, env=env) as child:
         try:
             return child.wait(timeout=timeout / 1000)
         except BaseException as error:
@@ -202,12 +202,12 @@ def start_and_wait(child, job, timeout):
         raise
 
 
-def run_windows(command, cwd, timeout):
+def run_windows(command, cwd, timeout, *, env=None):
     bootstrap_command = [sys.executable, str(Path(__file__).resolve()), *command]
     try:
         with WindowsJob() as job:
             with subprocess.Popen(bootstrap_command, cwd=cwd, shell=False, stdin=subprocess.PIPE,
-                                  stdout=sys.stderr, stderr=sys.stderr) as child:
+                                  stdout=sys.stderr, stderr=sys.stderr, env=env) as child:
                 return start_and_wait(child, job, timeout)
     except subprocess.TimeoutExpired as error:
         raise ValueError("Tool exceeded timeoutMs") from error

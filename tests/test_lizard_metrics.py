@@ -176,6 +176,21 @@ class LizardMetricsTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, '^Overlapping function ranges at line 1$'):
             collect({source: {'lines': {1: 1}, 'branches': {}}}, [str(source)])
 
+    def test_adjacent_functions_sharing_a_boundary_line_are_ambiguous(self):
+        from shared_crap import collect
+        source = (self.root / 'shared.js').resolve()
+        cases = [
+            ('function a() {\n return 1;} function b() {return 2;}\n', {1: 1, 2: 1}, 2),
+            ('function a() {\n return 1;\n} function b() {\n return 2;\n\n\n}\n',
+             {1: 1, 2: 1, 3: 1, 4: 0, 7: 0}, 3),
+            ('function a() {return 1;} function b() {\n return 2;\n}\n', {1: 1, 2: 0, 3: 0}, 1),
+        ]
+        for code, lines, shared_line in cases:
+            with self.subTest(code=code):
+                source.write_text(code)
+                with self.assertRaisesRegex(ValueError, f'^Overlapping function ranges at line {shared_line}$'):
+                    collect({source: {'lines': lines, 'branches': {}}}, [str(source)])
+
     def test_exclusions_include_the_end_line_and_receive_source(self):
         from shared_crap import collect
         source = (self.root / 'sample.js').resolve()
