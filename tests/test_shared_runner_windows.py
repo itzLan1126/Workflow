@@ -148,12 +148,12 @@ class WindowsJobTests(unittest.TestCase):
         self.api.CloseHandle.assert_called_once_with(123)
 
     def test_bootstrap_needs_release_and_disconnects_tool_stdin(self):
-        for token, expected in ((b"", 2), (b"0", 2), (b"1", 17)):
+        for token, expected in ((b"", 2), (b"0", 2), (b"1", 17), (b"1extra", 17)):
             stdin = mock.Mock(buffer=io.BytesIO(token))
             with mock.patch.object(sys, "stdin", stdin), \
                     mock.patch.object(windows_job.subprocess, "call", return_value=17) as call:
                 self.assertEqual(windows_job.bootstrap(["tool", "arg"]), expected)
-            if token == b"1":
+            if token.startswith(b"1"):
                 call.assert_called_once_with(["tool", "arg"], stdin=subprocess.DEVNULL)
             else:
                 call.assert_not_called()

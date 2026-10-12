@@ -60,6 +60,14 @@ class LizardMetricsTests(unittest.TestCase):
         self.assertIn("COVERAGE.lcov", stderr.getvalue())
         self.assertIn("OUTPUT.json", stderr.getvalue())
 
+    def test_adapter_labels_measured_branch_records(self):
+        from coverage_lcov import read
+        source = (self.root / 'sample.py').resolve()
+        code = 'def a(x):\n if x: return 1\n return 0\n'
+        self.coverage.write_text(f'SF:{source}\nDA:2,1\nBRDA:2,0,0,1\nend_of_record\n')
+        self.assertEqual(read(self.coverage, {source: code})[source],
+                         {'lines': {2: 1}, 'branches': {(2, '0', '0'): 1}, 'checksums': {}, 'branchKind': 'branch'})
+
     def test_accepts_single_character_lcov_source_path(self):
         source, records = open_section(None, "SF:x")
         self.assertEqual(source, Path("x").resolve())
@@ -152,6 +160,33 @@ class LizardMetricsTests(unittest.TestCase):
         result = collect(coverage, [str(source)], exclude=lambda path, code: [(4, 6)])
         self.assertEqual([f['name'] for f in result['functions']], ['production'])
         self.assertEqual(result['coverage'], {'line': {'covered': 1, 'total': 1}, 'branch': {'covered': 1, 'total': 1}})
+
+    def test_nested_functions_with_same_end_line_use_innermost_range(self):
+        from shared_crap import collect
+        source = (self.root / 'nested.js').resolve()
+        source.write_text('function outer() {\n function inner() { return 1; }}\n')
+        coverage = {source: {'lines': {1: 1, 2: 0}, 'branches': {}, 'branchKind': 'branch'}}
+        result = collect(coverage, [str(source)])
+        self.assertEqual([(f['name'], f['covered'], f['total']) for f in result['functions']], [('outer', 1, 1), ('inner', 0, 1)])
+
+    def test_shared_function_line_is_ambiguous(self):
+        from shared_crap import collect
+        source = (self.root / 'shared.js').resolve()
+        source.write_text('function a() { return 1; } function b() { return 2; }\n')
+        with self.assertRaisesRegex(ValueError, '^Overlapping function ranges at line 1$'):
+            collect({source: {'lines': {1: 1}, 'branches': {}}}, [str(source)])
+
+    def test_exclusions_include_the_end_line_and_receive_source(self):
+        from shared_crap import collect
+        source = (self.root / 'sample.js').resolve()
+        code = 'function a() {\n return 1;\n}\nfunction test() { return 0; }\n'
+        source.write_text(code)
+        def exclude(path, text):
+            self.assertEqual((path, text), (source, code))
+            return [(4, 4)]
+        result = collect({source: {'lines': {2: 1, 4: 0}, 'branches': {(4, '0', '0'): 0}}}, [str(source)], exclude)
+        self.assertEqual(result['coverage']['line'], {'covered': 1, 'total': 1})
+        self.assertEqual(result['coverage']['branch'], {'covered': 0, 'total': 0})
 
     def test_rejects_duplicate_source_paths(self):
         source = self.root / "sample.py"

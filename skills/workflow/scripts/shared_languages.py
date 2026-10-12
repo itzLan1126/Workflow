@@ -64,5 +64,5 @@ def arguments(args):
 
 def evidence_directory():
     evidence = Path(tempfile.mkdtemp(prefix='workflow-evidence-'))
-    print(f'Evidence: {evidence}', file=sys.stderr)
+    print(f'Evidence: {evidence}', file=sys.stderr, flush=True)
     return evidence

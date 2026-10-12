@@ -48,11 +48,22 @@ def read_files(data, texts):
     return files
 
 
-def add_regions(function, files):
+def region_source(function, region):
+    start, column, end, end_column, hits, file_id, expanded_id, kind = region[:8]
+    if type(file_id) is not int or file_id not in range(len(function['filenames'])):
+        raise ValueError('Invalid LLVM region file index')
+    if not 1 <= count(start) <= count(end):
+        raise ValueError('Invalid LLVM region range')
+    return Path(function['filenames'][file_id]).resolve()
+
+
+def add_regions(function, files, texts):
     for index, region in enumerate(function['regions']):
         start, column, end, end_column, hits, file_id, expanded_id, kind = region[:8]
-        source = Path(function['filenames'][file_id]).resolve()
+        source = region_source(function, region)
         if source in files and kind == 0:
+            if end > len(texts[source].splitlines()):
+                raise ValueError('Invalid LLVM region outside source')
             files[source]['branches'][(start, function['name'], index)] = count(hits)
 
 
@@ -64,7 +75,7 @@ def read(path, source_text_by_path):
     for data in report['data']:
         files.update(read_files(data, source_text_by_path))
         for function in data['functions']:
-            add_regions(function, files)
+            add_regions(function, files, source_text_by_path)
     if not source_text_by_path.keys() <= files.keys():
         raise ValueError('Missing exact-path LLVM coverage')
     return files

@@ -36,6 +36,28 @@ class LLVMCoverageTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, 'Require llvm-cov'):
                 read(report, {})
 
+    def test_segments_preserve_zero_hits_overlaps_and_last_source_line(self):
+        self.assertEqual(line_hits([[1, 1, 0, True, True, False], [4, 1, 0, False, False, False]], 2), {1: 0, 2: 0})
+        self.assertEqual(line_hits([[2, 1, 0, True, True, False]], 2), {2: 0})
+        self.assertEqual(line_hits([[1, 1, 3, True, True, False], [1, 3, 0, True, True, False],
+                                    [2, 1, 0, False, False, False]], 2), {1: 3})
+        self.assertEqual(line_hits([[1, 1, 0, True, True, False, 'extension']], 1), {1: 0})
+
+    def test_invalid_region_ranges_fail_closed(self):
+        with tempfile.TemporaryDirectory() as directory:
+            source = (Path(directory) / 'sample.swift').resolve()
+            report = Path(directory) / 'coverage.json'
+            for region, message in (([0, 1, 2, 1, 1, 0, 0, 0], 'Invalid LLVM region range'),
+                                    ([1, 1, 3, 1, 1, 0, 0, 0], 'Invalid LLVM region outside source'),
+                                    ([2, 1, 1, 1, 1, 0, 0, 0], 'Invalid LLVM region range'),
+                                    ([1, 1, 2, 1, 1, -1, 0, 0], 'Invalid LLVM region file index')):
+                data = {'type': 'llvm.coverage.json.export', 'data': [{'files': [{'filename': str(source), 'segments': []}],
+                        'functions': [{'name': 'a', 'filenames': [str(source)], 'regions': [region]}]}]}
+                report.write_text(json.dumps(data))
+                with self.subTest(region=region), self.assertRaises(ValueError) as raised:
+                    read(report, {source: 'func a() {\n}\n'})
+                self.assertEqual(str(raised.exception), message)
+
     def test_invalid_segments_fail_closed(self):
         for segment in (None, [], [0, 1, 1, True, True, False], [1, 1, -1, True, True, False], [True, 1, 0, True, True, False]):
             with self.subTest(segment=segment), self.assertRaises(ValueError):
