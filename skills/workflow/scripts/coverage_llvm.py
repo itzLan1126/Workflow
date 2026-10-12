@@ -53,14 +53,14 @@ def line_hits(segments, length):
     return hits
 
 
-def read_files(data, texts):
-    files = {}
+def read_files(data, texts, files):
     for file in data['files']:
         source = Path(file['filename']).resolve()
         if source in texts:
+            if source in files:
+                raise ValueError('Duplicate exact-path LLVM coverage')
             files[source] = {'lines': line_hits(file['segments'], len(texts[source].splitlines())),
                              'branches': {}, 'branchKind': 'region'}
-    return files
 
 
 def region_source(function, region):
@@ -88,7 +88,7 @@ def read(path, source_text_by_path):
         raise ValueError('Require llvm-cov export JSON')
     files = {}
     for data in report['data']:
-        files.update(read_files(data, source_text_by_path))
+        read_files(data, source_text_by_path, files)
         for function in data['functions']:
             add_regions(function, files, source_text_by_path)
     if not source_text_by_path.keys() <= files.keys():

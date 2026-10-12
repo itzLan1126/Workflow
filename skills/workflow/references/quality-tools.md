@@ -36,6 +36,8 @@ The formula is `C² × (1 − covered / total)³ + C`. Comparison uses exact rat
 
 The collector joins Lizard complexity to freshly generated coverage for the same source snapshot. Pass source files explicitly. Coverage paths must resolve to those exact files from the project's working directory. Each covered line belongs to its innermost function; ambiguous shared-line function ranges cause a run failure. A language module may exclude test-code line ranges. LCOV checksums, when present, must match source lines and agree across sections.
 
+LLVM JSON must contain each selected source file once, including across `data` objects. Duplicate source entries cause a run failure; combine coverage with LLVM before exporting rather than concatenating independent exports.
+
 Config-mode exporters produce this measurement schema:
 
 ```json
