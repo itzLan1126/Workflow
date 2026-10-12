@@ -16,6 +16,8 @@ def segment_values(segment):
     line, column, hits, has_count, entry, gap = segment[:6]
     if count(line) < 1:
         raise ValueError('Invalid LLVM coverage line')
+    if any(type(flag) is not bool for flag in (has_count, entry, gap)):
+        raise ValueError('Invalid LLVM coverage segment flag')
     return line, count(hits), has_count, entry, gap
 
 

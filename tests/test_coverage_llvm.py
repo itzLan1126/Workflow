@@ -113,3 +113,12 @@ class LLVMCoverageTests(unittest.TestCase):
             with self.subTest(segment=segment), self.assertRaises(ValueError):
                 line_hits([segment], 2)
         self.assertEqual(line_hits([[1, 1, 0, False, False, True], [2, 1, 1, True, True, False]], 1), {})
+
+    def test_non_boolean_segment_flags_fail_closed(self):
+        for position in range(3, 6):
+            for value in ('false', 'true', 0, 1, None, [], {}):
+                segment = [1, 1, 1, True, True, False]
+                segment[position] = value
+                with self.subTest(position=position, value=value), self.assertRaisesRegex(
+                        ValueError, '^Invalid LLVM coverage segment flag$'):
+                    line_hits([segment], 1)
