@@ -89,8 +89,8 @@ def analyze(source):
     if get_reader_for(str(source)) is None:
         raise ValueError(f"Unsupported source: {source}")
     code = source.read_text(encoding="utf-8")
-    functions = sorted(lizard.analyze_file.analyze_source_code(
-        str(source), code).function_list, key=lambda function: function.start_line)
+    # Lizard records functions when they close; retain that order to distinguish nested ranges.
+    functions = lizard.analyze_file.analyze_source_code(str(source), code).function_list
     if not functions:
         raise ValueError(f"No functions found: {source}")
     return code, functions
@@ -111,15 +111,14 @@ def owner(functions, line):
     matches = [f for f in functions if line in range(f.start_line, f.end_line + 1)]
     if not matches:
         return None
-    smallest = min(matches, key=lambda f: f.end_line - f.start_line)
-    ensure_unique_range(matches, smallest, line)
-    return smallest
+    ensure_unique_range(matches, line)
+    return matches[0]
 
 
-def ensure_unique_range(matches, smallest, line):
-    ranges = [(f.start_line, f.end_line) for f in matches]
-    if ranges.count((smallest.start_line, smallest.end_line)) > 1:
-        raise ValueError(f"Overlapping function ranges at line {line}")
+def ensure_unique_range(matches, line):
+    for inner, outer in zip(matches, matches[1:]):
+        if not outer.start_line < inner.start_line <= inner.end_line <= outer.end_line:
+            raise ValueError(f"Overlapping function ranges at line {line}")
 
 
 def measure_functions(source, functions, hits):
@@ -128,7 +127,8 @@ def measure_functions(source, functions, hits):
         function = owner(functions, line)
         if function is not None:
             owned[id(function)][line] = count
-    return [measure_function(source, function, owned[id(function)]) for function in functions]
+    return [measure_function(source, function, owned[id(function)])
+            for function in sorted(functions, key=lambda f: f.start_line)]
 
 
 def excluded(line, ranges):

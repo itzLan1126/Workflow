@@ -136,15 +136,16 @@ class WindowsJobTests(unittest.TestCase):
         child._handle = 456
         child.wait.return_value = 17
         command = ["tool", "argument with spaces", "$(literal)"]
+        environment = {"WORKFLOW_COVERAGE_FILE": "coverage output.json"}
         with mock.patch.object(windows_job.subprocess, "Popen", return_value=process) as start:
-            self.assertEqual(windows_job.run_windows(command, "analysis-directory", 1000), 17)
+            self.assertEqual(windows_job.run_windows(command, "analysis-directory", 1000, env=environment), 17)
         self.assertEqual(start.call_count, 1)
         self.assertEqual(start.call_args.args,
                          ([sys.executable, str(Path(windows_job.__file__).resolve()), *command],))
         options = dict(start.call_args.kwargs)
         self.assertFalse(options.pop("shell", False))
         self.assertEqual(options, dict(cwd="analysis-directory", stdin=subprocess.PIPE,
-                                       stdout=sys.stderr, stderr=sys.stderr))
+                                       stdout=sys.stderr, stderr=sys.stderr, env=environment))
         self.api.CloseHandle.assert_called_once_with(123)
 
     def test_bootstrap_needs_release_and_disconnects_tool_stdin(self):
@@ -196,6 +197,13 @@ class NativeWindowsJobTests(unittest.TestCase):
         self.assertEqual(windows_job.run_command(command, project, 10000), 7)
         self.assertEqual((project / 'arguments.txt').read_text().strip(),
                          'run --testRunner command --reporters json')
+
+    def test_native_coverage_environment_reaches_owned_command(self):
+        environment = {**os.environ, 'WORKFLOW_COVERAGE_FILE': str(self.root / 'coverage output.json')}
+        command = [sys.executable, '-c',
+                   'import os; from pathlib import Path; Path(os.environ["WORKFLOW_COVERAGE_FILE"]).write_text("{}");']
+        self.assertEqual(windows_job.run_command(command, self.root, 10000, env=environment), 0)
+        self.assertEqual((self.root / 'coverage output.json').read_text(), '{}')
 
     def test_native_timeout_terminates_descendants(self):
         with self.assertRaisesRegex(ValueError, "^Tool exceeded timeoutMs$"):

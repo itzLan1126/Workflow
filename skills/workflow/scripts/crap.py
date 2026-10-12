@@ -51,10 +51,12 @@ def language_result(name, args):
     spec = language(name).CRAP
     evidence = evidence_directory()
     commands = spec.commands(project, evidence, tool)
+    environment = {'WORKFLOW_COVERAGE_FILE': str(evidence / spec.coverage)}
     (evidence / 'config.json').write_text(json.dumps({'cwd': str(project), 'commands': commands,
-                                                    'sources': sources, 'timeoutMs': timeout}, indent=2), encoding='utf-8')
+                                                    'sources': sources, 'timeoutMs': timeout,
+                                                    'env': environment}, indent=2), encoding='utf-8')
     for command in commands:
-        if run_command(command, project, timeout) != 0:
+        if run_command(command, project, timeout, env={**os.environ, **environment}) != 0:
             raise ValueError('Coverage command failed')
     measurements = read_measurements(project, sources, spec, evidence)
     (evidence / 'measurements.json').write_text(json.dumps(measurements, indent=2), encoding='utf-8')

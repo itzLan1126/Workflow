@@ -1,6 +1,6 @@
 """macOS Swift coverage export and Muter commands."""
-import json
 from pathlib import Path
+import shutil
 import subprocess
 import sys
 from shared_languages import Crap, Mutation
@@ -13,22 +13,32 @@ def require_macos():
 
 def coverage_commands(project, evidence, args):
     require_macos()
-    return [args or ['xcrun', 'swift', 'test', '--enable-code-coverage'],
-            [sys.executable, str(Path(__file__).resolve()), str(project), str(evidence / 'coverage.json')]]
+    command = args or ['xcrun', 'swift', 'test', '--enable-code-coverage']
+    if not swift_test_command(command):
+        return [command]
+    validate_test_command(command)
+    return [command, [sys.executable, str(Path(__file__).resolve()), str(project),
+                      str(evidence / 'coverage.json'), *args]]
 
 
-def export_coverage(project, output):
-    probe = subprocess.run(['xcrun', 'swift', 'build', '--show-bin-path'], cwd=project,
+def swift_test_command(command):
+    words = [Path(argument).name for argument in command[:3]]
+    return words[:2] == ['swift', 'test'] or words == ['xcrun', 'swift', 'test']
+
+
+def validate_test_command(command):
+    if '--enable-code-coverage' not in command or '--disable-code-coverage' in command:
+        raise ValueError('Swift test overrides require --enable-code-coverage')
+    if set(command) & {'--show-codecov-path', '--show-code-coverage-path', '--show-coverage-path'}:
+        raise ValueError('Swift coverage requires a test run before querying the report path')
+
+
+def export_coverage(project, output, args=()):
+    command = args or ['xcrun', 'swift', 'test']
+    probe = subprocess.run([*command, '--show-codecov-path'], cwd=project,
                            capture_output=True, text=True, check=True)
-    directory = Path(probe.stdout.strip())
-    binaries = sorted(directory.glob('*.xctest/Contents/MacOS/*'))
-    if not binaries:
-        raise ValueError('Swift test coverage binary not found')
-    command = ['xcrun', 'llvm-cov', 'export', str(binaries[0]),
-               f'-instr-profile={directory / "codecov/default.profdata"}',
-               *(argument for binary in binaries[1:] for argument in ('-object', str(binary)))]
-    with Path(output).open('x', encoding='utf-8') as report:
-        subprocess.run(command, cwd=project, stdout=report, stderr=sys.stderr, check=True)
+    with Path(probe.stdout.strip()).open('rb') as source, Path(output).open('xb') as report:
+        shutil.copyfileobj(source, report)
 
 
 def mutation_command(project, evidence, args):
@@ -45,7 +55,7 @@ MUTATION = Mutation('muter', mutation_command, report_path)
 
 if __name__ == '__main__':
     try:
-        export_coverage(sys.argv[1], sys.argv[2])
+        export_coverage(sys.argv[1], sys.argv[2], sys.argv[3:])
     except (OSError, ValueError, subprocess.CalledProcessError) as error:
         print(f'Swift coverage: {error}', file=sys.stderr)
         raise SystemExit(2)

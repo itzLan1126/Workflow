@@ -226,9 +226,10 @@ class MutationTests(unittest.TestCase):
         self.assertFalse(alive(pid), "a grandchild process outlived the timeout")
 
     def test_windows_commands_use_job_lifetime_tracking(self):
-        with mock.patch("shared_runner.os.name", "nt"), mock.patch("shared_runner.run_windows", return_value=17) as run:
-            self.assertEqual(run_command(["tool"], "directory", 1234), 17)
-        run.assert_called_once_with(["tool"], "directory", 1234)
+        for environment in (None, {"WORKFLOW_COVERAGE_FILE": "coverage output.json"}):
+            with mock.patch("shared_runner.os.name", "nt"), mock.patch("shared_runner.run_windows", return_value=17) as run:
+                self.assertEqual(run_command(["tool"], "directory", 1234, env=environment), 17)
+            run.assert_called_once_with(["tool"], "directory", 1234, env=environment)
 
     def test_json_rejects_nonfinite_numbers(self):
         path = self.fixture({})

@@ -45,7 +45,8 @@ class LanguageArgumentsTests(unittest.TestCase):
         self.assertEqual(lang_python.report_path(project, evidence), evidence / 'mutation.json')
 
     def test_rust_commands_and_report_location(self):
-        from lang_rust import coverage_commands, mutation_command, report_path
+        from lang_rust import coverage_commands, mutation_command, report_path, require_nightly
+        import lang_rust
         from unittest.mock import patch
         import subprocess
         project, evidence = Path('/project'), Path('/evidence')
@@ -55,8 +56,10 @@ class LanguageArgumentsTests(unittest.TestCase):
             self.assertIs(text, True)
             return subprocess.CompletedProcess(command, 0, 'rustc nightly', '')
         with patch('lang_rust.subprocess.run', side_effect=probe):
-            self.assertEqual(coverage_commands(project, evidence, []), [['cargo', '+nightly', 'llvm-cov', '--branch', '--lcov', '--output-path', '/evidence/coverage.lcov']])
-            self.assertEqual(coverage_commands(project, evidence, ['custom']), [['custom']])
+            require_nightly()
+        helper = [sys.executable, str(Path(lang_rust.__file__).resolve())]
+        self.assertEqual(coverage_commands(project, evidence, []), [helper, ['cargo', '+nightly', 'llvm-cov', '--branch', '--lcov', '--output-path', '/evidence/coverage.lcov']])
+        self.assertEqual(coverage_commands(project, evidence, ['custom']), [helper, ['custom']])
         self.assertEqual(mutation_command(project, evidence, []), ['cargo', 'mutants', '--output', '/evidence'])
         self.assertEqual(mutation_command(project, evidence, ['custom']), ['custom'])
         self.assertEqual(report_path(project, evidence), evidence / 'mutants.out/outcomes.json')
@@ -92,13 +95,13 @@ class LanguageArgumentsTests(unittest.TestCase):
                                         [sys.executable, '-m', 'coverage', 'lcov', f'--rcfile={evidence / "coveragerc"}', '-o', str(evidence / 'coverage.lcov')]])
 
     def test_rust_requires_nightly(self):
-        from lang_rust import coverage_commands
+        from lang_rust import require_nightly
         from unittest.mock import patch
         import subprocess
         for code, version in ((1, ''), (0, 'rustc stable'), (1, 'rustc nightly')):
             with patch('lang_rust.subprocess.run', return_value=subprocess.CompletedProcess([], code, version, 'missing')):
                 with self.assertRaisesRegex(ValueError, '^Rust CRAP check requires a nightly toolchain for branch coverage$'):
-                    coverage_commands(Path('.'), Path('/tmp'), [])
+                    require_nightly()
 
     def test_rust_test_module_excludes_braces_in_strings(self):
         from lang_rust import exclude_tests
@@ -121,42 +124,6 @@ class LanguageArgumentsTests(unittest.TestCase):
         self.assertEqual([function['name'] for function in measured['functions']], ['production'])
         self.assertEqual(measured['coverage'], {'line': {'covered': 2, 'total': 2},
                                               'branch': {'covered': 1, 'total': 2}})
-
-    def test_swift_export_includes_all_test_binaries(self):
-        from lang_swift import export_coverage
-        from unittest.mock import patch
-        import subprocess
-        import tempfile
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            for name in ('First', 'Second'):
-                binary = root / f'{name}.xctest/Contents/MacOS' / name
-                binary.parent.mkdir(parents=True)
-                binary.touch()
-            def run_export(command, *, cwd, capture_output=None, text=None, check=None, stdout=None, stderr=None):
-                self.assertEqual(cwd, root)
-                self.assertIs(check, True)
-                if stdout is None:
-                    self.assertEqual(command, ['xcrun', 'swift', 'build', '--show-bin-path'])
-                    self.assertIs(capture_output, True)
-                    self.assertIs(text, True)
-                    return subprocess.CompletedProcess(command, 0, str(root), '')
-                self.assertEqual(command, ['xcrun', 'llvm-cov', 'export', str(root / 'First.xctest/Contents/MacOS/First'),
-                                          f'-instr-profile={root / "codecov/default.profdata"}', '-object',
-                                          str(root / 'Second.xctest/Contents/MacOS/Second')])
-                self.assertIs(stderr, sys.stderr)
-                stdout.write('{"type":"llvm.coverage.json.export"}')
-            with patch('lang_swift.subprocess.run', side_effect=run_export):
-                export_coverage(root, root / 'coverage.json')
-            self.assertEqual((root / 'coverage.json').read_text(), '{"type":"llvm.coverage.json.export"}')
-            with patch('lang_swift.subprocess.run', return_value=subprocess.CompletedProcess([], 0, str(root), '')):
-                with self.assertRaises(FileExistsError):
-                    export_coverage(root, root / 'coverage.json')
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            with patch('lang_swift.subprocess.run', return_value=subprocess.CompletedProcess([], 0, str(root), '')):
-                with self.assertRaisesRegex(ValueError, '^Swift test coverage binary not found$'):
-                    export_coverage(root, root / 'coverage.json')
 
     def test_swift_rejects_other_platforms_for_both_checks(self):
         from lang_swift import coverage_commands, mutation_command
