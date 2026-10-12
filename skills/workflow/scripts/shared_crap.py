@@ -135,6 +135,14 @@ def excluded(line, ranges):
     return any(start <= line <= end for start, end in ranges)
 
 
+def excluded_function(function, ranges):
+    if not excluded(function.start_line, ranges):
+        return False
+    if not any(start <= function.start_line <= function.end_line <= end for start, end in ranges):
+        raise ValueError(f"Function crosses test exclusion boundary: {function.name}")
+    return True
+
+
 def filter_hits(hits, ranges):
     return {**hits, 'lines': {line: count for line, count in hits['lines'].items() if not excluded(line, ranges)},
             'branches': {key: count for key, count in hits['branches'].items() if not excluded(key[0], ranges)}}
@@ -145,7 +153,7 @@ def source_measurements(coverage, source, exclude):
     if source not in coverage:
         raise ValueError(f"Missing exact-path LCOV coverage: {source}")
     ranges = exclude(source, code) if exclude else []
-    functions = [f for f in functions if not excluded(f.start_line, ranges)]
+    functions = [f for f in functions if not excluded_function(f, ranges)]
     hits = filter_hits(coverage[source], ranges)
     return measure_functions(source, functions, hits['lines']), hits
 

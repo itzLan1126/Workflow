@@ -26,41 +26,131 @@ def report_path(project, evidence):
 
 
 def exclude_tests(source, code):
-    # Lizard's tokenizer removes braces in comments and string literals.
-    from lizard_languages import get_reader_for
-    tokens = get_reader_for(str(source)).generate_tokens(code)
-    ranges, pending, depth, start, line, target = [], False, 0, None, 1, None
+    test_attribute = r'#\s*\[\s*cfg\s*\(\s*test\s*\)\s*\]'
+    tokens = rust_tokens(source, code.removeprefix('\ufeff'))
+    ranges, line, had_code, boundary = [], 1, False, None
     for token in tokens:
-        line += token.count('\n')
-        if starts_test_range(token, start):
-            pending, start = True, line
-        pending, start = close_test_declaration(ranges, start, line, pending, token)
-        if token == '{':
-            depth += 1
-            if pending:
-                pending, target = False, depth
-        if token == '}':
-            start = close_test_range(ranges, start, line, depth, target)
-            depth -= 1
+        if re.fullmatch(test_attribute, token):
+            require_test_boundary(had_code, False)
+            start = line
+            line += token.count('\n')
+            line = test_declaration_end(tokens, line)
+            ranges.append((start, line))
+            boundary = line
+        elif re.fullmatch(r'#\s*\[', token):
+            end = test_block_end(tokens, line + token.count('\n'), '[', ']')
+            had_code = had_code and end == line
+            line = end
+        else:
+            had_code = outside_test_token(token, had_code, line == boundary)
+            line += token.count('\n')
     return ranges
 
 
-def starts_test_range(token, start):
-    return start is None and re.fullmatch(r'#\s*\[\s*cfg\s*\(\s*test\s*\)\s*\]', token)
+def rust_tokens(source, code):
+    # Extend Lizard before its string rules for raw literals, lifetimes, and attributes.
+    from lizard_languages import get_reader_for
+    test_attribute = r'#\s*\[\s*cfg\s*\(\s*test\s*\)\s*\]'
+    addition = (r'|\b(?:br|cr|r)(?P<rust_raw_hashes>\#*)".*?"(?P=rust_raw_hashes)'
+                r'|\br\#[^\W\d]\w*'
+                r"|'[^\W\d]\w*(?![\w'])|" + test_attribute + r'|#\s*\[')
+    reader, position = get_reader_for(str(source)), 0
+    while position < len(code):
+        for token in reader.generate_tokens(code[position:], addition=addition):
+            if code.startswith('/*', position):
+                end = block_comment_end(code, position)
+                comment, position = code[position:end], end
+                yield comment
+                if len(comment) != len(token):
+                    break
+            else:
+                position += len(token)
+                yield token
 
 
-def close_test_declaration(ranges, start, line, pending, token):
-    if token == ';' and pending:
-        ranges.append((start, line))
-        return False, None
-    return pending, start
+def block_comment_end(code, start):
+    depth = 0
+    for marker in re.compile(r'/\*|\*/').finditer(code, start):
+        depth += 1 if marker.group() == '/*' else -1
+        if not depth:
+            return marker.end()
+    raise ValueError('Unclosed Rust block comment')
 
 
-def close_test_range(ranges, start, line, depth, target):
-    if start is not None and depth == target:
-        ranges.append((start, line))
-        return None
-    return start
+def require_test_boundary(had_code, at_boundary):
+    if had_code or at_boundary:
+        raise ValueError('Ambiguous Rust test boundary: production and tests share a line')
+
+
+def outside_test_token(token, had_code, at_boundary):
+    if token.isspace() or token.startswith(('//', '/*')):
+        return had_code and '\n' not in token
+    require_test_boundary(False, at_boundary)
+    return True
+
+
+def test_declaration_end(tokens, line):
+    prefix = ''
+    for token in tokens:
+        line += token.count('\n')
+        if re.fullmatch(r'#\s*\[', token):
+            line = test_block_end(tokens, line, '[', ']')
+            continue
+        if token.startswith(('#[', '//', '/*')):
+            prefix += ' '
+            continue
+        if token in ('fn', 'mod'):
+            # The compiler validates modifiers; other declarations introduce punctuation.
+            if not re.fullmatch(r'\s*(?:pub(?:\s*\([^()]*\))?\s*)?'
+                                r'(?:(?:(?!r\#*")\w+\b|(?:r\#*)?"[^"]*"\#*)\s*)*', prefix):
+                raise ValueError('Unsupported Rust test declaration: require a module or function')
+            break
+        prefix += token
+    else:
+        raise ValueError('Unsupported Rust test declaration: require a module or function')
+    return test_signature_end(tokens, line)
+
+
+def test_signature_end(tokens, line):
+    nesting = []
+    for token in tokens:
+        line += token.count('\n')
+        if token == ';' and not nesting:
+            return line
+        if token == '{' and not nesting:
+            return test_block_end(tokens, line)
+        update_signature_nesting(nesting, token)
+    raise ValueError('Unclosed Rust test declaration')
+
+
+def update_signature_nesting(nesting, token):
+    token = re.sub(r'^#\s*(?=\[)', '', token)
+    if token in ('<', '>') and any(delimiter != '<' for delimiter in nesting):
+        return
+    closing = {')': '(', ']': '[', '}': '{', '>': '<'}
+    if token in closing.values():
+        nesting.append(token)
+    elif token in closing:
+        close_signature_delimiter(nesting, closing[token])
+
+
+def close_signature_delimiter(nesting, opening):
+    if not nesting or nesting.pop() != opening:
+        raise ValueError('Unbalanced Rust test declaration')
+
+
+def test_block_end(tokens, line, opening='{', closing='}'):
+    depth = 1
+    for token in tokens:
+        line += token.count('\n')
+        token = re.sub(r'^#\s*(?=\[)', '', token)
+        if token == opening:
+            depth += 1
+        if token == closing:
+            depth -= 1
+        if not depth:
+            return line
+    raise ValueError('Unclosed Rust test declaration')
 
 
 CRAP = Crap('lcov', coverage_commands, 'coverage.lcov', exclude_tests)
