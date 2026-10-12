@@ -29,10 +29,11 @@ class CommandRunnerTests(unittest.TestCase):
             config = root / "config.json"
             config.write_text('{"cwd":".","report":"report.json","command":["tool"],"timeoutMs":1234}')
 
-            def run(command, cwd, timeout):
+            def run(command, cwd, timeout, *, env):
                 self.assertEqual(command, ["tool"])
                 self.assertEqual(cwd, root.resolve())
                 self.assertEqual(timeout, 1234)
+                self.assertEqual(env, {**os.environ, "WORKFLOW_REPORT_FILE": str((root / "report.json").resolve())})
                 (root / "report.json").write_text('{}')
                 return 0
 

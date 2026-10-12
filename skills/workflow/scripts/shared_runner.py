@@ -98,7 +98,8 @@ def run_report(config_path, accepted_exit_codes=(0,), *, config=None):
     if config is None:
         config = read_config(config_path)
     cwd, report_path = fresh_report_path(config_path, config)
-    exit_code = run_command(config["command"], cwd, config.get("timeoutMs", DEFAULT_TIMEOUT_MS))
+    exit_code = run_command(config["command"], cwd, config.get("timeoutMs", DEFAULT_TIMEOUT_MS),
+                            env={**os.environ, "WORKFLOW_REPORT_FILE": str(report_path.resolve())})
     if exit_code < 0 or exit_code not in accepted_exit_codes:
         raise ValueError(f"Tool failed: exit {exit_code}")
     if not stat.S_ISREG(report_path.lstat().st_mode):

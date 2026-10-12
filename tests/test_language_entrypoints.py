@@ -2,6 +2,7 @@
 from contextlib import redirect_stdout, redirect_stderr
 import io
 import json
+import os
 from pathlib import Path
 import sys
 import tempfile
@@ -13,6 +14,41 @@ import mutation
 
 
 class LanguageEntryPointsTests(unittest.TestCase):
+    def test_replacement_mutation_command_receives_report_path_and_literal_arguments(self):
+        from unittest.mock import patch
+        reports = {
+            'python': {'baselinePassed': True, 'mutants': [{'status': 'killed'}]},
+            'js': {'files': {'sample.js': {'mutants': [{'status': 'Killed'}]}}},
+            'rust': {'total_mutants': 1, 'outcomes': [
+                {'scenario': 'Baseline', 'summary': 'Success', 'phase_results': [{'phase': 'Test'}]},
+                {'scenario': {'Mutant': {}}, 'summary': 'CaughtMutant', 'phase_results': [{'phase': 'Test'}]}]},
+            'swift': {'fileReports': [{'appliedOperators': [{'testSuiteOutcome': 'failed'}]}]},
+        }
+        writer = ('import os,sys; from pathlib import Path; '
+                  'assert sys.argv[2] == "--json"; '
+                  'assert os.environ["WORKFLOW_TEST_KEEP"] == "inherited"; '
+                  'output = Path(os.environ["WORKFLOW_REPORT_FILE"]); '
+                  'assert output.is_absolute() and not output.exists(); '
+                  'output.parent.mkdir(parents=True, exist_ok=True); '
+                  'output.write_text(sys.argv[1], encoding="utf-8")')
+        for name, report in reports.items():
+            with self.subTest(language=name), tempfile.TemporaryDirectory() as directory:
+                project = Path(directory) / 'project with spaces'
+                project.mkdir()
+                tool = [sys.executable, '-c', writer, json.dumps(report), '--json']
+                with patch('lang_swift.sys.platform', 'darwin'), \
+                        patch.dict(os.environ, {'WORKFLOW_TEST_KEEP': 'inherited', 'WORKFLOW_REPORT_FILE': 'stale'}), \
+                        redirect_stdout(io.StringIO()) as stdout, tempfile.TemporaryFile(mode='w+') as stderr, redirect_stderr(stderr):
+                    self.assertEqual(mutation.main(['--json', name, str(project), '--', *tool]), 0)
+                result = json.loads(stdout.getvalue())
+                self.assertEqual(result['counts']['killed'], 1)
+                evidence = Path(result['reportPath']).parent
+                if name == 'rust':
+                    evidence = evidence.parent
+                config = json.loads((evidence / 'config.json').read_text())
+                self.assertEqual(config['command'], tool)
+                self.assertTrue(Path(config['report']).is_file())
+
     def test_custom_coverage_command_receives_fresh_output_path_and_literal_arguments(self):
         with tempfile.TemporaryDirectory() as directory:
             project = Path(directory)

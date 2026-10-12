@@ -16,6 +16,8 @@ A registered language name selects its language module; any other argument is a 
 
 Coverage commands receive `WORKFLOW_COVERAGE_FILE`, the absolute path of the fresh report expected by the selected language module. Configure replacement tools or their exporters to write that path; it is recorded in the evidence directory's `config.json`. Arguments remain literal and are not expanded by a shell.
 
+Mutation commands and config-mode commands receive `WORKFLOW_REPORT_FILE`, the absolute expected report path derived from `cwd` and `report`. Replacement commands or their exporters must write to that path; read it from the environment rather than using a shell placeholder in the argument array.
+
 Tool output goes to stderr; the result goes to stdout. Exit 0 means pass, exit 1 means review needed, and exit 2 means run failure. Missing tools, invalid or incomplete evidence, crashed commands, and no assessed mutants never count as a pass. Commands run as argument arrays without implicit shell evaluation. Timeouts default to 3,600,000 milliseconds; valid values are 1 through 2,147,483,647.
 
 Run mutation checks in a fresh isolated copy containing the accepted changes and test resources. The entry points do not create the copy or verify its isolation, and do not delete files outside the project. Preserve evidence; never alter reports to obtain a pass.
