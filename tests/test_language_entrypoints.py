@@ -122,14 +122,14 @@ class LanguageEntryPointsTests(unittest.TestCase):
 
     def test_invalid_language_arguments_fail_closed(self):
         with tempfile.TemporaryDirectory() as directory:
-            with self.assertRaisesRegex(ValueError, 'at least one source'):
+            with self.assertRaisesRegex(ValueError, '^Require at least one source file$'):
                 crap.language_result('python', [directory])
-            with self.assertRaisesRegex(ValueError, 'one project'):
+            with self.assertRaisesRegex(ValueError, '^Mutation check accepts one project path$'):
                 mutation.language_result('python', [directory, 'extra'])
             with redirect_stdout(io.StringIO()), tempfile.TemporaryFile(mode="w+") as stderr, redirect_stderr(stderr):
                 self.assertEqual(mutation.main(['--json', 'swift', directory, '--', 'nonexistent']), 2)
 
     def test_failed_coverage_command_is_run_failure(self):
         with tempfile.TemporaryDirectory() as directory, tempfile.TemporaryFile(mode="w+") as stderr, redirect_stderr(stderr):
-            with self.assertRaisesRegex(ValueError, 'Coverage command failed'):
+            with self.assertRaisesRegex(ValueError, '^Coverage command failed$'):
                 crap.language_result('js', [directory, 'sample.js', '--', sys.executable, '-c', 'raise SystemExit(1)'])

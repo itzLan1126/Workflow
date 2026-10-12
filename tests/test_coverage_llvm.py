@@ -16,7 +16,7 @@ class LLVMCoverageTests(unittest.TestCase):
             data = {'type': 'llvm.coverage.json.export', 'data': [{'files': [
                 {'filename': str(source), 'segments': [[1, 1, 2, True, True, False], [3, 1, 0, False, False, False]]}],
                 'functions': [{'name': 'example', 'filenames': [str(source)],
-                               'regions': [[1, 1, 3, 1, 2, 0, 0, 0], [2, 1, 2, 5, 0, 0, 0, 0], [2, 1, 2, 2, 5, 0, 0, 1]]}]}]}
+                               'regions': [[1, 1, 3, 1, 2, 0, 0, 0, 'extension'], [2, 1, 2, 5, 0, 0, 0, 0], [2, 1, 2, 2, 5, 0, 0, 1]]}]}]}
             report.write_text(json.dumps(data))
             hits = read(report, {source: 'func example() {\n return 1\n}\n'})[source]
             self.assertEqual(hits['lines'], {1: 2, 2: 2})
@@ -29,11 +29,11 @@ class LLVMCoverageTests(unittest.TestCase):
             self.assertEqual(result['coverage']['region'], {'covered': 1, 'total': 2, 'coverage': 0.5, 'meetsStandard': False})
             self.assertNotIn('branch', result['coverage'])
             self.assertEqual(result['findings'], 1)
-            with self.assertRaisesRegex(ValueError, 'Missing exact-path'):
+            with self.assertRaisesRegex(ValueError, '^Missing exact-path LLVM coverage$'):
                 read(report, {Path('/missing.swift'): 'x'})
             data['type'] = 'other'
             report.write_text(json.dumps(data))
-            with self.assertRaisesRegex(ValueError, 'Require llvm-cov'):
+            with self.assertRaisesRegex(ValueError, '^Require llvm-cov export JSON$'):
                 read(report, {})
 
     def test_segments_preserve_zero_hits_overlaps_and_last_source_line(self):
