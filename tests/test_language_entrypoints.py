@@ -57,7 +57,10 @@ class LanguageEntryPointsTests(unittest.TestCase):
             engine = [sys.executable, '-c', "import pathlib,json,sys; assert sys.argv[1]=='--json'; pathlib.Path(sys.argv[2]).write_text(json.dumps({'baselinePassed':True,'mutants':[{'status':'killed'}]}))", '--json']
             import lang_python
             from shared_languages import Mutation
-            spec = Mutation('normalized', lambda p, e, a: [*a, str(e / 'mutation.json')], lambda p, e: e / 'mutation.json')
+            def command(project_path, evidence, args):
+                self.assertEqual(project_path, project.resolve())
+                return [*args, str(evidence / 'mutation.json')]
+            spec = Mutation('normalized', command, lambda p, e: e / 'mutation.json')
             with patch.object(lang_python, 'MUTATION', spec), redirect_stdout(io.StringIO()) as stdout, tempfile.TemporaryFile(mode='w+') as stderr, redirect_stderr(stderr):
                 self.assertEqual(mutation.main(['--json', 'python', directory, '--', *engine]), 0)
             self.assertEqual(json.loads(stdout.getvalue())['counts']['killed'], 1)
