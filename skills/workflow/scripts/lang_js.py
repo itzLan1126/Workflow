@@ -1,4 +1,5 @@
 """JavaScript and TypeScript coverage and mutation commands."""
+import os
 from shared_languages import Crap, Mutation
 
 
@@ -8,7 +9,8 @@ def coverage_commands(project, evidence, args):
 
 
 def mutation_command(project, evidence, args):
-    return args or [str(project / 'node_modules/.bin/stryker'), 'run', '--testRunner', 'command', '--reporters', 'json']
+    executable = 'stryker.cmd' if os.name == 'nt' else 'stryker'
+    return args or [str(project / 'node_modules/.bin' / executable), 'run', '--testRunner', 'command', '--reporters', 'json']
 
 
 def report_path(project, evidence):
