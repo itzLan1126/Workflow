@@ -161,6 +161,20 @@ class LizardMetricsTests(unittest.TestCase):
         self.assertEqual([f['name'] for f in result['functions']], ['production'])
         self.assertEqual(result['coverage'], {'line': {'covered': 1, 'total': 1}, 'branch': {'covered': 1, 'total': 1}})
 
+    def test_exclusion_boundary_cannot_hide_a_production_function(self):
+        from shared_crap import collect
+        source = (self.root / 'shared.js').resolve()
+        source.write_text('function covered(flag) {\n if (flag) return 1;\n return 0;\n}\n'
+                          'function test() {} function complex(value) {\n'
+                          + ''.join(f' if (value === {value}) return {value};\n' for value in range(6))
+                          + ' return -1;\n}\n')
+        coverage = {source: {'lines': dict.fromkeys(range(1, 14), 1),
+                             'branches': {(2, '0', '0'): 1, (6, '0', '0'): 1}}}
+        for ranges in ([(5, 5)], [(5, 6), (12, 13)]):
+            with self.subTest(ranges=ranges), self.assertRaisesRegex(
+                    ValueError, '^Function crosses test exclusion boundary: complex$'):
+                collect(coverage, [source], exclude=lambda path, code: ranges)
+
     def test_nested_functions_with_same_end_line_use_innermost_range(self):
         from shared_crap import collect
         source = (self.root / 'nested.js').resolve()
