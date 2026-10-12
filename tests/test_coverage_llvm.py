@@ -36,6 +36,34 @@ class LLVMCoverageTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, '^Require llvm-cov export JSON$'):
                 read(report, {})
 
+    def test_duplicate_source_records_fail_closed_in_either_order(self):
+        with tempfile.TemporaryDirectory() as directory:
+            source = (Path(directory) / 'sample.swift').resolve()
+            report = Path(directory) / 'coverage.json'
+            for counts in ((0, 1), (1, 0)):
+                files = [{'filename': str(source), 'segments': [[1, 1, hits, True, True, False]]}
+                         for hits in counts]
+                for data in ([{'files': files, 'functions': []}],
+                             [{'files': [file], 'functions': []} for file in files]):
+                    report.write_text(json.dumps({'type': 'llvm.coverage.json.export', 'data': data}))
+                    with self.subTest(counts=counts, objects=len(data)), self.assertRaisesRegex(
+                            ValueError, '^Duplicate exact-path LLVM coverage$'):
+                        read(report, {source: 'func a() {}\n'})
+
+    def test_distinct_sources_in_multiple_data_objects_preserve_coverage(self):
+        with tempfile.TemporaryDirectory() as directory:
+            sources = [(Path(directory) / name).resolve() for name in ('a.swift', 'b.swift')]
+            report = Path(directory) / 'coverage.json'
+            data = [{'files': [{'filename': str(source), 'segments': [[1, 1, hits, True, True, False]]}],
+                     'functions': [{'name': source.stem, 'filenames': [str(source)],
+                                    'regions': [[1, 1, 1, 12, hits, 0, 0, 0]]}]}
+                    for source, hits in zip(sources, (0, 2))]
+            report.write_text(json.dumps({'type': 'llvm.coverage.json.export', 'data': data}))
+            coverage = read(report, {source: f'func {source.stem}() {{}}\n' for source in sources})
+            self.assertEqual(coverage, {
+                sources[0]: {'lines': {1: 0}, 'branches': {(1, 'a', 0): 0}, 'branchKind': 'region'},
+                sources[1]: {'lines': {1: 2}, 'branches': {(1, 'b', 0): 2}, 'branchKind': 'region'}})
+
     def test_segments_preserve_zero_hits_overlaps_and_last_source_line(self):
         self.assertEqual(line_hits([[1, 1, 0, True, True, False], [4, 1, 0, False, False, False]], 2), {1: 0, 2: 0})
         self.assertEqual(line_hits([[2, 1, 0, True, True, False]], 2), {2: 0})
