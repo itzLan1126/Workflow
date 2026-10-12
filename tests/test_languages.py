@@ -125,7 +125,7 @@ class LanguageArgumentsTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             with patch('lang_swift.subprocess.run', return_value=subprocess.CompletedProcess([], 0, str(root), '')):
-                with self.assertRaisesRegex(ValueError, 'binary not found'):
+                with self.assertRaisesRegex(ValueError, '^Swift test coverage binary not found$'):
                     export_coverage(root, root / 'coverage.json')
 
     def test_swift_rejects_other_platforms_for_both_checks(self):
@@ -133,7 +133,7 @@ class LanguageArgumentsTests(unittest.TestCase):
         from unittest.mock import patch
         with patch('lang_swift.sys.platform', 'linux'):
             for command in (coverage_commands, mutation_command):
-                with self.assertRaisesRegex(ValueError, 'require macOS'):
+                with self.assertRaisesRegex(ValueError, '^Swift quality checks require macOS$'):
                     command(Path('.'), Path('/tmp'), [])
 
     def test_timeout_before_source_preserves_source_and_default(self):
