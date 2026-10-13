@@ -111,6 +111,17 @@ class ReportContractsTests(unittest.TestCase):
         report = {'files': {'sample.js': {'mutants': [{'id': '1', 'status': 'Survived', 'file': 'forged.js'}]}}}
         self.assertEqual(assess(report, 'stryker', Path('report.json'))['mutants'][0]['file'], 'sample.js')
 
+    def test_stryker_utf16_column_bounds_use_exact_integer_counts(self):
+        from report_stryker import valid_utf16_column
+        cases = [(0, 1, True), (0, 2, False), (2, 0, False), (2, 1, True),
+                 (2, 2, True), (2, 3, False),
+                 (2**54 - 2, 2**53, True), (2**54 - 2, 2**53 + 1, False),
+                 (2**54, 2**53 + 1, True), (2**54, 2**53 + 2, False),
+                 (2**54 + 2, 2**53 + 2, True), (2**54 + 2, 2**53 + 3, False)]
+        for encoded_byte_length, column, accepted in cases:
+            with self.subTest(encoded_byte_length=encoded_byte_length, column=column):
+                self.assertIs(valid_utf16_column(encoded_byte_length, column), accepted)
+
     def test_unified_diff_preserves_header_and_line_format(self):
         from shared_mutation import code_diff, numbered_diff
         self.assertEqual(code_diff('old\n', 'new\n'), '--- \n+++ \n@@ -1 +1 @@\n-old\n+new')

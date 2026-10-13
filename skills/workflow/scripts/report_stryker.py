@@ -5,9 +5,13 @@ from shared_mutation import object_value, array, safe_detail, code_diff, functio
 ACCEPTED_EXIT_CODES = (0,)
 STATUSES = {'Killed': 'killed', 'Survived': 'survived', 'NoCoverage': 'noCoverage', 'Timeout': 'timeout', 'CompileError': 'unviable', 'Ignored': 'ignored', 'RuntimeError': 'error', 'Pending': 'error'}
 
+def valid_utf16_column(encoded_byte_length, column):
+    return 1 <= column <= encoded_byte_length // 2 + 1
+
+
 def valid_position(lines, line, column):
     return (1 <= line <= len(lines)
-            and 1 <= column <= len(lines[line - 1].rstrip("\r\n").encode("utf-16-le")) // 2 + 1)
+            and valid_utf16_column(len(lines[line - 1].rstrip("\r\n").encode("utf-16-le")), column))
 
 
 def source_offset(source, position):
