@@ -66,6 +66,8 @@ def rust_tokens(source, code):
             else:
                 position += len(token)
                 yield token
+        else:
+            return
 
 
 def block_comment_end(code, start):
