@@ -7,7 +7,7 @@ from shared_crap import calculate, collect, score_functions, gate_coverage, STAN
 from coverage_lcov import read
 import sys
 
-from shared_runner import read_config, run_report, run_command
+from shared_runner import read_config, read_utf8, run_report, run_command
 from shared_languages import LANGUAGES, language, arguments, evidence_directory
 from importlib import import_module
 import os
@@ -15,11 +15,11 @@ import os
 def collect_main(args):
     if len(args) < 3:
         raise ValueError('Usage: crap.py collect COVERAGE.lcov OUTPUT.json SOURCE_FILE...')
-    sources = {Path(source).resolve(strict=True): Path(source).read_text(encoding='utf-8')
+    sources = {Path(source).resolve(strict=True): read_utf8(source)
                for source in args[2:]}
     metrics = collect(read(args[0], sources), args[2:])
-    with Path(args[1]).open('x', encoding='utf-8') as output:
-        output.write(json.dumps(metrics, indent=2) + '\n')
+    with Path(args[1]).open('xb') as output:
+        output.write((json.dumps(metrics) + '\n').encode())
     return 0
 
 
@@ -29,7 +29,7 @@ def config_result(path):
         raise ValueError('maxCrap is not configurable; the skill standard is CRAP <= 6')
     execution = run_report(path, config=config)
     result = calculate(execution['report'])
-    print(json.dumps(result, indent=2, allow_nan=False))
+    print(json.dumps(result))
     return 1 if result['findings'] else 0
 
 
@@ -37,7 +37,7 @@ def read_measurements(project, sources, spec, evidence):
     previous = Path.cwd()
     try:
         os.chdir(project)
-        texts = {Path(source).resolve(strict=True): Path(source).read_text(encoding='utf-8') for source in sources}
+        texts = {Path(source).resolve(strict=True): read_utf8(source) for source in sources}
         coverage = import_module({'lcov': 'coverage_lcov', 'llvm-json': 'coverage_llvm'}[spec.format]).read(evidence / spec.coverage, texts)
         return collect(coverage, sources, exclude=spec.exclude)
     finally:
@@ -52,16 +52,16 @@ def language_result(name, args):
     evidence = evidence_directory()
     commands = spec.commands(project, evidence, tool)
     environment = {'WORKFLOW_COVERAGE_FILE': str(evidence / spec.coverage)}
-    (evidence / 'config.json').write_text(json.dumps({'cwd': str(project), 'commands': commands,
-                                                    'sources': sources, 'timeoutMs': timeout,
-                                                    'env': environment}, indent=2), encoding='utf-8')
+    (evidence / 'config.json').write_bytes(json.dumps({'cwd': str(project), 'commands': commands,
+                                                     'sources': sources, 'timeoutMs': timeout,
+                                                     'env': environment}).encode())
     for command in commands:
         if run_command(command, project, timeout, env={**os.environ, **environment}) != 0:
             raise ValueError('Coverage command failed')
     measurements = read_measurements(project, sources, spec, evidence)
-    (evidence / 'measurements.json').write_text(json.dumps(measurements, indent=2), encoding='utf-8')
+    (evidence / 'measurements.json').write_bytes(json.dumps(measurements).encode())
     result = calculate(measurements)
-    print(json.dumps(result, indent=2, allow_nan=False))
+    print(json.dumps(result))
     return 1 if result['findings'] else 0
 
 

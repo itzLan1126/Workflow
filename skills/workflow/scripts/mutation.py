@@ -38,7 +38,7 @@ def language_result(name, args):
     config = {'cwd': str(project), 'report': str(report), 'format': spec.format,
               'command': spec.command(project, evidence, tool), 'timeoutMs': timeout}
     path = evidence / 'config.json'
-    path.write_text(json.dumps(config, indent=2), encoding='utf-8')
+    path.write_bytes(json.dumps(config).encode())
     result = run_mutation(path)
     if not report.resolve().is_relative_to(evidence.resolve()):
         shutil.copy2(report, evidence / report.name)
@@ -63,7 +63,7 @@ def main(argv=None):
         if as_json:
             args.remove('--json')
         result = dispatch(args)
-        print(json.dumps(result, indent=2, allow_nan=False) if as_json else render_report(result))
+        print(json.dumps(result) if as_json else render_report(result))
         return result["exitCode"]
     except (OSError, ValueError, ImportError, KeyError, TypeError) as error:
         print(f"mutation: {error}", file=sys.stderr)

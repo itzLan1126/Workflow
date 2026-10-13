@@ -161,17 +161,17 @@ class LanguageEntryPointsTests(unittest.TestCase):
                       'coverage': {'line': {'covered': 1, 'total': 1}, 'branch': {'covered': 1, 'total': 1}}}
             # Detect a second read at the filesystem boundary without mocking the runner.
             from unittest.mock import patch
-            read_text = Path.read_text
+            read_bytes = Path.read_bytes
             reads = []
             def read(path, *args, **kwargs):
                 if path == config:
                     reads.append(path)
                     if len(reads) > 1:
                         raise OSError('config read twice')
-                return read_text(path, *args, **kwargs)
+                return read_bytes(path, *args, **kwargs)
             command = [sys.executable, '-c', 'import pathlib,sys;pathlib.Path("report.json").write_text(sys.argv[1])', json.dumps(report)]
             config.write_text(json.dumps({'cwd': '.', 'command': command, 'report': 'report.json'}))
-            with patch.object(Path, 'read_text', read), redirect_stdout(io.StringIO()), tempfile.TemporaryFile(mode='w+') as stderr, redirect_stderr(stderr):
+            with patch.object(Path, 'read_bytes', read), redirect_stdout(io.StringIO()), tempfile.TemporaryFile(mode='w+') as stderr, redirect_stderr(stderr):
                 self.assertEqual(crap.config_result(config), 0)
             self.assertEqual(len(reads), 1)
             (root / 'report.json').unlink()
@@ -179,7 +179,7 @@ class LanguageEntryPointsTests(unittest.TestCase):
             command[-1] = json.dumps(report)
             config.write_text(json.dumps({'cwd': '.', 'command': command, 'report': 'report.json', 'format': 'normalized'}))
             reads.clear()
-            with patch.object(Path, 'read_text', read), tempfile.TemporaryFile(mode='w+') as stderr, redirect_stderr(stderr):
+            with patch.object(Path, 'read_bytes', read), tempfile.TemporaryFile(mode='w+') as stderr, redirect_stderr(stderr):
                 self.assertEqual(mutation.run_mutation(config)['exitCode'], 0)
             self.assertEqual(len(reads), 1)
 

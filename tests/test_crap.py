@@ -128,6 +128,20 @@ class CrapTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, r"^Duplicate function measurement: \('src/a.ts', 1, 'choose'\)$"):
             calculate(report(MEASURED, MEASURED))
 
+    def test_cli_rejects_nonfinite_values_in_extra_metadata(self):
+        for value in (float('nan'), float('inf'), float('-inf')):
+            with self.subTest(value=value):
+                code, stdout, stderr = self.run_main(report({**MEASURED, 'extra': {'nested': [value]}}))
+                self.assertEqual((code, stdout), (2, ''))
+                self.assertIn('Non-finite JSON number:', stderr)
+
+    def test_largest_valid_measurements_produce_finite_json(self):
+        largest = 2**53 - 1
+        result = calculate(report({**MEASURED, 'complexity': largest, 'covered': 0,
+                                   'total': largest, 'line': largest}))
+        self.assertEqual(result['functions'][0]['crap'], float(largest**2 + largest))
+        self.assertEqual(json.loads(json.dumps(result, allow_nan=False)), result)
+
     def test_invalid_aggregate_coverage(self):
         for coverage in [None, [], 'line']:
             with self.subTest(coverage=coverage), self.assertRaisesRegex(

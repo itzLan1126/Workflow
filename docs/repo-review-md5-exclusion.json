@@ -1,0 +1,10 @@
+{
+  "id": "coverage_lcov.x_validate_checksums__mutmut_3",
+  "file": "src/coverage_lcov.py",
+  "function": "validate_checksums",
+  "repositoryFile": "skills/workflow/scripts/coverage_lcov.py",
+  "sourceSha256": "ef99126aed9617accb3f32190a56822f49684df14bb0dc2366acfa5ad47fea47",
+  "diffSha256": "97ecc3613d91c5e6170e02a10a2269070c5b70fd0f47f967476b29d2cfc5e798",
+  "reason": "Approved by the repository owner: MD5 usedforsecurity=False to None is equivalent under the verified CPython OpenSSL providers. Both values select the same nonsecurity branch; removing the flag would break restricted-policy compatibility.",
+  "proof": "repo-review-survivor-remediation.json#/remainingEquivalentProof"
+}

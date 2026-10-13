@@ -41,7 +41,7 @@ jobs:
       - name: Check every production script against the CRAP standard
         if: runner.os != 'Windows'
         run: python scripts/self_crap.py > crap-result.json
-      - name: Mutation-test every production script
+      - name: Review full-repository mutation with the approved MD5 equivalence
         if: runner.os != 'Windows'
         run: python scripts/self_mutation.py --json > mutation-result.json 2> mutation-run.log
       - name: Preserve quality evidence even when the strict gate fails
@@ -54,6 +54,9 @@ jobs:
             mutation-result.json
             mutation-run.log
             ${{ runner.temp }}/**/source-snapshot.json
+            ${{ runner.temp }}/**/mutation-result.json
+            ${{ runner.temp }}/**/mutation-reviewed.json
+            ${{ runner.temp }}/**/md5-exclusion.json
             ${{ runner.temp }}/**/mutation.json
             ${{ runner.temp }}/**/measurements.json
             ${{ runner.temp }}/**/coverage.lcov

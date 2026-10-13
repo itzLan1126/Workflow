@@ -1,5 +1,64 @@
 # Repository review repairs and survivor verification
 
+## Latest approved MD5 reviewed gate (2026-10-14)
+
+The current uncommitted snapshot remains based on `ea67dabf9b7b7767f8be10fb92ec997045a52540` on `fix/repo-review`. The repository owner approved exactly the MD5 `usedforsecurity=False` to `None` equivalent. The new reviewed gate passes on Python 3.14.3 and 3.10.18; **the original strict mutation result remains exit 1**, with its counts, statuses and bytes preserved. All sections after this update describe historical snapshots.
+
+[repo-review-md5-exclusion.json](repo-review-md5-exclusion.json) binds the exact ID, file, function and repository path to the complete source-file SHA-256 `ef99126aed9617accb3f32190a56822f49684df14bb0dc2366acfa5ad47fea47` and actual generated diff SHA-256 `97ecc3613d91c5e6170e02a10a2269070c5b70fd0f47f967476b29d2cfc5e798`. The production MD5 call remains unchanged for restricted-policy compatibility. This is a reviewed-result exception, without a line exclusion or generator filter. All eight mutations on the digest line remain generated: only False-to-None survives and is approved; the other seven, including True and argument deletion, are killed. Other failures, stale hashes, changed identities, malformed evidence or approval changes during execution block the reviewed gate.
+
+`scripts/mutation_review.py` validates the raw evidence and applies the single approval. `scripts/self_mutation.py` preserves separate raw `mutation-result.json` and overlaid `mutation-reviewed.json` files, with raw exit 1, review exit 0 and the captured manifest SHA clearly labeled. The original bundled strict mutation command retains its behavior. CI uses the existing self-check command and uploads both results, the approval and source snapshot; only the existing step name and three artifact paths changed, with no new jobs or altered exit handling.
+
+The complete scope is **20 production scripts and 18 test resources**, including the new reviewer. Both full mutation runs match all 38 current source/test hashes to their snapshots and actual copied bytes. Every native ID/status was independently compared with its real per-mutant pytest exit metadata. All **326 mutations in the new reviewer are killed**, and the previously repaired 16 PiB UTF-16 arithmetic mutation remains killed.
+
+| Final accepted check | Python 3.14.3 | Python 3.10.18 |
+| --- | --- | --- |
+| Full unit suite | 245 total; 241 passed; 4 existing native Windows skips; exit 0 | Same, serial full run |
+| Full-repository CRAP | 189 functions; 0 findings; maximum 6; exit 0 | Same |
+| Line coverage | 1,448 / 1,460 = 99.1781% | 1,454 / 1,466 = 99.1814% |
+| Branch coverage | 515 / 524 = 98.2824% | Same |
+| Full-repository mutation | 4,069 generated; 4,068 killed; 1 survived | Same IDs and raw statuses |
+| Raw strict mutation exit | **1** | **1** |
+| Reviewed gate and actual self-check process exit | **0**, exactly one hash-bound approval | Same |
+| Mutation noCoverage / timeout / error / ignored / unviable | 0 / 0 / 0 / 0 / 0 | Same |
+
+Eleven controls based on a real raw report confirm that only the exact approved item passes. Source/diff changes, an extra survivor, noCoverage, timeout, unviable, ignored, error and inconsistent counts are blocked. Raw objects remain unchanged. Strict JSON tests also reject NaN, infinity, overflow and invalid UTF-8 without hiding damaged raw output. A case-sensitive read fixture exercises Linux filename semantics on macOS and is applied through `Path.open` on both Python versions; subprocess tests load the helper from the actual isolated module location.
+
+Fresh real JS/TS/Rust/Swift checks all returned exit 0: mutation 2/2, 2/2, 6/6 and 1/1 killed, with complete measured CRAP coverage (Swift retains its region label). Their 20 production-source hashes match this final snapshot. Repository validation, both dependency checks, AST syntax for all 38 Python inputs, both workflow YAML files, all 15 embedded Bash-step syntax checks and `git diff --check` passed. Thresholds, inner test selection, raw status mapping and platform skips are unchanged.
+
+One Python 3.10 full-unit attempt under six concurrent heavy checks failed because an existing Rust probe had not started before its 100 ms deadline. Its failure log and exit 1 are retained. The complete suite then passed serially on the exact same source/test snapshot, without changing the timeout or adding a skip. This remains an observed startup timing limitation under heavy parallel load.
+
+Fresh OpenSSL `default_properties=fips=yes` subprocess probes on both Python versions again reject True and accept False/None with the same checksum. This verifies the stated property-policy compatibility, without claiming FIPS module certification or behavior on every Python implementation. The exact CPython source evidence and original proof remain in [repo-review-survivor-remediation.json](repo-review-survivor-remediation.json).
+
+[repo-review-reviewed-gate.json](repo-review-reviewed-gate.json) records the complete input hashes, original and preserved raw-report bindings, neighboring mutation diffs, native metadata checks, both full results, real-language reports, negative controls, policy replay and preserved failed attempt. Raw files and byte-identical archive copies are in `/private/tmp/workflow-reviewed-gate-20261014-jyqqqni9/`. The final code and raw evidence also received an independent read-only review.
+
+No commits, pushes or merges were made. Remote CI for this snapshot and native Windows behavior were not run; both local executions of the same CI mutation command passed the reviewed gate. Earlier raw failure reports are historical evidence and remain unchanged.
+
+## Historical survivor remediation (2026-10-13)
+
+The latest uncommitted repair is based on `ea67dabf9b7b7767f8be10fb92ec997045a52540` on `fix/repo-review`. The sections below this update and the 71-item equivalent ledger are historical measurements of the earlier source snapshot. They are not the current survivor list.
+
+The complete reruns now generate **3,601 mutants: 3,600 killed and 1 survived**, identically on Python 3.14.3 and 3.10.18. All other statuses are zero. The engine completed with exit 0, while the unchanged strict mutation gate returns **exit 1**. Mutation has **not passed**.
+
+Of the previous 71 survivors, 68 redundant sites were removed or consolidated into standard/shared operations. JSON formatting/default arguments, repeated Rust opener scans, duplicate exhaustion checks and absent-diff processing were simplified. Strict UTF-8, universal newlines, surrogate errors, non-finite input rejection, exclusive report ownership and process cleanup remain covered. The two corresponding Rust comment-depth operator mutants now fail tests in both complete runs. A disappearing or reused historical ID is not counted as a kill. The 16 PiB UTF-16 arithmetic regression still kills the exact floating-division mutation.
+
+[repo-review-survivor-remediation.json](repo-review-survivor-remediation.json) records each of the 71 dispositions, old/current source and diff hashes, the new corresponding mutant diffs, all 36 copied-input hashes, native per-ID/pytest-exit verification, complete check results and the remaining proof. The previous audit and equivalence artifacts retain their original source bindings. No threshold, mutation selection, status mapping, workflow or platform skip changed.
+
+The remaining mutation changes `hashlib.md5(..., usedforsecurity=False)` to `usedforsecurity=None`. In the verified CPython [3.10.18 parameter parser](https://github.com/python/cpython/blob/v3.10.18/Modules/clinic/_hashopenssl.c.h#L262) and [3.14.3 parameter parser](https://github.com/python/cpython/blob/v3.14.3/Modules/clinic/_hashopenssl.c.h#L408), both values become the same false C integer and select the same OpenSSL nonsecurity branch. Real subprocesses using `default_properties=fips=yes` reject the default/True call but accept False and None with the same checksum. Removing this parameter would therefore break restricted-policy compatibility. Tests that only assert a literal False, changing its spelling, hiding it outside mutation coverage or suppressing the survivor would not prove a behavioral repair. The flag and raw failure remain. The replayable probe, configuration, outputs and exact official-source excerpts are embedded in the remediation JSON; this property-policy check does not claim FIPS module certification.
+
+| Latest check | Python 3.14.3 | Python 3.10.18 |
+| --- | --- | --- |
+| Full unit suite | 225 total; 221 passed; 4 existing native Windows skips | Same |
+| Full-repository CRAP | 171 functions; 0 findings; maximum 6; exit 0 | Same |
+| Line coverage | 1,306 / 1,317 = 99.1648% | 1,312 / 1,323 = 99.1686% |
+| Branch coverage | 454 / 462 = 98.2684% | Same |
+| Full-repository mutation | 3,601 generated; 3,600 killed; 1 survived; exit 1 | Same IDs and raw statuses |
+
+Fresh real JS/TS/Rust/Swift CRAP and mutation checks all returned exit 0. Their mutation counts were 2/2, 2/2, 6/6 and 1/1 killed; measured line/branch coverage was complete (Swift retains the region label). Their production-source hashes match the final repair snapshot. Repository validation, both dependency checks, syntax for all 36 Python input files, both workflow YAML files, embedded Bash steps and `git diff --check` passed. A read-only review found and repaired one new test's mutmut initialization/order dependency; its selected Unicode tests and entire file passed separately on both Python versions before the final full reruns.
+
+Raw logs, snapshots, reports and independent proof programs are in `/private/tmp/workflow-survivor-repair-20261013-hrvz2h2x/`. These repairs have not been committed, pushed or merged. Native Windows and remote CI were not run for this uncommitted snapshot. The retained exit 1 will still block strict CI/release gates.
+
+## Earlier UTF-16 repair snapshot
+
 Verified on 2026-10-13 on macOS in the uncommitted `fix/repo-review` worktree, based on `7bcf36d`. No commits or pushes were made. Standards, mutation exclusions, and platform skips were not relaxed.
 
 ## UTF-16 correction

@@ -124,12 +124,11 @@ class CommandRunnerTests(unittest.TestCase):
 
     def test_json_encoding_is_independent_of_locale(self):
         encoded = '{"中文":"😀"}'.encode("utf-8")
-
-        def read(path, *, encoding=None):
-            return io.TextIOWrapper(io.BytesIO(encoded), encoding=encoding or "ascii").read()
-
-        with mock.patch.object(Path, "read_text", autospec=True, side_effect=read):
-            self.assertEqual(run_report.read_json("report.json"), {"中文": "😀"})
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'report.json'
+            path.write_bytes(encoded)
+            with mock.patch.object(io, 'text_encoding', side_effect=lambda encoding, *args: encoding or 'ascii'):
+                self.assertEqual(run_report.read_json(path), {"中文": "😀"})
 
 
 if __name__ == "__main__":
