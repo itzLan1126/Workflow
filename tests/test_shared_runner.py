@@ -7,6 +7,7 @@ import signal
 import subprocess
 import sys
 import tempfile
+import time
 import unittest
 from unittest import mock
 
@@ -59,9 +60,11 @@ class CommandRunnerTests(unittest.TestCase):
     def test_command_owns_group_and_converts_milliseconds(self):
         process = mock.MagicMock()
         child = process.__enter__.return_value
+        child.pid = 12345
         child.wait.return_value = 17
         command = ["tool", "argument with spaces", "$(literal)"]
-        with mock.patch.object(run_report.subprocess, "Popen", return_value=process) as start:
+        with mock.patch.object(run_report.subprocess, "Popen", return_value=process) as start, \
+                mock.patch.object(run_report.os, "killpg") as kill:
             self.assertEqual(run_report.run_command(command, "analysis-directory", 1234), 17)
         self.assertEqual(start.call_count, 1)
         self.assertEqual(start.call_args.args, (command,))
@@ -69,7 +72,40 @@ class CommandRunnerTests(unittest.TestCase):
         self.assertFalse(options.pop("shell", False))
         self.assertEqual(options, dict(cwd="analysis-directory", stdin=subprocess.DEVNULL,
                                        stdout=sys.stderr, stderr=sys.stderr, start_new_session=True, env=None))
-        child.wait.assert_called_once_with(timeout=1.234)
+        self.assertEqual(child.wait.call_args_list, [mock.call(timeout=1.234), mock.call()])
+        kill.assert_called_once_with(12345, signal.SIGKILL)
+
+    @unittest.skipUnless(os.name == "posix", "POSIX process groups")
+    def test_normal_root_exit_stops_background_report_writer(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            writer = ('import time; from pathlib import Path; Path("ready").touch(); '
+                      'time.sleep(0.4); Path("report.json").write_text("{\\"late\\":true}")')
+            tool = ('import subprocess,sys,time; from pathlib import Path; '
+                    'Path("report.json").write_text("{}"); '
+                    f'subprocess.Popen([sys.executable,"-c",{writer!r}]); '
+                    '\nwhile not Path("ready").exists(): time.sleep(0.01)')
+            config = {'cwd': '.', 'report': 'report.json', 'timeoutMs': 2000,
+                      'command': [sys.executable, '-c', tool]}
+            result = run_report.run_report(root / 'config.json', config=config)
+            self.assertEqual(result['report'], {})
+            self.assertTrue((root / 'ready').exists())
+            time.sleep(0.5)
+            self.assertEqual(run_report.read_json(root / 'report.json'), {})
+
+    @unittest.skipUnless(os.name == "posix", "POSIX process groups")
+    def test_cleanup_failure_preserves_timeout_classification(self):
+        process = mock.MagicMock()
+        child = process.__enter__.return_value
+        timeout = subprocess.TimeoutExpired('tool', 1)
+        child.wait.side_effect = timeout
+        cleanup = OSError('cleanup failed')
+        with mock.patch.object(run_report.subprocess, 'Popen', return_value=process), \
+                mock.patch.object(run_report, 'stop', side_effect=cleanup), \
+                self.assertRaisesRegex(ValueError, '^Tool exceeded timeoutMs$') as raised:
+            run_report.run_command(['tool'], '.', 1000)
+        self.assertIs(raised.exception.__cause__, timeout)
+        self.assertIs(timeout.__cause__, cleanup)
 
     @unittest.skipUnless(os.name == "posix", "POSIX process groups")
     def test_timeout_terminates_owned_group_before_returning(self):
