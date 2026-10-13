@@ -20,10 +20,11 @@ jobs:
           - os: macos-latest
             python: "3.x"
     runs-on: ${{ matrix.os }}
-    env:
-      TMPDIR: ${{ runner.temp }}
     steps:
       - uses: actions/checkout@v7
+      - name: Use runner-owned temporary directory for quality evidence
+        if: runner.os != 'Windows'
+        run: echo "TMPDIR=$RUNNER_TEMP" >> "$GITHUB_ENV"
       - uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python }}
