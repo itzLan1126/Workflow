@@ -86,12 +86,17 @@ def run_command(command, cwd, timeout, *, env=None):
                           stdout=sys.stderr, stderr=sys.stderr,
                           start_new_session=True, env=env) as child:
         try:
-            return child.wait(timeout=timeout / 1000)
+            exit_code = child.wait(timeout=timeout / 1000)
         except BaseException as error:
-            stop(child)
+            try:
+                stop(child)
+            except OSError as cleanup_error:
+                error.__cause__ = cleanup_error
             if isinstance(error, subprocess.TimeoutExpired):
                 raise ValueError("Tool exceeded timeoutMs") from error
             raise
+        stop(child)
+        return exit_code
 
 
 def run_report(config_path, accepted_exit_codes=(0,), *, config=None):
