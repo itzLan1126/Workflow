@@ -152,3 +152,12 @@ class LanguageArgumentsTests(unittest.TestCase):
         for timeout in ('0', '-1', 'no', '2147483648'):
             with self.subTest(timeout=timeout), self.assertRaises(ValueError):
                 arguments(['.', '--timeout-ms', timeout])
+
+    def test_missing_project_reports_filesystem_failure_before_directory_validation(self):
+        from shared_languages import arguments
+        import tempfile
+        with tempfile.TemporaryDirectory() as directory:
+            missing = Path(directory).resolve() / 'missing'
+            with self.assertRaises(FileNotFoundError) as raised:
+                arguments([str(missing)])
+            self.assertEqual(raised.exception.filename, str(missing))

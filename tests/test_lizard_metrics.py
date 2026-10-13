@@ -227,6 +227,22 @@ class LizardMetricsTests(unittest.TestCase):
         self.assertIn(str(source.resolve()), result.stderr)
         self.assertFalse(self.output.exists())
 
+    def test_missing_sources_preserve_target_diagnostic_before_measurement(self):
+        from shared_crap import collect
+        missing = self.root.resolve() / 'missing.unknown'
+        with self.assertRaises(FileNotFoundError) as raised:
+            collect({}, [missing])
+        self.assertEqual(raised.exception.filename, str(missing))
+
+    def test_dangling_source_link_identifies_missing_target(self):
+        target = self.root.resolve() / 'missing.py'
+        link = self.root / 'sample.py'
+        link.symlink_to(target)
+        with self.assertRaises(FileNotFoundError) as raised:
+            lizard_metrics.collect_main([str(self.coverage), str(self.output), str(link)])
+        self.assertEqual(raised.exception.filename, str(target))
+        self.assertFalse(self.output.exists())
+
     def test_merges_test_records_but_requires_each_function_coverage(self):
         source = self.root / "sample.py"
         source.write_text("def example():\n    return 1\n\ndef uncovered():\n    return 0\n")

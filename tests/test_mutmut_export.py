@@ -118,7 +118,9 @@ class MutmutExportTests(unittest.TestCase):
                   "class Box:\n    @staticmethod\n    def choose(a, b):\n        return a + b\n")
         path.write_text(source, encoding="utf-8")
         # Keep the outer mutation runner's cached config for its instrumented trampolines.
-        self.enterContext(mock.patch("mutmut.utils.file_utils.config", return_value=_load_config()))
+        patcher = mock.patch("mutmut.utils.file_utils.config", return_value=_load_config())
+        patcher.start()
+        self.addCleanup(patcher.stop)
         generated = mutate_file_contents(str(path), source)
         target = Path("mutants") / path
         target.parent.mkdir(parents=True)
@@ -152,11 +154,17 @@ class MutmutExportTests(unittest.TestCase):
     @unittest.skipUnless(HAS_MUTMUT, "mutmut is not installed")
     def test_main_runs_mutmut_then_exports_its_results(self):
         generated = []
+        rglob = Path.rglob
+
+        def case_sensitive_rglob(path, pattern):
+            # Simulate Linux when this suite runs on a case-insensitive macOS filesystem.
+            return iter(()) if path.name == 'MUTANTS' else rglob(path, pattern)
 
         def fake_run(command, check):
             generated.extend(self.generated_results())
 
-        with mock.patch("lang_python.subprocess.run", side_effect=fake_run) as run:
+        with mock.patch("lang_python.subprocess.run", side_effect=fake_run) as run, \
+                mock.patch.object(Path, 'rglob', case_sensitive_rglob):
             self.assertEqual(self.run_main(), (0, ""))
         run.assert_called_once_with([sys.executable, "-m", "mutmut", "run"], check=True)
         report = json.loads((self.root / "report.json").read_text(encoding="utf-8"))
@@ -202,8 +210,16 @@ class MutmutExportTests(unittest.TestCase):
         (self.root / "mutants").mkdir()
         self.addCleanup(os.chdir, os.getcwd())
         os.chdir(self.root)
-        with redirect_stderr(io.StringIO()) as stderr:
+        exists = Path.exists
+
+        def case_sensitive_exists(path):
+            # A differently cased path must not hide an existing engine result directory.
+            return False if path.name == 'MUTANTS' else exists(path)
+
+        with redirect_stderr(io.StringIO()) as stderr, mock.patch.object(Path, 'exists', case_sensitive_exists), \
+                mock.patch('lang_python.subprocess.run') as run:
             self.assertEqual(main(["report.json"]), 2)
+        run.assert_not_called()
         self.assertEqual(stderr.getvalue(), "mutmut_export: mutants/ already exists; mutmut would reuse "
                          "stale results. Use a fresh analysis copy\n")
         self.assertFalse((self.root / "report.json").exists())
