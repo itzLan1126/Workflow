@@ -5,17 +5,28 @@ from pathlib import Path
 import subprocess
 import sys
 import tempfile
+from types import SimpleNamespace
 import unittest
 from unittest import mock
 
 SCRIPTS = Path(__file__).resolve().parents[1] / 'skills/workflow/scripts'
 sys.path.insert(0, str(SCRIPTS))
 from crap import calculate, main
+import crap
+from shared_languages import Crap
 
 MEASURED = dict(file='src/a.ts', name='choose', line=1, complexity=4,
                 covered=1, total=2, coverageKind='line')
 COVERAGE = {'line': {'covered': 95, 'total': 100}, 'branch': {'covered': 9, 'total': 10}}
 INVALID = '^Invalid function measurement: require file, name, line, complexity, covered, total, coverageKind$'
+TEXT_ENCODING = io.text_encoding
+
+
+def strict_text_encoding(encoding, stacklevel=2):
+    # Match Python's -X warn_default_encoding -W error::EncodingWarning policy in process.
+    if encoding is None:
+        raise EncodingWarning("'encoding' argument not specified")
+    return TEXT_ENCODING(encoding, stacklevel)
 
 
 def report(*functions, **coverage):
@@ -23,6 +34,41 @@ def report(*functions, **coverage):
 
 
 class CrapTests(unittest.TestCase):
+    def test_collect_output_remains_valid_under_strict_default_encoding(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source, coverage, output = root / '你好+.py', root / 'coverage.lcov', root / 'measurements.json'
+            source.write_text('def choose(value):\n    if value:\n        return "你好"\n    return "再见"\n',
+                              encoding='utf-8')
+            coverage.write_text(f'SF:{source.resolve()}\nDA:1,1\nDA:2,1\nDA:3,1\nDA:4,1\n'
+                                'BRDA:2,0,0,1\nBRDA:2,0,1,1\nend_of_record\n', encoding='utf-8')
+            with mock.patch.object(io, 'text_encoding', side_effect=strict_text_encoding):
+                self.assertEqual(crap.collect_main([str(coverage), str(output), str(source)]), 0)
+            measured = json.loads(output.read_text(encoding='utf-8'))
+            self.assertEqual(measured['functions'][0]['file'], str(source.resolve()))
+            self.assertEqual(measured['coverage']['line'], {'covered': 4, 'total': 4})
+
+    def test_language_evidence_remains_valid_under_strict_default_encoding(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root, stdout = Path(directory).resolve(), io.StringIO()
+            source, evidence = root / '你好+.py', root / 'evidence'
+            evidence.mkdir()
+            source.write_text('def choose(value):\n    if value:\n        return "你好"\n    return "再见"\n',
+                              encoding='utf-8')
+            lcov = (f'SF:{source}\nDA:1,1\nDA:2,1\nDA:3,1\nDA:4,1\n'
+                    'BRDA:2,0,0,1\nBRDA:2,0,1,1\nend_of_record\n')
+            exporter = ('import os; from pathlib import Path; '
+                        f'Path(os.environ["WORKFLOW_COVERAGE_FILE"]).write_text({lcov!r},encoding="utf-8")')
+            spec = Crap('lcov', lambda project, evidence, tool: [[sys.executable, '-c', exporter]], 'coverage.lcov')
+            with tempfile.TemporaryFile(mode='w+', encoding='utf-8') as stderr, redirect_stderr(stderr), \
+                    redirect_stdout(stdout), mock.patch.object(crap, 'language', return_value=SimpleNamespace(CRAP=spec)), \
+                    mock.patch.object(crap, 'evidence_directory', return_value=evidence), \
+                    mock.patch.object(io, 'text_encoding', side_effect=strict_text_encoding):
+                self.assertEqual(crap.language_result('python', [str(root), source.name]), 0)
+            self.assertEqual(json.loads(stdout.getvalue())['findings'], 0)
+            for name in ('config.json', 'measurements.json'):
+                self.assertIsInstance(json.loads((evidence / name).read_text(encoding='utf-8')), dict)
+
     def test_formula_and_crap_standard(self):
         result = calculate(report(MEASURED, {**MEASURED, 'name': 'uncovered', 'covered': 0}))
         self.assertEqual([f['crap'] for f in result['functions']], [20, 6])

@@ -111,6 +111,19 @@ class ReportContractsTests(unittest.TestCase):
         report = {'files': {'sample.js': {'mutants': [{'id': '1', 'status': 'Survived', 'file': 'forged.js'}]}}}
         self.assertEqual(assess(report, 'stryker', Path('report.json'))['mutants'][0]['file'], 'sample.js')
 
+    def test_detail_errors_identify_unsafe_path_and_invalid_position(self):
+        from report_cargo import read_cargo_diff
+        from report_stryker import source_offset
+        with tempfile.TemporaryDirectory() as directory:
+            report = Path(directory) / 'outcomes.json'
+            with self.assertRaisesRegex(ValueError, '^Cargo diff path must stay inside the report directory$'):
+                read_cargo_diff(report, '../outside.diff')
+        for position in ({'line': True, 'column': 1}, {'line': 1, 'column': 0},
+                         {'line': 2, 'column': 1}):
+            with self.subTest(position=position), self.assertRaisesRegex(
+                    ValueError, '^Invalid Stryker source position$'):
+                source_offset('hello', position)
+
     def test_stryker_utf16_column_bounds_use_exact_integer_counts(self):
         from report_stryker import valid_utf16_column
         cases = [(0, 1, True), (0, 2, False), (2, 0, False), (2, 1, True),

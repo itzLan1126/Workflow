@@ -63,6 +63,25 @@ def descriptor(fd, file):
 
 
 class MutationTests(unittest.TestCase):
+    def test_language_evidence_uses_exact_config_and_report_filenames(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory).resolve()
+            project, evidence = root / 'project', root / 'evidence'
+            project.mkdir()
+            evidence.mkdir()
+            writer = ('import os; from pathlib import Path; '
+                      f'Path(os.environ["WORKFLOW_REPORT_FILE"]).write_text({json.dumps(normalized("killed"))!r})')
+            command = [sys.executable, '-c', writer]
+            with mock.patch('mutation.evidence_directory', return_value=evidence), \
+                    tempfile.TemporaryFile(mode='w+') as stderr, redirect_stderr(stderr), \
+                    redirect_stdout(io.StringIO()) as stdout:
+                self.assertEqual(main(['--json', 'python', str(project), '--', *command]), 0)
+            self.assertEqual({path.name for path in evidence.iterdir()}, {'config.json', 'mutation.json'})
+            config = read_json(evidence / 'config.json')
+            self.assertEqual(config, {'cwd': str(project), 'report': str(evidence / 'mutation.json'),
+                                     'format': 'normalized', 'command': command, 'timeoutMs': 3600000})
+            self.assertEqual(json.loads(stdout.getvalue())['reportPath'], str(evidence / 'mutation.json'))
+
     def fixture(self, report, exit_code=0, **overrides):
         temporary = tempfile.TemporaryDirectory(prefix="workflow-mutation-")
         self.addCleanup(temporary.cleanup)

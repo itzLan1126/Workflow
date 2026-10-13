@@ -66,6 +66,8 @@ class LanguageEntryPointsTests(unittest.TestCase):
                 stderr.seek(0)
                 evidence = Path(stderr.readline().removeprefix('Evidence: ').strip())
             config = json.loads((evidence / 'config.json').read_text())
+            self.assertEqual({path.name for path in evidence.iterdir()},
+                             {'config.json', 'coverage.lcov', 'measurements.json'})
             self.assertEqual(config['commands'], [tool])
             self.assertEqual(config['env'], {'WORKFLOW_COVERAGE_FILE': str(evidence / 'coverage.lcov')})
             self.assertTrue((evidence / 'coverage.lcov').is_file())
@@ -194,3 +196,15 @@ class LanguageEntryPointsTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory, tempfile.TemporaryFile(mode="w+") as stderr, redirect_stderr(stderr):
             with self.assertRaisesRegex(ValueError, '^Coverage command failed$'):
                 crap.language_result('js', [directory, 'sample.js', '--', sys.executable, '-c', 'raise SystemExit(1)'])
+
+    def test_read_measurements_restores_working_directory_and_identifies_dangling_target(self):
+        from shared_languages import Crap
+        with tempfile.TemporaryDirectory() as directory:
+            project = Path(directory).resolve()
+            target = project / 'missing.js'
+            (project / 'sample.js').symlink_to(target)
+            previous = Path.cwd()
+            with self.assertRaises(FileNotFoundError) as raised:
+                crap.read_measurements(project, ['sample.js'], Crap('lcov', None, 'coverage.lcov'), project)
+            self.assertEqual(raised.exception.filename, str(target))
+            self.assertEqual(Path.cwd(), previous)

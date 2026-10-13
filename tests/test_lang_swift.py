@@ -76,10 +76,12 @@ class SwiftCoverageTests(unittest.TestCase):
                     ['swift', 'test', '--enable-code-coverage', '--disable-code-coverage'])
         with patch('lang_swift.sys.platform', 'darwin'):
             for command in commands:
-                with self.subTest(command=command), self.assertRaisesRegex(ValueError, '--enable-code-coverage'):
+                with self.subTest(command=command), self.assertRaisesRegex(
+                        ValueError, '^Swift test overrides require --enable-code-coverage$'):
                     coverage_commands(Path('/project'), Path('/evidence'), command)
             for option in ('--show-codecov-path', '--show-code-coverage-path', '--show-coverage-path'):
-                with self.subTest(option=option), self.assertRaisesRegex(ValueError, 'requires a test run'):
+                with self.subTest(option=option), self.assertRaisesRegex(
+                        ValueError, '^Swift coverage requires a test run before querying the report path$'):
                     coverage_commands(Path('/project'), Path('/evidence'),
                                       ['swift', 'test', '--enable-code-coverage', option])
 
