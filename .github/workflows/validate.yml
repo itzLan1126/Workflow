@@ -13,21 +13,49 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest]
+        python: ["3.x"]
+        include:
+          - os: ubuntu-latest
+            python: "3.10"
+          - os: macos-latest
+            python: "3.x"
     runs-on: ${{ matrix.os }}
+    env:
+      TMPDIR: ${{ runner.temp }}
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v7
         with:
-          python-version: "3.x"
+          python-version: ${{ matrix.python }}
       - name: Install validation dependencies
-        if: runner.os == 'Linux'
+        if: runner.os != 'Windows'
         run: python -m pip install -r requirements-dev.txt
       - name: Test validator and deterministic tools
-        if: runner.os == 'Linux'
+        if: runner.os != 'Windows'
         run: python -m unittest discover -s tests
       - name: Validate skills
-        if: runner.os == 'Linux'
+        if: runner.os != 'Windows'
         run: python scripts/validation.py
+      - name: Check every production script against the CRAP standard
+        if: runner.os != 'Windows'
+        run: python scripts/self_crap.py > crap-result.json
+      - name: Mutation-test every production script
+        if: runner.os != 'Windows'
+        run: python scripts/self_mutation.py --json > mutation-result.json 2> mutation-run.log
+      - name: Preserve quality evidence even when the strict gate fails
+        if: always() && runner.os != 'Windows'
+        uses: actions/upload-artifact@v7
+        with:
+          name: mutation-${{ runner.os }}-python-${{ matrix.python }}
+          path: |
+            crap-result.json
+            mutation-result.json
+            mutation-run.log
+            ${{ runner.temp }}/**/source-snapshot.json
+            ${{ runner.temp }}/**/mutation.json
+            ${{ runner.temp }}/**/measurements.json
+            ${{ runner.temp }}/**/coverage.lcov
+            ${{ runner.temp }}/**/config.json
       - name: Test native job ownership and timeout cleanup
         if: runner.os == 'Windows'
         run: python -m unittest discover -s tests -p test_shared_runner_windows.py -v
