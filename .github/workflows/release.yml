@@ -11,14 +11,14 @@ permissions:
 jobs:
   release:
     runs-on: ubuntu-latest
-    env:
-      TMPDIR: ${{ runner.temp }}
     permissions:
       contents: write
     steps:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
+      - name: Use runner-owned temporary directory for quality evidence
+        run: echo "TMPDIR=$RUNNER_TEMP" >> "$GITHUB_ENV"
       - name: Validate release tag and source
         shell: bash
         run: |
