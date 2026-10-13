@@ -90,7 +90,7 @@ Language commands and prerequisites: [Python](skills/workflow/references/languag
   The Windows runner holds a bootstrap behind a pipe until it is assigned to a kill-on-close Job Object, then releases the tool ([shared runner](skills/workflow/scripts/shared_runner.py)); the tool and all descendants inherit that job. Cleanup owns the job rather than looking up a possibly exited root PID, and timeout failures keep their timeout classification even if cleanup reports an error. Native timeout and root-exit cleanup behavior is verified in Windows CI; Linux self-tests exercise API contracts. Bundled scripts require Python 3.10+.
 
 - **Deterministic Repository CI**:
-  The validator and CI check skill packaging, YAML frontmatter, references, README consistency, and explicit invocation policies. These are deterministic checks of this repository, not proof that an agent host implements the workflow correctly or that a target application meets requirements.
+  CI checks packaging, frontmatter, references, README consistency, invocation policies, and full-repository CRAP and mutation on Linux and macOS; Linux also checks the minimum Python 3.10 version. Windows retains its native Job Object tests. Mutation results are uploaded even when the strict gate fails; equivalent-survivor evidence does not change that exit status. These checks do not prove that an agent host implements the workflow correctly or that a target application meets requirements.
 
 ---
 
