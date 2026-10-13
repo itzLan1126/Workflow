@@ -86,7 +86,7 @@ def add_regions(function, files, texts):
 
 def read(path, source_text_by_path):
     report = read_json(path)
-    if report.get('type') != 'llvm.coverage.json.export':
+    if not isinstance(report, dict) or report.get('type') != 'llvm.coverage.json.export':
         raise ValueError('Require llvm-cov export JSON')
     files = {}
     for data in report['data']:

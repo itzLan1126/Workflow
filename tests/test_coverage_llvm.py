@@ -1,14 +1,44 @@
+from contextlib import redirect_stderr, redirect_stdout
+import io
 import json
 from pathlib import Path
 import sys
 import tempfile
 import unittest
+from unittest import mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'skills/workflow/scripts'))
 from coverage_llvm import read, line_hits
+import coverage_llvm
+import crap
 
 
 class LLVMCoverageTests(unittest.TestCase):
+    def test_invalid_top_level_reports_fail_closed(self):
+        with tempfile.TemporaryDirectory() as directory:
+            report = Path(directory) / 'coverage.json'
+            for value in ([], None, 1, True, 'llvm.coverage.json.export'):
+                report.write_text(json.dumps(value))
+                with self.subTest(value=value), self.assertRaisesRegex(ValueError, '^Require llvm-cov export JSON$'):
+                    read(report, {})
+
+    def test_invalid_llvm_export_is_a_cli_run_failure(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / 'sample.swift').write_text('func sample() { return 1 }\n')
+            writer = ('import os; from pathlib import Path; '
+                      'Path(os.environ["WORKFLOW_COVERAGE_FILE"]).write_text("[]")')
+            command = [sys.executable, str(Path(coverage_llvm.__file__).with_name('crap.py')),
+                       'swift', directory, 'sample.swift', '--', sys.executable, '-c', writer]
+            # Dispatch in process so the same malformed-evidence contract runs on every platform.
+            with mock.patch('lang_swift.sys.platform', 'darwin'), mock.patch.object(sys, 'argv', command[1:]), \
+                    tempfile.TemporaryFile(mode='w+') as stderr, redirect_stderr(stderr), \
+                    redirect_stdout(io.StringIO()) as stdout:
+                self.assertEqual(crap.main(), 2)
+                stderr.seek(0)
+                self.assertTrue(stderr.read().endswith('CRAP: Require llvm-cov export JSON\n'))
+            self.assertEqual(stdout.getvalue(), '')
+
     def test_line_and_region_counts_from_export(self):
         with tempfile.TemporaryDirectory() as directory:
             source = (Path(directory) / 'sample.swift').resolve()
