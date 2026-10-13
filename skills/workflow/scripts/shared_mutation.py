@@ -148,7 +148,7 @@ def summarize(report, format):
     return result
 
 
-def report_details(report, format, report_path, maps=None):
+def report_details(report, format, report_path):
     return assess(report, format, report_path)["mutants"]
 def exit_code(counts, assessed):
     if counts["error"] or not assessed:

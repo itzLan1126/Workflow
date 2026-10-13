@@ -14,7 +14,7 @@ from unittest import mock
 
 SCRIPTS = Path(__file__).resolve().parents[1] / "skills/workflow/scripts"
 sys.path.insert(0, str(SCRIPTS))
-from mutation import MAPS, main, run_mutation, summarize
+from mutation import main, run_mutation, summarize
 from shared_mutation import function_at, numbered_diff, report_details
 from report_stryker import source_offset
 from shared_runner import read_json, run_report, run_command
@@ -276,7 +276,7 @@ class MutationTests(unittest.TestCase):
         mutant = {"id": "1", "status": "Survived", "replacement": "+",
                   "location": {"start": {"line": 2, "column": 21}, "end": {"line": 2, "column": 23}}}
         report = {"files": {"missing/demo.js": {"source": source, "mutants": [mutant]}}}
-        details = report_details(report, "stryker", Path("/tmp/report.json"), MAPS)
+        details = report_details(report, "stryker", Path("/tmp/report.json"))
         self.assertEqual(details[0]["function"], "power")
         self.assertEqual((details[0]["id"], details[0]["file"], details[0]["line"], details[0]["status"]),
                          ("1", "missing/demo.js", 1, "survived"))
@@ -287,7 +287,7 @@ class MutationTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "Invalid Stryker source position"):
                 source_offset(source, position)
         mutant["location"] = {}
-        self.assertIn("detailGap", report_details(report, "stryker", Path("/tmp/report.json"), MAPS)[0])
+        self.assertIn("detailGap", report_details(report, "stryker", Path("/tmp/report.json"))[0])
         with mock.patch.dict(sys.modules, {"lizard": None}):
             self.assertEqual(function_at("demo.js", source, 2), {})
         self.assertEqual(function_at("demo.js", "const x = 1;", 1), {})
@@ -310,20 +310,20 @@ class MutationTests(unittest.TestCase):
         outcome.update(diff_path="change.diff")
         outcome["scenario"]["Mutant"] = {"name": "replace bool", "file": "src/lib.rs",
             "function": {"function_name": "choose", "span": {"start": {"line": 6}}}}
-        detail = report_details(report, "cargo-mutants", root / "outcomes.json", MAPS)[0]
+        detail = report_details(report, "cargo-mutants", root / "outcomes.json")[0]
         self.assertEqual((detail["function"], detail["line"]), ("choose", 6))
         self.assertEqual((detail["id"], detail["file"], detail["status"]),
                          ("replace bool", "src/lib.rs", "survived"))
         self.assertEqual(Path(detail["evidence"]), (root / "change.diff").resolve())
         self.assertEqual(numbered_diff(detail["diff"]), "7 - false\n7 + true")
         outcome["diff_path"] = "missing.diff"
-        self.assertIn("Cannot read diff", report_details(report, "cargo-mutants", root / "outcomes.json", MAPS)[0]["detailGap"])
+        self.assertIn("Cannot read diff", report_details(report, "cargo-mutants", root / "outcomes.json")[0]["detailGap"])
         outcome["diff_path"] = "../outside.diff"
-        self.assertIn("inside the report directory", report_details(report, "cargo-mutants", root / "outcomes.json", MAPS)[0]["detailGap"])
+        self.assertIn("inside the report directory", report_details(report, "cargo-mutants", root / "outcomes.json")[0]["detailGap"])
         swift = {"fileReports": [{"fileName": "Demo.swift", "appliedOperators": [{
             "testSuiteOutcome": "passed", "mutationPoint": {"mutationOperatorId": "Swap", "position": {"line": 8}},
             "mutationSnapshot": {"before": "x > y", "after": "x < y"}}]}]}
-        detail = report_details(swift, "muter", root / "swift.json", MAPS)[0]
+        detail = report_details(swift, "muter", root / "swift.json")[0]
         self.assertEqual(numbered_diff(detail["diff"], detail["diffOffset"]), "8 - x > y\n8 + x < y")
         self.assertIn("function name is unavailable", detail["detailGap"])
         self.assertEqual((detail["id"], detail["file"], detail["line"], detail["status"]),
@@ -352,7 +352,7 @@ class MutationTests(unittest.TestCase):
         for data in ({"source": "abc", "mutants": [mutant]}, {"mutants": [mutant]},
                      {"source": "abc", "mutants": [{"id": "insert-1", "status": "Survived"}]}):
             with self.subTest(data=data):
-                detail = report_details({"files": {"top.js": data}}, "stryker", Path("report.json"), MAPS)[0]
+                detail = report_details({"files": {"top.js": data}}, "stryker", Path("report.json"))[0]
                 self.assertEqual((detail["id"], detail["file"], detail["status"]),
                                  ("insert-1", "top.js", "survived"))
                 self.assertNotIn("detailGap", detail)
@@ -372,7 +372,7 @@ class MutationTests(unittest.TestCase):
         for report, format, file, identifier in ((stryker, "stryker", "demo.js", "S1"),
                 (cargo_report, "cargo-mutants", "a.rs", "C1"), (muter, "muter", "a.swift", None)):
             with self.subTest(format=format):
-                detail = report_details(report, format, Path("report.json"), MAPS)[0]
+                detail = report_details(report, format, Path("report.json"))[0]
                 self.assertEqual((detail["file"], detail["status"]), (file, "survived"))
                 if identifier is not None:
                     self.assertEqual(detail["id"], identifier)
@@ -386,7 +386,7 @@ class MutationTests(unittest.TestCase):
             report = cargo("MissedMutant")
             report["outcomes"][1]["scenario"]["Mutant"] = {"name": "C1", "file": "a.rs", **extras}
             with self.subTest(extras=extras):
-                detail = report_details(report, "cargo-mutants", Path("report.json"), MAPS)[0]
+                detail = report_details(report, "cargo-mutants", Path("report.json"))[0]
                 self.assertEqual((detail["id"], detail["file"], detail["status"], detail.get("line")),
                                  ("C1", "a.rs", "survived", expected_line))
                 self.assertNotIn("detailGap", detail)
@@ -400,7 +400,7 @@ class MutationTests(unittest.TestCase):
                       "mutationSnapshot": snapshot}
             report = {"fileReports": [{"fileName": "Demo.swift", "appliedOperators": [mutant]}]}
             with self.subTest(point=point, snapshot=snapshot):
-                detail = report_details(report, "muter", Path("report.json"), MAPS)[0]
+                detail = report_details(report, "muter", Path("report.json"))[0]
                 self.assertEqual((detail["id"], detail["file"], detail["status"]),
                                  ("Swap", "Demo.swift", "survived"))
                 self.assertEqual(detail.get("line"), point.get("position", {}).get("line"))
@@ -436,7 +436,7 @@ class MutationTests(unittest.TestCase):
             with mock.patch("io.text_encoding", side_effect=lambda encoding, *args: encoding or "ascii"):
                 with self.assertRaises(UnicodeDecodeError):
                     (root / "change.diff").read_text()
-                detail = report_details(report, "cargo-mutants", root / "outcomes.json", MAPS)[0]
+                detail = report_details(report, "cargo-mutants", root / "outcomes.json")[0]
             self.assertEqual(detail["diff"], diff)
             self.assertEqual(Path(detail["evidence"]), (root / "change.diff").resolve())
             self.assertNotIn("detailGap", detail)
