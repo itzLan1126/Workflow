@@ -40,6 +40,21 @@ class RustCoverageTests(unittest.TestCase):
                 lang_rust.block_comment_end(comment, 0)
             self.assertEqual(str(raised.exception), 'Unclosed Rust block comment')
 
+    def test_block_comments_terminate_at_their_matching_close(self):
+        for comment in ('/**/', '/***/', '/*/**/*/',
+                        '/*' * 40 + 'nested' + '*/' * 40):
+            with self.subTest(comment=comment):
+                code = 'production; ' + comment + ' fn next() {} /* later */'
+                start = code.index('/*')
+                self.assertEqual(lang_rust.block_comment_end(code, start), start + len(comment))
+                self.assertEqual(''.join(lang_rust.rust_tokens('lib.rs', code)), code)
+
+    def test_empty_rust_source_and_trailing_whitespace_finish_scanning(self):
+        for code in ('', ' ', '\n', 'fn production() {}\n ', '/*/**/*/\n'):
+            with self.subTest(code=code):
+                self.assertEqual(''.join(lang_rust.rust_tokens('lib.rs', code)), code)
+                self.assertEqual(lang_rust.exclude_tests('lib.rs', code), [])
+
     def test_multiline_attributes_and_signatures_preserve_exact_test_lines(self):
         declarations = ('#\n[\n cfg(\n test\n )\n]\nfn helper() {}',
                         '#\n[allow(dead_code)] #[cfg(test)]\nfn helper() {}',

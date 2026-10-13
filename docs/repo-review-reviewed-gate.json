@@ -1,0 +1,1883 @@
+{
+  "date": "2026-10-14",
+  "repository": "itzLan1126/Workflow",
+  "branch": "fix/repo-review",
+  "headBeforeUncommittedChanges": "ea67dabf9b7b7767f8be10fb92ec997045a52540",
+  "authorization": "Only the exact MD5 False-to-None equivalent may pass the reviewed gate; retain source/diff SHA bindings and unchanged raw evidence; no line exclusion, other exception, threshold reduction, commit or push",
+  "status": "Reviewed gate passes on both verified local Python versions; raw strict mutation remains exit 1 with exactly one proved equivalent survivor",
+  "approval": {
+    "manifest": {
+      "id": "coverage_lcov.x_validate_checksums__mutmut_3",
+      "file": "src/coverage_lcov.py",
+      "function": "validate_checksums",
+      "repositoryFile": "skills/workflow/scripts/coverage_lcov.py",
+      "sourceSha256": "ef99126aed9617accb3f32190a56822f49684df14bb0dc2366acfa5ad47fea47",
+      "diffSha256": "97ecc3613d91c5e6170e02a10a2269070c5b70fd0f47f967476b29d2cfc5e798",
+      "reason": "Approved by the repository owner: MD5 usedforsecurity=False to None is equivalent under the verified CPython OpenSSL providers. Both values select the same nonsecurity branch; removing the flag would break restricted-policy compatibility.",
+      "proof": "repo-review-survivor-remediation.json#/remainingEquivalentProof"
+    },
+    "binding": {
+      "path": "/Users/jameslan/Documents/Workflow/docs/repo-review-md5-exclusion.json",
+      "sha256": "8ddce7fde256f6f262497624b75a5578194bb7899374952c8d5f235d0e1b20fd",
+      "bytes": 695
+    },
+    "proofBinding": {
+      "path": "/Users/jameslan/Documents/Workflow/docs/repo-review-survivor-remediation.json",
+      "sha256": "884a4b4af19c113cfdceefcc0b9d31de8b5615bb02729f51f5cee4091fbb606b",
+      "bytes": 108104
+    },
+    "scope": "Exact ID, file, function, repository file, whole source file SHA-256 and actual UTF-8 mutant diff SHA-256; no whole-line exclusion",
+    "compatibilityBoundary": "Verified CPython 3.10.18/3.14.3 OpenSSL boolean parameter parsing; fips=yes property-policy replay, not FIPS module certification; other implementations require review"
+  },
+  "scope": {
+    "productionFiles": 20,
+    "bundledProductionFiles": 16,
+    "rootProductionFiles": 4,
+    "testResources": 18,
+    "copiedInputs": 38,
+    "sha256": {
+      "skills/workflow/scripts/coverage_lcov.py": "ef99126aed9617accb3f32190a56822f49684df14bb0dc2366acfa5ad47fea47",
+      "skills/workflow/scripts/coverage_llvm.py": "f9d60a92303a51351cda5f881631690aaaf08a6e3cb9027ca97e335849d2aab0",
+      "skills/workflow/scripts/crap.py": "dfd65f8d1d458b19d5f98094f23a0c6de906d676ed5e7250e6cdfda803317a82",
+      "skills/workflow/scripts/lang_js.py": "712a643c50dd7b9ace4885d10cebb3e02f53d9cc401c7b49d2cad1afd4dea088",
+      "skills/workflow/scripts/lang_python.py": "01185b579f0088dd1e8c0196ce972d382584f1aeb678a935b67f747315f5b72f",
+      "skills/workflow/scripts/lang_rust.py": "b96279a3d61befbcc86552551fdf6feb298a8a5ab269738a5ee6a19aa591c49f",
+      "skills/workflow/scripts/lang_swift.py": "d068430a73c99c1bc1ed898a7b11d4fe12f565bbe5b32d92a37f1d8acbfa9c57",
+      "skills/workflow/scripts/mutation.py": "7dbe2d0d42a469789b339e000f0fb556058ed466c638700e5b58633531c602ef",
+      "skills/workflow/scripts/report_cargo.py": "00c7284f81cdfede6adec091172cbfbdab360d0594735b4a87f11d37b9c7a0e8",
+      "skills/workflow/scripts/report_muter.py": "57fd0a032cdc56b8ce57a6ee88a675bc7cbac4c15750bdb95156534ce8946707",
+      "skills/workflow/scripts/report_normalized.py": "9718700636ff2b80bb291e519f556779cd617b28399b2b755d6c47217e39b1fe",
+      "skills/workflow/scripts/report_stryker.py": "fe183ecd1f99827ac83a24831b0cf011729f94eb277acf2631793bf3231ad2f7",
+      "skills/workflow/scripts/shared_crap.py": "6579383105be83f813a163776d0e1c3ce35401bb12be58ed1854328711edcab1",
+      "skills/workflow/scripts/shared_languages.py": "77723ff9ccc3d385ff3751a5fa9e5cd524f34b81d1bae6a85d767bc7e8b78235",
+      "skills/workflow/scripts/shared_mutation.py": "29d74c55217f448202e7013c780ecfe1a99b4450c82bafa2853c9166404c90e3",
+      "skills/workflow/scripts/shared_runner.py": "48454a26dff555656e45e44cf0310ae7fd5303a414a68380de78fec85a93b9a0",
+      "scripts/mutation_review.py": "e37ee4f3cc879d7a5e3e1e99257c0c2b11cda8c6153c136fde3ea3dea6fcf5b2",
+      "scripts/self_crap.py": "8455ca7e384181e2d5a82c20683bc2055186d76cce769af57c4b7c26c08007b4",
+      "scripts/self_mutation.py": "4cdf5ff113f867d975654e28d7b2a9ff9f3f7405554edbfa8bed9afcbbc21395",
+      "scripts/validation.py": "f8ed9758024e363ffbe88bfe17b51c7e90b60dd827049064081f9289cef14f3f",
+      "tests/test_coverage_llvm.py": "7c985c6ad6069cc0728bf16fdd67f5741da35d03b01c95b73dcce8f3d3c47fe5",
+      "tests/test_crap.py": "21c8911cf36280940e7c387588b37f1a33079c96e0fe8521a217f9207d452864",
+      "tests/test_evidence_encoding.py": "fb420cb1d9adfaf2104402d02b29835ee0b1a66eeb8a3b4b211d4d0e95e912ac",
+      "tests/test_lang_rust.py": "09375d8e85c4062f5834ce7a8c983b3adfa7287dae84b1ad3cc304d35f418a80",
+      "tests/test_lang_swift.py": "1e3b3ec2d0d1e99e2adfcc8c258853c0da52dd7cdf50aca20835ab49b4a5498b",
+      "tests/test_language_entrypoints.py": "a2f8f28202d8a6e9db97c5ff287c1879fd4f117b8480e93db6faf027426ad1f6",
+      "tests/test_languages.py": "752ec394135fdff8e34875016eaeda2db7f955ca1fc46a50b4ebf33eadd0197d",
+      "tests/test_lizard_metrics.py": "d01dead79577e87603ba2f4054470ce09d5e4488dfedae530b4419102b2308a0",
+      "tests/test_mutation.py": "714af8080f68a506efd67638a4919c2d4ac29f4993a188d8a5f14e6ae6899756",
+      "tests/test_mutation_review.py": "e03f897269ff3b01b1a49e2ba8b385f37d93ef789d00a0bae39039d787b814cc",
+      "tests/test_mutmut_export.py": "c240b10a0d1917607e615b5ff2841c47c8b2c31b30c87090fa2c4fe97de0e9e6",
+      "tests/test_report_contracts.py": "b9071871b79dc86a4be42840cbcb5680bc5cf999f79e74c3df6a7a305598878d",
+      "tests/test_runtime_contracts.py": "e970bf086d1e658e9e05e7dbb79fc131d85d5d1bea87201546dd92b32efedfde",
+      "tests/test_self_quality.py": "abee3d13b803652038ab3046d001bb5332e537637a6779dbebc05736f79734a2",
+      "tests/test_shared_runner.py": "e26ccb4aa4e9c2a7cb828d33d985ea6f6723edc19720ee6438b0825224f26813",
+      "tests/test_shared_runner_windows.py": "109a47941774fad2aeffb66039db06e5e112858e644f4d33c719d8514d2a2d46",
+      "tests/test_utf8_reading.py": "50497e7148887bca8554d9fed888cc747c472c40c300b3d7b3fa2386061b52a9",
+      "tests/test_validation.py": "5f8191876118ebafcbb3de62a08684e4e0ae20df3e0f27e2c5d98df9c26f5148"
+    }
+  },
+  "checks": {
+    "py314": {
+      "python": "3.14.3 (main, Feb  3 2026, 15:32:20) [Clang 17.0.0 (clang-1700.6.3.2)]",
+      "mutation": {
+        "actualProcess": {
+          "command": [
+            ".venv/bin/python",
+            "scripts/self_mutation.py",
+            "--json"
+          ],
+          "exitCode": 0,
+          "durationSeconds": 104.907,
+          "logs": {
+            "stdout": {
+              "path": "/private/tmp/workflow-reviewed-gate-20261014-jyqqqni9/verified-py314-mutation.stdout",
+              "sha256": "2dd03711c1288ed80fe25be23921f0de0d4625dec7a697a856600271a061fc95",
+              "bytes": 2094
+            },
+            "stderr": {
+              "path": "/private/tmp/workflow-reviewed-gate-20261014-jyqqqni9/verified-py314-mutation.stderr",
+              "sha256": "26b857d91473c36c04ad03ad6d6b5b277c4de63ed66ea71c963c014c5bd769ca",
+              "bytes": 299633
+            },
+            "status.json": {
+              "path": "/private/tmp/workflow-reviewed-gate-20261014-jyqqqni9/verified-py314-mutation.status.json",
+              "sha256": "7fc56821d794891ba285591f3ccca5d51b89e5fa83999910de74deab85bca4a7",
+              "bytes": 139
+            }
+          }
+        },
+        "rawResult": {
+          "format": "normalized",
+          "counts": {
+            "killed": 4068,
+            "survived": 1,
+            "noCoverage": 0,
+            "timeout": 0,
+            "unviable": 0,
+            "ignored": 0,
+            "error": 0
+          },
+          "assessed": 4069,
+          "exitCode": 1,
+          "mutants": [
+            {
+              "id": "coverage_lcov.x_validate_checksums__mutmut_3",
+              "status": "survived",
+              "file": "src/coverage_lcov.py",
+              "function": "validate_checksums",
+              "line": 87,
+              "diffOffset": 86,
+              "diff": "--- src/coverage_lcov.py\n+++ src/coverage_lcov.py\n@@ -1,7 +1,7 @@\n def validate_checksums(source, lines, checksums):\n     for line, checksum in checksums.items():\n         # LCOV fingerprints UTF-8 source lines without their newline, with unpadded base64 MD5.\n-        digest = hashlib.md5(lines[line - 1].encode(), usedforsecurity=False).digest()\n+        digest = hashlib.md5(lines[line - 1].encode(), usedforsecurity=None).digest()\n         # A 16-byte MD5 digest always has exactly two base64 padding characters.\n         expected = base64.b64encode(digest)[:-2].decode()\n         if checksum != expected:"
+            }
+          ],
+          "toolExitCode": 0,
+          "reportPath": "/private/var/folders/97/36py7_j14dv3mhytn6cgbgbw0000gn/T/workflow-evidence-ch7l8jp5/mutation.json"
+        },
+        "reviewGate": {
+          "exitCode": 0,
+          "approvedEquivalentExclusions": [
+            {
+              "id": "coverage_lcov.x_validate_checksums__mutmut_3",
+              "file": "src/coverage_lcov.py",
+              "function": "validate_checksums",
+              "repositoryFile": "skills/workflow/scripts/coverage_lcov.py",
+              "sourceSha256": "ef99126aed9617accb3f32190a56822f49684df14bb0dc2366acfa5ad47fea47",
+              "diffSha256": "97ecc3613d91c5e6170e02a10a2269070c5b70fd0f47f967476b29d2cfc5e798",
+              "reason": "Approved by the repository owner: MD5 usedforsecurity=False to None is equivalent under the verified CPython OpenSSL providers. Both values select the same nonsecurity branch; removing the flag would break restricted-policy compatibility.",
+              "proof": "repo-review-survivor-remediation.json#/remainingEquivalentProof"
+            }
+          ]
+        },
+        "approvalSha256": "8ddce7fde256f6f262497624b75a5578194bb7899374952c8d5f235d0e1b20fd",
+        "rawExitCode": 1,
+        "sourceCopy": "/var/folders/97/36py7_j14dv3mhytn6cgbgbw0000gn/T/workflow-self-mutation-nlhohzb8",
+        "inputHashesMatchCurrentSnapshotAndActualCopy": true,
+        "nativeCounts": {
+          "killed": 4068,
+          "survived": 1
+        },
+        "nativeAssessed": 4069,
+        "nativeAndMetadataIdsMatch": true,
+        "nativeAndMetadataStatusesMatch": true,
+        "actualPytestExitDistribution": {
+          "1": 4068,
+          "0": 1
+        },
+        "nativeIdStatusSha256": "341231851ee575de026419d9f59e2a8d839d29822097747597998843a451ac9c",
+        "metadataFiles": [
+          {
+            "path": "/var/folders/97/36py7_j14dv3mhytn6cgbgbw0000gn/T/workflow-self-mutation-nlhohzb8/mutants/scripts/mutation_review.py.meta",
+            "sha256": "3202e806fe42ed691edad8debd54c5a9e4354eea8b0dfd2f7cc7379f7e6c135f",
+            "bytes": 72656
+          },
+          {
+            "path": "/var/folders/97/36py7_j14dv3mhytn6cgbgbw0000gn/T/workflow-self-mutation-nlhohzb8/mutants/scripts/self_crap.py.meta",
+            "sha256": "baf81d18aaca5842ed488de3f61eba4ba5760bc94a5f69c389ff1c80c7f6b53c",
+            "bytes": 5495
+          },
+          {
+            "path": "/var/folders/97/36py7_j14dv3mhytn6cgbgbw0000gn/T/workflow-self-mutation-nlhohzb8/mutants/scripts/self_mutation.py.meta",
+            "sha256": "0c444ca37e5df539605247116ad33ee6afa7fa3088c7bbc0d68c4a654c96d12c",
+            "bytes": 41603
+          },
+          {
+            "path": "/var/folders/97/36py7_j14dv3mhytn6cgbgbw0000gn/T/workflow-self-mutation-nlhohzb8/mutants/scripts/validation.py.meta",
+            "sha256": "134dc338dcfa2daabdf27ce7127ad336c224c00dec5cb9a99caa32c27be80e4a",
+            "bytes": 68780
+          },
+          {
+            "path": "/var/folders/97/36py7_j14dv3mhytn6cgbgbw0000gn/T/workflow-self-mutation-nlhohzb8/mutants/src/coverage_lcov.py.meta",
+            "sha256": "f688776014e68add1212ad5082ac48b952f95217c35490208354ea7b64829898",
+            "bytes": 41345
+          },
+          {
+            "path": "/var/folders/97/36py7_j14dv3mhytn6cgbgbw0000gn/T/workflow-self-mutation-nlhohzb8/mutants/src/coverage_llvm.py.meta",
+            "sha256": "1acd78f2ca8439e1cbdd27d9db1858110fb34eecb907ae9a5416195ddd6053a6",
+            "bytes": 40283
+          },
+          {
+            "path": "/var/folders/97/36py7_j14dv3mhytn6cgbgbw0000gn/T/workflow-self-mutation-nlhohzb8/mutants/src/crap.py.meta",
+            "sha256": "f1da4f341c7700e8ddf6ea0963dc27ed745f85c984c43d163d38230dcf760a60",
+            "bytes": 32789
+          },
+          {
+            "path": "/var/folders/97/36py7_j14dv3mhytn6cgbgbw0000gn/T/workflow-self-mutation-nlhohzb8/mutants/src/lang_js.py.meta",
+            "sha256": "c0a656bfe196be64bc6e55042be88002604b96856465ae09085212aa56320ebf",
+            "bytes": 8176
+          },
+          {
+            "path": "/var/folders/97/36py7_j14dv3mhytn6cgbgbw0000gn/T/workflow-self-mutation-nlhohzb8/mutants/src/lang_python.py.meta",
+            "sha256": "d3c919a1b51103a15955d0f1b1e8a5617294d5279defe6e630176a948ab73b78",
+            "bytes": 37173
+          },
+          {
+            "path": "/var/folders/97/36py7_j14dv3mhytn6cgbgbw0000gn/T/workflow-self-mutation-nlhohzb8/mutants/src/lang_rust.py.meta",
+            "sha256": "04330ccfe25c8bf6c07adfc56fd8cfcfb1f1b38922adf87a120ccb6c8e3d42b6",
+            "bytes": 65966
+          },
+          {
+            "path": "/var/folders/97/36py7_j14dv3mhytn6cgbgbw0000gn/T/workflow-self-mutation-nlhohzb8/mutants/src/lang_swift.py.meta",
+            "sha256": "2af9dd87169cf774eea329f94ef4633f4ee1bd6e16547fa9c328962aa402186d",
+            "bytes": 24004
+          },
+          {
+            "path": "/var/folders/97/36py7_j14dv3mhytn6cgbgbw0000gn/T/workflow-self-mutation-nlhohzb8/mutants/src/mutation.py.meta",
+            "sha256": "62662e0fb62e9c8c59329e78a8a7c4ed8a7e0ca865b4f5ae1d0ab010b2c42be7",
+            "bytes": 30134
+          },
+          {
+            "path": "/var/folders/97/36py7_j14dv3mhytn6cgbgbw0000gn/T/workflow-self-mutation-nlhohzb8/mutants/src/report_cargo.py.meta",
+            "sha256": "7d4d776502faff878af6d1652f4e19eae66f94e21cbb954455ea9e62fccd6714",
+            "bytes": 36746
+          },
+          {
+            "path": "/var/folders/97/36py7_j14dv3mhytn6cgbgbw0000gn/T/workflow-self-mutation-nlhohzb8/mutants/src/report_muter.py.meta",
+            "sha256": "7ecabf642a95b5243ce4d3a0168533e26c371cacab5c90d6fe7e7f1050e54c2e",
+            "bytes": 15821
+          },
+          {
+            "path": "/var/folders/97/36py7_j14dv3mhytn6cgbgbw0000gn/T/workflow-self-mutation-nlhohzb8/mutants/src/report_normalized.py.meta",
+            "sha256": "0ecdfe6a4ac51e83f94195a40483e44c29114abf93818506f198a61bf45c5263",
+            "bytes": 3666
+          },
+          {
+            "path": "/var/folders/97/36py7_j14dv3mhytn6cgbgbw0000gn/T/workflow-self-mutation-nlhohzb8/mutants/src/report_stryker.py.meta",
+            "sha256": "7c1d18a8ca11fd425ee78ffe8a56df61bead0ac9a4582d7c42e0ec4a9d8ff587",
+            "bytes": 32671
+          },
+          {
+            "path": "/var/folders/97/36py7_j14dv3mhytn6cgbgbw0000gn/T/workflow-self-mutation-nlhohzb8/mutants/src/shared_crap.py.meta",
+            "sha256": "de6ad19d433d29c2138f8cd7d95f7cefb2329b507bd0f42c6f1bd1210677c164",
+            "bytes": 85109
+          },
+          {
+            "path": "/var/folders/97/36py7_j14dv3mhytn6cgbgbw0000gn/T/workflow-self-mutation-nlhohzb8/mutants/src/shared_languages.py.meta",
+            "sha256": "e96dd10566797bdadf249be3165dc592f4cefbdeb0637fc308e34b568e4e00c7",
+            "bytes": 14447
+          },
+          {
+            "path": "/var/folders/97/36py7_j14dv3mhytn6cgbgbw0000gn/T/workflow-self-mutation-nlhohzb8/mutants/src/shared_mutation.py.meta",
+            "sha256": "7de61e2fe2df96233ab2978baaf0c0fb7ccb29927b0e0ee901db0009a70d794e",
+            "bytes": 65554
+          },
+          {
+            "path": "/var/folders/97/36py7_j14dv3mhytn6cgbgbw0000gn/T/workflow-self-mutation-nlhohzb8/mutants/src/shared_runner.py.meta",
+            "sha256": "ca49cc01c6173ab1bab699567887d26d09d20ced67efaff9ed38c99a4edcfac7",
+            "bytes": 58090
+          }
+        ],
+        "reviewerOwnMutants": {
+          "generated": 326,
+          "killed": 326,
+          "byFunction": {
+            "scripts.mutation_review.x_is_integer": 5,
+            "scripts.mutation_review.x_is_text": 2,
+            "scripts.mutation_review.x_raw_counts": 20,
+            "scripts.mutation_review.x_expected_exit": 16,
+            "scripts.mutation_review.x_validate_totals": 45,
+            "scripts.mutation_review.x_mutant_identity": 23,
+            "scripts.mutation_review.x_validate_proof_details": 13,
+            "scripts.mutation_review.x_raw_mutants": 28,
+            "scripts.mutation_review.x_validate_raw": 34,
+            "scripts.mutation_review.x_validate_approval": 19,
+            "scripts.mutation_review.x_validate_hashes": 19,
+            "scripts.mutation_review.x_matches_identity": 3,
+            "scripts.mutation_review.x_approved_md5": 18,
+            "scripts.mutation_review.x_matched_proof": 24,
+            "scripts.mutation_review.x_review_result": 57
+          }
+        },
+        "rawFieldsUnchangedInReviewedResult": true,
+        "archivedRawEvidence": {
+          "mutation-result.json": {
+            "original": {
+              "path": "/var/folders/97/36py7_j14dv3mhytn6cgbgbw0000gn/T/workflow-self-mutation-nlhohzb8/mutation-result.json",
+              "sha256": "a4e8a7b0c1db9faaee9078e899c381cb73c2a3e66e3882e76ad0f02c06bd1e96",
+              "bytes": 1125
+            },
+            "preservedCopy": {
+              "path": "/private/tmp/workflow-reviewed-gate-20261014-jyqqqni9/final-raw/py314/mutation-result.json",
+              "sha256": "a4e8a7b0c1db9faaee9078e899c381cb73c2a3e66e3882e76ad0f02c06bd1e96",
+              "bytes": 1125
+            },
+            "bytesUnchanged": true
+          },
+          "mutation-reviewed.json": {
+            "original": {
+              "path": "/var/folders/97/36py7_j14dv3mhytn6cgbgbw0000gn/T/workflow-self-mutation-nlhohzb8/mutation-reviewed.json",
+              "sha256": "17fa310b9022db6828bee88905ddedcbd78bacb8ccb60dadee00cbc557430298",
+              "bytes": 2093
+            },
+            "preservedCopy": {
+              "path": "/private/tmp/workflow-reviewed-gate-20261014-jyqqqni9/final-raw/py314/mutation-reviewed.json",
+              "sha256": "17fa310b9022db6828bee88905ddedcbd78bacb8ccb60dadee00cbc557430298",
+              "bytes": 2093
+            },
+            "bytesUnchanged": true
+          },
+          "source-snapshot.json": {
+            "original": {
+              "path": "/var/folders/97/36py7_j14dv3mhytn6cgbgbw0000gn/T/workflow-self-mutation-nlhohzb8/source-snapshot.json",
+              "sha256": "7df462a3a930e6dbb4e7289cc88a1472f4d7cb5b2439d7b40f3e8559898554b0",
+              "bytes": 4025
+            },
+            "preservedCopy": {
+              "path": "/private/tmp/workflow-reviewed-gate-20261014-jyqqqni9/final-raw/py314/source-snapshot.json",
+              "sha256": "7df462a3a930e6dbb4e7289cc88a1472f4d7cb5b2439d7b40f3e8559898554b0",
+              "bytes": 4025
+            },
+            "bytesUnchanged": true
+          },
+          "md5-exclusion.json": {
+            "original": {
+              "path": "/var/folders/97/36py7_j14dv3mhytn6cgbgbw0000gn/T/workflow-self-mutation-nlhohzb8/md5-exclusion.json",
+              "sha256": "8ddce7fde256f6f262497624b75a5578194bb7899374952c8d5f235d0e1b20fd",
+              "bytes": 695
+            },
+            "preservedCopy": {
+              "path": "/private/tmp/workflow-reviewed-gate-20261014-jyqqqni9/final-raw/py314/md5-exclusion.json",
+              "sha256": "8ddce7fde256f6f262497624b75a5578194bb7899374952c8d5f235d0e1b20fd",
+              "bytes": 695
+            },
+            "bytesUnchanged": true
+          },
+          "native-mutation.json": {
+            "original": {
+              "path": "/private/var/folders/97/36py7_j14dv3mhytn6cgbgbw0000gn/T/workflow-evidence-ch7l8jp5/mutation.json",
+              "sha256": "14db18504638cc49c4adbea06f7bd8adbebd0e0f937fc7f9dfc1520afa9bb8c5",
+              "bytes": 292927
+            },
+            "preservedCopy": {
+              "path": "/private/tmp/workflow-reviewed-gate-20261014-jyqqqni9/final-raw/py314/native-mutation.json",
+              "sha256": "14db18504638cc49c4adbea06f7bd8adbebd0e0f937fc7f9dfc1520afa9bb8c5",
+              "bytes": 292927
+            },
+            "bytesUnchanged": true
+          },
+          "pyproject.toml": {
+            "original": {
+              "path": "/var/folders/97/36py7_j14dv3mhytn6cgbgbw0000gn/T/workflow-self-mutation-nlhohzb8/pyproject.toml",
+              "sha256": "ee8850512f5b7f9f512e0d5275fed934bb60fa7ba8d641b28e0e065adc802958",
+              "bytes": 149
+            },
+            "preservedCopy": {
+              "path": "/private/tmp/workflow-reviewed-gate-20261014-jyqqqni9/final-raw/py314/pyproject.toml",
+              "sha256": "ee8850512f5b7f9f512e0d5275fed934bb60fa7ba8d641b28e0e065adc802958",
+              "bytes": 149
+            },
+            "bytesUnchanged": true
+          }
+        }
+      },
+      "unit": {
+        "command": [
+          ".venv/bin/python",
+          "-m",
+          "unittest",
+          "discover",
+          "-s",
+          "tests",
+          "-v"
+        ],
+        "exitCode": 0,
+        "durationSeconds": 13.07,
+        "logs": {
+          "stdout": {
+            "path": "/private/tmp/workflow-reviewed-gate-20261014-jyqqqni9/verified-py314-unit.stdout",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "bytes": 0
+          },
+          "stderr": {
+            "path": "/private/tmp/workflow-reviewed-gate-20261014-jyqqqni9/verified-py314-unit.stderr",
+            "sha256": "8c14c7ff7cf9cdb5f5b77276dd695c2ea38e68a95adfda08eaf038c6cde50e54",
+            "bytes": 37527
+          },
+          "status.json": {
+            "path": "/private/tmp/workflow-reviewed-gate-20261014-jyqqqni9/verified-py314-unit.status.json",
+            "sha256": "93fba674b98cd6e1c262d84ec898a90bd9fd73b2d2b1a28b4e46df22fc52d764",
+            "bytes": 166
+          }
+        },
+        "tests": 245,
+        "passed": 241,
+        "skipped": 4,
+        "skipBoundary": "Existing native Windows Job Object tests; unchanged"
+      },
+      "crap": {
+        "actualProcess": {
+          "command": [
+            ".venv/bin/python",
+            "scripts/self_crap.py"
+          ],
+          "exitCode": 0,
+          "durationSeconds": 26.418,
+          "logs": {
+            "stdout": {
+              "path": "/private/tmp/workflow-reviewed-gate-20261014-jyqqqni9/verified-py314-crap.stdout",
+              "sha256": "9654b5493552d529d6eec2ed5035c831060e8484851761cee12f5ea46a0d6f10",
+              "bytes": 46794
+            },
+            "stderr": {
+              "path": "/private/tmp/workflow-reviewed-gate-20261014-jyqqqni9/verified-py314-crap.stderr",
+              "sha256": "3ba4236602896d6839fc62bcecaff447f4fc4c21c04050d5dbfe2f5c20f24ebb",
+              "bytes": 585
+            },
+            "status.json": {
+              "path": "/private/tmp/workflow-reviewed-gate-20261014-jyqqqni9/verified-py314-crap.status.json",
+              "sha256": "670a6969f39bad941efa886f80c391dc10a109b29af81b59bbb7c7f5e97332cd",
+              "bytes": 120
+            }
+          }
+        },
+        "standard": {
+          "maxCrap": 6,
+          "minCoveragePercent": {
+            "line": 95,
+            "branch": 90
+          }
+        },
+        "functions": 189,
+        "findings": 0,
+        "maximumCrap": 6.0,
+        "coverage": {
+          "line": {
+            "covered": 1448,
+            "total": 1460,
+            "coverage": 0.9917808219178083,
+            "meetsStandard": true
+          },
+          "branch": {
+            "covered": 515,
+            "total": 524,
+            "coverage": 0.982824427480916,
+            "meetsStandard": true
+          }
+        }
+      },
+      "dependencies": {
+        "command": [
+          ".venv/bin/python",
+          "-m",
+          "pip",
+          "check"
+        ],
+        "exitCode": 0,
+        "durationSeconds": 0.264,
+        "logs": {
+          "stdout": {
+            "path": "/private/tmp/workflow-reviewed-gate-20261014-jyqqqni9/final-py314-pip.stdout",
+            "sha256": "9261363b733079a641c2e4cc9bc46ffa1d8336945a87f807b6cf68847dbc9b09",
+            "bytes": 30
+          },
+          "stderr": {
+            "path": "/private/tmp/workflow-reviewed-gate-20261014-jyqqqni9/final-py314-pip.stderr",
+            "sha256": "6c2e8c77da54a6b3ee45b70d6f5c8babfd038578114b65411e876b86f63f14dc",
+            "bytes": 276
+          },
+          "status.json": {
+            "path": "/private/tmp/workflow-reviewed-gate-20261014-jyqqqni9/final-py314-pip.status.json",
+            "sha256": "1c11b0e700242d64f4eb24d7f0af34a64a7633496cf511fb3c63a1852dfcbc1b",
+            "bytes": 125
+          }
+        }
+      }
+    },
+    "py310": {
+      "python": "3.10.18 (main, Jun  3 2025, 18:23:41) [Clang 17.0.0 (clang-1700.3.19.1)]",
+      "mutation": {
+        "actualProcess": {
+          "command": [
+            "/private/tmp/workflow-repo-review-fixes-20261012-O1IFPx/py310/bin/python",
+            "scripts/self_mutation.py",
+            "--json"
+          ],
+          "exitCode": 0,
+          "durationSeconds": 101.531,
+          "logs": {
+            "stdout": {
+              "path": "/private/tmp/workflow-reviewed-gate-20261014-jyqqqni9/verified-py310-mutation.stdout",
+              "sha256": "4d9a8702dbba9cc4c825d7026fba2945eaa9e5319070253e3ff148a0ceb1a76d",
+              "bytes": 2094
+            },
+            "stderr": {
+              "path": "/private/tmp/workflow-reviewed-gate-20261014-jyqqqni9/verified-py310-mutation.stderr",
+              "sha256": "5f7c1daee4ded80eb1f7c31be33842257694688a9a3613dc43ee85dd94d25c7f",
+              "bytes": 299633
+            },
+            "status.json": {
+              "path": "/private/tmp/workflow-reviewed-gate-20261014-jyqqqni9/verified-py310-mutation.status.json",
+              "sha256": "d8614d6dc50e02cc63b44de363589c65c36753346def07f2f2270dbcf913697b",
+              "bytes": 195
+            }
+          }
+        },
+        "rawResult": {
+          "format": "normalized",
+          "counts": {
+            "killed": 4068,
+            "survived": 1,
+            "noCoverage": 0,
+            "timeout": 0,
+            "unviable": 0,
+            "ignored": 0,
+            "error": 0
+          },
+          "assessed": 4069,
+          "exitCode": 1,
+          "mutants": [
+            {
+              "id": "coverage_lcov.x_validate_checksums__mutmut_3",
+              "status": "survived",
+              "file": "src/coverage_lcov.py",
+              "function": "validate_checksums",
+              "line": 87,
+              "diffOffset": 86,
+              "diff": "--- src/coverage_lcov.py\n+++ src/coverage_lcov.py\n@@ -1,7 +1,7 @@\n def validate_checksums(source, lines, checksums):\n     for line, checksum in checksums.items():\n         # LCOV fingerprints UTF-8 source lines without their newline, with unpadded base64 MD5.\n-        digest = hashlib.md5(lines[line - 1].encode(), usedforsecurity=False).digest()\n+        digest = hashlib.md5(lines[line - 1].encode(), usedforsecurity=None).digest()\n         # A 16-byte MD5 digest always has exactly two base64 padding characters.\n         expected = base64.b64encode(digest)[:-2].decode()\n         if checksum != expected:"
+            }
+          ],
+          "toolExitCode": 0,
+          "reportPath": "/private/var/folders/97/36py7_j14dv3mhytn6cgbgbw0000gn/T/workflow-evidence-3hya0yvp/mutation.json"
+        },
+        "reviewGate": {
+          "exitCode": 0,
+          "approvedEquivalentExclusions": [
+            {
+              "id": "coverage_lcov.x_validate_checksums__mutmut_3",
+              "file": "src/coverage_lcov.py",
+              "function": "validate_checksums",
+              "repositoryFile": "skills/workflow/scripts/coverage_lcov.py",
+              "sourceSha256": "ef99126aed9617accb3f32190a56822f49684df14bb0dc2366acfa5ad47fea47",
+              "diffSha256": "97ecc3613d91c5e6170e02a10a2269070c5b70fd0f47f967476b29d2cfc5e798",
+              "reason": "Approved by the repository owner: MD5 usedforsecurity=False to None is equivalent under the verified CPython OpenSSL providers. Both values select the same nonsecurity branch; removing the flag would break restricted-policy compatibility.",
+              "proof": "repo-review-survivor-remediation.json#/remainingEquivalentProof"
+            }
+          ]
+        },
+        "approvalSha256": "8ddce7fde256f6f262497624b75a5578194bb7899374952c8d5f235d0e1b20fd",
+        "rawExitCode": 1,
+        "sourceCopy": "/var/folders/97/36py7_j14dv3mhytn6cgbgbw0000gn/T/workflow-self-mutation-qdscv8xo",
+        "inputHashesMatchCurrentSnapshotAndActualCopy": true,
+        "nativeCounts": {
+          "killed": 4068,
+          "survived": 1
+        },
+        "nativeAssessed": 4069,
+        "nativeAndMetadataIdsMatch": true,
+        "nativeAndMetadataStatusesMatch": true,
+        "actualPytestExitDistribution": {
+          "1": 4068,
+          "0": 1
+        },
+        "nativeIdStatusSha256": "341231851ee575de026419d9f59e2a8d839d29822097747597998843a451ac9c",
+        "metadataFiles": [
+          {
+            "path": "/var/folders/97/36py7_j14dv3mhytn6cgbgbw0000gn/T/workflow-self-mutation-qdscv8xo/mutants/scripts/mutation_review.py.meta",
+            "sha256": "ba54335f265ec852c5980bdc03c7c7056ad3bab59b09daa1d58e67dc29c33982",
+            "bytes": 72534
+          },
+          {
+            "path": "/var/folders/97/36py7_j14dv3mhytn6cgbgbw0000gn/T/workflow-self-mutation-qdscv8xo/mutants/scripts/self_crap.py.meta",
+            "sha256": "b406918ddb2570eea9e94cae9fcdcf368efca277298c244d1c9243599cc2cb00",
+            "bytes": 5493
+          },
+          {
+            "path": "/var/folders/97/36py7_j14dv3mhytn6cgbgbw0000gn/T/workflow-self-mutation-qdscv8xo/mutants/scripts/self_mutation.py.meta",
+            "sha256": "92646900d08b50289344f6cd462d90895ad36f5d6efc21355eb81646792f12af",
+            "bytes": 41554
+          },
+          {
+            "path": "/var/folders/97/36py7_j14dv3mhytn6cgbgbw0000gn/T/workflow-self-mutation-qdscv8xo/mutants/scripts/validation.py.meta",
+            "sha256": "86fa88369fd6a585a37e22493ae10cc6b4f4cc5711086f91988bcf086fe20401",
+            "bytes": 68913
+          },
+          {
+            "path": "/var/folders/97/36py7_j14dv3mhytn6cgbgbw0000gn/T/workflow-self-mutation-qdscv8xo/mutants/src/coverage_lcov.py.meta",
+            "sha256": "d97d376eddaf8c11e073f984bd3d6bd27a7161d9399dcc3fa5a3567f511876a7",
+            "bytes": 41355
+          },
+          {
+            "path": "/var/folders/97/36py7_j14dv3mhytn6cgbgbw0000gn/T/workflow-self-mutation-qdscv8xo/mutants/src/coverage_llvm.py.meta",
+            "sha256": "0f0089058985d6f526b24d14d769448460bf34ba695db77d09ffbc70e42ab84f",
+            "bytes": 40271
+          },
+          {
+            "path": "/var/folders/97/36py7_j14dv3mhytn6cgbgbw0000gn/T/workflow-self-mutation-qdscv8xo/mutants/src/crap.py.meta",
+            "sha256": "f08262a51a7b93c5552bc03a880704b615555f26309fe09f7c0fe0c1f2e2c6e5",
+            "bytes": 32721
+          },
+          {
+            "path": "/var/folders/97/36py7_j14dv3mhytn6cgbgbw0000gn/T/workflow-self-mutation-qdscv8xo/mutants/src/lang_js.py.meta",
+            "sha256": "b3abe56524a22b67ef4f9a0716127cb3a851c099b7570dff3a40c8fa272b5a9e",
+            "bytes": 8151
+          },
+          {
+            "path": "/var/folders/97/36py7_j14dv3mhytn6cgbgbw0000gn/T/workflow-self-mutation-qdscv8xo/mutants/src/lang_python.py.meta",
+            "sha256": "3547ba727d763425055ef80bf6831ebe06337f62402e1e7e4eda383bf40b17d2",
+            "bytes": 37140
+          },
+          {
+            "path": "/var/folders/97/36py7_j14dv3mhytn6cgbgbw0000gn/T/workflow-self-mutation-qdscv8xo/mutants/src/lang_rust.py.meta",
+            "sha256": "0c92ee12a494d5d2a5c2309465e3af238d4afc46b50a54e664740e511f85d23f",
+            "bytes": 65847
+          },
+          {
+            "path": "/var/folders/97/36py7_j14dv3mhytn6cgbgbw0000gn/T/workflow-self-mutation-qdscv8xo/mutants/src/lang_swift.py.meta",
+            "sha256": "55193f0cccd15bae4b40191ec3daac021bde2abc23256d8ca913790ea13b06c1",
+            "bytes": 24043
+          },
+          {
+            "path": "/var/folders/97/36py7_j14dv3mhytn6cgbgbw0000gn/T/workflow-self-mutation-qdscv8xo/mutants/src/mutation.py.meta",
+            "sha256": "0d5526bcca500f99b5d4c287e515ca64ecc46f0a24f92117e9276083af514177",
+            "bytes": 30111
+          },
+          {
+            "path": "/var/folders/97/36py7_j14dv3mhytn6cgbgbw0000gn/T/workflow-self-mutation-qdscv8xo/mutants/src/report_cargo.py.meta",
+            "sha256": "50d21be09d911ff706970c9a21d1752e85699c5c88cbeb64d30f988a506f1d9d",
+            "bytes": 36716
+          },
+          {
+            "path": "/var/folders/97/36py7_j14dv3mhytn6cgbgbw0000gn/T/workflow-self-mutation-qdscv8xo/mutants/src/report_muter.py.meta",
+            "sha256": "daad862a1b1a50885913cfaa97544123040ff4a5cf0f118df81d10d858b9c0e5",
+            "bytes": 15858
+          },
+          {
+            "path": "/var/folders/97/36py7_j14dv3mhytn6cgbgbw0000gn/T/workflow-self-mutation-qdscv8xo/mutants/src/report_normalized.py.meta",
+            "sha256": "9cf8c76b85f099f719a51507b72c9bfc17699416b529dff2410a7c5ab55f9385",
+            "bytes": 3666
+          },
+          {
+            "path": "/var/folders/97/36py7_j14dv3mhytn6cgbgbw0000gn/T/workflow-self-mutation-qdscv8xo/mutants/src/report_stryker.py.meta",
+            "sha256": "2396273187c5f5d99bd3c5832a3871badd0412974a499ca67ce07c69d97c99b3",
+            "bytes": 32764
+          },
+          {
+            "path": "/var/folders/97/36py7_j14dv3mhytn6cgbgbw0000gn/T/workflow-self-mutation-qdscv8xo/mutants/src/shared_crap.py.meta",
+            "sha256": "29ac629bad7002c9a780eede1d4f62f3051c2f489b1e780c6f798b7d62046495",
+            "bytes": 85214
+          },
+          {
+            "path": "/var/folders/97/36py7_j14dv3mhytn6cgbgbw0000gn/T/workflow-self-mutation-qdscv8xo/mutants/src/shared_languages.py.meta",
+            "sha256": "f4e67898e9aa82f7d149c5fa2b149e7287390139e5b5766a3d0de0936c47ba21",
+            "bytes": 14446
+          },
+          {
+            "path": "/var/folders/97/36py7_j14dv3mhytn6cgbgbw0000gn/T/workflow-self-mutation-qdscv8xo/mutants/src/shared_mutation.py.meta",
+            "sha256": "74ba78020dbc696be41629e1de50259d8c92edbb5788bee53ea6ea244dd71bc3",
+            "bytes": 65607
+          },
+          {
+            "path": "/var/folders/97/36py7_j14dv3mhytn6cgbgbw0000gn/T/workflow-self-mutation-qdscv8xo/mutants/src/shared_runner.py.meta",
+            "sha256": "6dfc0f79b110de10bee9853dad3ec660c7ea4788f6d0366356045f13d9d1d80d",
+            "bytes": 58107
+          }
+        ],
+        "reviewerOwnMutants": {
+          "generated": 326,
+          "killed": 326,
+          "byFunction": {
+            "scripts.mutation_review.x_is_integer": 5,
+            "scripts.mutation_review.x_is_text": 2,
+            "scripts.mutation_review.x_raw_counts": 20,
+            "scripts.mutation_review.x_expected_exit": 16,
+            "scripts.mutation_review.x_validate_totals": 45,
+            "scripts.mutation_review.x_mutant_identity": 23,
+            "scripts.mutation_review.x_validate_proof_details": 13,
+            "scripts.mutation_review.x_raw_mutants": 28,
+            "scripts.mutation_review.x_validate_raw": 34,
+            "scripts.mutation_review.x_validate_approval": 19,
+            "scripts.mutation_review.x_validate_hashes": 19,
+            "scripts.mutation_review.x_matches_identity": 3,
+            "scripts.mutation_review.x_approved_md5": 18,
+            "scripts.mutation_review.x_matched_proof": 24,
+            "scripts.mutation_review.x_review_result": 57
+          }
+        },
+        "rawFieldsUnchangedInReviewedResult": true,
+        "archivedRawEvidence": {
+          "mutation-result.json": {
+            "original": {
+              "path": "/var/folders/97/36py7_j14dv3mhytn6cgbgbw0000gn/T/workflow-self-mutation-qdscv8xo/mutation-result.json",
+              "sha256": "3977c7d2e29101d824b8025e753cf562bf53264d8b25d4354e7875ea69040295",
+              "bytes": 1125
+            },
+            "preservedCopy": {
+              "path": "/private/tmp/workflow-reviewed-gate-20261014-jyqqqni9/final-raw/py310/mutation-result.json",
+              "sha256": "3977c7d2e29101d824b8025e753cf562bf53264d8b25d4354e7875ea69040295",
+              "bytes": 1125
+            },
+            "bytesUnchanged": true
+          },
+          "mutation-reviewed.json": {
+            "original": {
+              "path": "/var/folders/97/36py7_j14dv3mhytn6cgbgbw0000gn/T/workflow-self-mutation-qdscv8xo/mutation-reviewed.json",
+              "sha256": "f620738a82ac100d6c823bb51fe5b17ebc6618abff120c5ffd7a3d406ef50582",
+              "bytes": 2093
+            },
+            "preservedCopy": {
+              "path": "/private/tmp/workflow-reviewed-gate-20261014-jyqqqni9/final-raw/py310/mutation-reviewed.json",
+              "sha256": "f620738a82ac100d6c823bb51fe5b17ebc6618abff120c5ffd7a3d406ef50582",
+              "bytes": 2093
+            },
+            "bytesUnchanged": true
+          },
+          "source-snapshot.json": {
+            "original": {
+              "path": "/var/folders/97/36py7_j14dv3mhytn6cgbgbw0000gn/T/workflow-self-mutation-qdscv8xo/source-snapshot.json",
+              "sha256": "853fd4ea7c427c9f53b7acc5c4031c7ffc68c9d2f1c569c5e041a606ceab5a2c",
+              "bytes": 4027
+            },
+            "preservedCopy": {
+              "path": "/private/tmp/workflow-reviewed-gate-20261014-jyqqqni9/final-raw/py310/source-snapshot.json",
+              "sha256": "853fd4ea7c427c9f53b7acc5c4031c7ffc68c9d2f1c569c5e041a606ceab5a2c",
+              "bytes": 4027
+            },
+            "bytesUnchanged": true
+          },
+          "md5-exclusion.json": {
+            "original": {
+              "path": "/var/folders/97/36py7_j14dv3mhytn6cgbgbw0000gn/T/workflow-self-mutation-qdscv8xo/md5-exclusion.json",
+              "sha256": "8ddce7fde256f6f262497624b75a5578194bb7899374952c8d5f235d0e1b20fd",
+              "bytes": 695
+            },
+            "preservedCopy": {
+              "path": "/private/tmp/workflow-reviewed-gate-20261014-jyqqqni9/final-raw/py310/md5-exclusion.json",
+              "sha256": "8ddce7fde256f6f262497624b75a5578194bb7899374952c8d5f235d0e1b20fd",
+              "bytes": 695
+            },
+            "bytesUnchanged": true
+          },
+          "native-mutation.json": {
+            "original": {
+              "path": "/private/var/folders/97/36py7_j14dv3mhytn6cgbgbw0000gn/T/workflow-evidence-3hya0yvp/mutation.json",
+              "sha256": "14db18504638cc49c4adbea06f7bd8adbebd0e0f937fc7f9dfc1520afa9bb8c5",
+              "bytes": 292927
+            },
+            "preservedCopy": {
+              "path": "/private/tmp/workflow-reviewed-gate-20261014-jyqqqni9/final-raw/py310/native-mutation.json",
+              "sha256": "14db18504638cc49c4adbea06f7bd8adbebd0e0f937fc7f9dfc1520afa9bb8c5",
+              "bytes": 292927
+            },
+            "bytesUnchanged": true
+          },
+          "pyproject.toml": {
+            "original": {
+              "path": "/var/folders/97/36py7_j14dv3mhytn6cgbgbw0000gn/T/workflow-self-mutation-qdscv8xo/pyproject.toml",
+              "sha256": "ee8850512f5b7f9f512e0d5275fed934bb60fa7ba8d641b28e0e065adc802958",
+              "bytes": 149
+            },
+            "preservedCopy": {
+              "path": "/private/tmp/workflow-reviewed-gate-20261014-jyqqqni9/final-raw/py310/pyproject.toml",
+              "sha256": "ee8850512f5b7f9f512e0d5275fed934bb60fa7ba8d641b28e0e065adc802958",
+              "bytes": 149
+            },
+            "bytesUnchanged": true
+          }
+        }
+      },
+      "unit": {
+        "command": [
+          "/private/tmp/workflow-repo-review-fixes-20261012-O1IFPx/py310/bin/python",
+          "-m",
+          "unittest",
+          "discover",
+          "-s",
+          "tests",
+          "-v"
+        ],
+        "exitCode": 0,
+        "durationSeconds": 11.938,
+        "logs": {
+          "stdout": {
+            "path": "/private/tmp/workflow-reviewed-gate-20261014-jyqqqni9/accepted-py310-unit.stdout",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "bytes": 0
+          },
+          "stderr": {
+            "path": "/private/tmp/workflow-reviewed-gate-20261014-jyqqqni9/accepted-py310-unit.stderr",
+            "sha256": "c7eaa8f6ec2c59ddc2ac0114fe8df46be18d76349c465c492ccff3062e66b998",
+            "bytes": 24396
+          },
+          "status.json": {
+            "path": "/private/tmp/workflow-reviewed-gate-20261014-jyqqqni9/accepted-py310-unit.status.json",
+            "sha256": "2b8744b38f7d604fc62bb1ce4077674b9204b4ef4060b3f3bf0285498083e886",
+            "bytes": 223
+          }
+        },
+        "tests": 245,
+        "passed": 241,
+        "skipped": 4,
+        "skipBoundary": "Existing native Windows Job Object tests; unchanged"
+      },
+      "crap": {
+        "actualProcess": {
+          "command": [
+            "/private/tmp/workflow-repo-review-fixes-20261012-O1IFPx/py310/bin/python",
+            "scripts/self_crap.py"
+          ],
+          "exitCode": 0,
+          "durationSeconds": 31.836,
+          "logs": {
+            "stdout": {
+              "path": "/private/tmp/workflow-reviewed-gate-20261014-jyqqqni9/verified-py310-crap.stdout",
+              "sha256": "a1ff27ce247e2369d9a9f076cca801faf2cc57f88283445a2054bfab776587cd",
+              "bytes": 46794
+            },
+            "stderr": {
+              "path": "/private/tmp/workflow-reviewed-gate-20261014-jyqqqni9/verified-py310-crap.stderr",
+              "sha256": "5d07a1dc6bfd39a8ced19efe847550bb7f7f454acdf1ce69ee028c458ac78804",
+              "bytes": 585
+            },
+            "status.json": {
+              "path": "/private/tmp/workflow-reviewed-gate-20261014-jyqqqni9/verified-py310-crap.status.json",
+              "sha256": "f07af37cab77fbd2238b5a6db545c451fdf0b72811243268f9885b3b0c9c0d69",
+              "bytes": 176
+            }
+          }
+        },
+        "standard": {
+          "maxCrap": 6,
+          "minCoveragePercent": {
+            "line": 95,
+            "branch": 90
+          }
+        },
+        "functions": 189,
+        "findings": 0,
+        "maximumCrap": 6.0,
+        "coverage": {
+          "line": {
+            "covered": 1454,
+            "total": 1466,
+            "coverage": 0.9918144611186903,
+            "meetsStandard": true
+          },
+          "branch": {
+            "covered": 515,
+            "total": 524,
+            "coverage": 0.982824427480916,
+            "meetsStandard": true
+          }
+        }
+      },
+      "dependencies": {
+        "command": [
+          "/private/tmp/workflow-repo-review-fixes-20261012-O1IFPx/py310/bin/python",
+          "-m",
+          "pip",
+          "check"
+        ],
+        "exitCode": 0,
+        "durationSeconds": 0.334,
+        "logs": {
+          "stdout": {
+            "path": "/private/tmp/workflow-reviewed-gate-20261014-jyqqqni9/final-py310-pip.stdout",
+            "sha256": "9261363b733079a641c2e4cc9bc46ffa1d8336945a87f807b6cf68847dbc9b09",
+            "bytes": 30
+          },
+          "stderr": {
+            "path": "/private/tmp/workflow-reviewed-gate-20261014-jyqqqni9/final-py310-pip.stderr",
+            "sha256": "6c2e8c77da54a6b3ee45b70d6f5c8babfd038578114b65411e876b86f63f14dc",
+            "bytes": 276
+          },
+          "status.json": {
+            "path": "/private/tmp/workflow-reviewed-gate-20261014-jyqqqni9/final-py310-pip.status.json",
+            "sha256": "fd95255e88060c661e65945e80a887358afebdc51cc8b0edcd157dcd5c28920c",
+            "bytes": 181
+          }
+        }
+      }
+    }
+  },
+  "sameMd5LineGeneratedMutants": [
+    {
+      "id": "coverage_lcov.x_validate_checksums__mutmut_1",
+      "diff": "--- src/coverage_lcov.py\n+++ src/coverage_lcov.py\n@@ -1,7 +1,7 @@\n def validate_checksums(source, lines, checksums):\n     for line, checksum in checksums.items():\n         # LCOV fingerprints UTF-8 source lines without their newline, with unpadded base64 MD5.\n-        digest = hashlib.md5(lines[line - 1].encode(), usedforsecurity=False).digest()\n+        digest = None\n         # A 16-byte MD5 digest always has exactly two base64 padding characters.\n         expected = base64.b64encode(digest)[:-2].decode()\n         if checksum != expected:",
+      "diffSha256": "8ec63f2ef5bf083c9c0bdd0dd970a613e9be1a03d09accf1f617450b876ad9e4",
+      "byPython": {
+        "py314": {
+          "status": "killed",
+          "actualPytestExitCode": 1
+        },
+        "py310": {
+          "status": "killed",
+          "actualPytestExitCode": 1
+        }
+      }
+    },
+    {
+      "id": "coverage_lcov.x_validate_checksums__mutmut_2",
+      "diff": "--- src/coverage_lcov.py\n+++ src/coverage_lcov.py\n@@ -1,7 +1,7 @@\n def validate_checksums(source, lines, checksums):\n     for line, checksum in checksums.items():\n         # LCOV fingerprints UTF-8 source lines without their newline, with unpadded base64 MD5.\n-        digest = hashlib.md5(lines[line - 1].encode(), usedforsecurity=False).digest()\n+        digest = hashlib.md5(None, usedforsecurity=False).digest()\n         # A 16-byte MD5 digest always has exactly two base64 padding characters.\n         expected = base64.b64encode(digest)[:-2].decode()\n         if checksum != expected:",
+      "diffSha256": "09c94180e3df9e654edf1b9cb78a7300160d8c0829d79f2cca3851345cd7974f",
+      "byPython": {
+        "py314": {
+          "status": "killed",
+          "actualPytestExitCode": 1
+        },
+        "py310": {
+          "status": "killed",
+          "actualPytestExitCode": 1
+        }
+      }
+    },
+    {
+      "id": "coverage_lcov.x_validate_checksums__mutmut_3",
+      "diff": "--- src/coverage_lcov.py\n+++ src/coverage_lcov.py\n@@ -1,7 +1,7 @@\n def validate_checksums(source, lines, checksums):\n     for line, checksum in checksums.items():\n         # LCOV fingerprints UTF-8 source lines without their newline, with unpadded base64 MD5.\n-        digest = hashlib.md5(lines[line - 1].encode(), usedforsecurity=False).digest()\n+        digest = hashlib.md5(lines[line - 1].encode(), usedforsecurity=None).digest()\n         # A 16-byte MD5 digest always has exactly two base64 padding characters.\n         expected = base64.b64encode(digest)[:-2].decode()\n         if checksum != expected:",
+      "diffSha256": "97ecc3613d91c5e6170e02a10a2269070c5b70fd0f47f967476b29d2cfc5e798",
+      "byPython": {
+        "py314": {
+          "status": "survived",
+          "actualPytestExitCode": 0
+        },
+        "py310": {
+          "status": "survived",
+          "actualPytestExitCode": 0
+        }
+      }
+    },
+    {
+      "id": "coverage_lcov.x_validate_checksums__mutmut_4",
+      "diff": "--- src/coverage_lcov.py\n+++ src/coverage_lcov.py\n@@ -1,7 +1,7 @@\n def validate_checksums(source, lines, checksums):\n     for line, checksum in checksums.items():\n         # LCOV fingerprints UTF-8 source lines without their newline, with unpadded base64 MD5.\n-        digest = hashlib.md5(lines[line - 1].encode(), usedforsecurity=False).digest()\n+        digest = hashlib.md5(usedforsecurity=False).digest()\n         # A 16-byte MD5 digest always has exactly two base64 padding characters.\n         expected = base64.b64encode(digest)[:-2].decode()\n         if checksum != expected:",
+      "diffSha256": "6560b7565e9f686e53c52fb1f22631fa9ac804c0e02dffc86c4479bb6f66d7ad",
+      "byPython": {
+        "py314": {
+          "status": "killed",
+          "actualPytestExitCode": 1
+        },
+        "py310": {
+          "status": "killed",
+          "actualPytestExitCode": 1
+        }
+      }
+    },
+    {
+      "id": "coverage_lcov.x_validate_checksums__mutmut_5",
+      "diff": "--- src/coverage_lcov.py\n+++ src/coverage_lcov.py\n@@ -1,7 +1,7 @@\n def validate_checksums(source, lines, checksums):\n     for line, checksum in checksums.items():\n         # LCOV fingerprints UTF-8 source lines without their newline, with unpadded base64 MD5.\n-        digest = hashlib.md5(lines[line - 1].encode(), usedforsecurity=False).digest()\n+        digest = hashlib.md5(lines[line - 1].encode(), ).digest()\n         # A 16-byte MD5 digest always has exactly two base64 padding characters.\n         expected = base64.b64encode(digest)[:-2].decode()\n         if checksum != expected:",
+      "diffSha256": "d4e356348974041b30aade486cb6b4e9ca338b517b39edc8208e906ba1fe30c1",
+      "byPython": {
+        "py314": {
+          "status": "killed",
+          "actualPytestExitCode": 1
+        },
+        "py310": {
+          "status": "killed",
+          "actualPytestExitCode": 1
+        }
+      }
+    },
+    {
+      "id": "coverage_lcov.x_validate_checksums__mutmut_6",
+      "diff": "--- src/coverage_lcov.py\n+++ src/coverage_lcov.py\n@@ -1,7 +1,7 @@\n def validate_checksums(source, lines, checksums):\n     for line, checksum in checksums.items():\n         # LCOV fingerprints UTF-8 source lines without their newline, with unpadded base64 MD5.\n-        digest = hashlib.md5(lines[line - 1].encode(), usedforsecurity=False).digest()\n+        digest = hashlib.md5(lines[line + 1].encode(), usedforsecurity=False).digest()\n         # A 16-byte MD5 digest always has exactly two base64 padding characters.\n         expected = base64.b64encode(digest)[:-2].decode()\n         if checksum != expected:",
+      "diffSha256": "a28be33794cb1942b396a226de5870ef85897a28d26108eba9f0d7949df543a2",
+      "byPython": {
+        "py314": {
+          "status": "killed",
+          "actualPytestExitCode": 1
+        },
+        "py310": {
+          "status": "killed",
+          "actualPytestExitCode": 1
+        }
+      }
+    },
+    {
+      "id": "coverage_lcov.x_validate_checksums__mutmut_7",
+      "diff": "--- src/coverage_lcov.py\n+++ src/coverage_lcov.py\n@@ -1,7 +1,7 @@\n def validate_checksums(source, lines, checksums):\n     for line, checksum in checksums.items():\n         # LCOV fingerprints UTF-8 source lines without their newline, with unpadded base64 MD5.\n-        digest = hashlib.md5(lines[line - 1].encode(), usedforsecurity=False).digest()\n+        digest = hashlib.md5(lines[line - 2].encode(), usedforsecurity=False).digest()\n         # A 16-byte MD5 digest always has exactly two base64 padding characters.\n         expected = base64.b64encode(digest)[:-2].decode()\n         if checksum != expected:",
+      "diffSha256": "ee612b599ba4e9e7dc3e5199af9feb2b564f181b587b96f62d406cea29046d5f",
+      "byPython": {
+        "py314": {
+          "status": "killed",
+          "actualPytestExitCode": 1
+        },
+        "py310": {
+          "status": "killed",
+          "actualPytestExitCode": 1
+        }
+      }
+    },
+    {
+      "id": "coverage_lcov.x_validate_checksums__mutmut_8",
+      "diff": "--- src/coverage_lcov.py\n+++ src/coverage_lcov.py\n@@ -1,7 +1,7 @@\n def validate_checksums(source, lines, checksums):\n     for line, checksum in checksums.items():\n         # LCOV fingerprints UTF-8 source lines without their newline, with unpadded base64 MD5.\n-        digest = hashlib.md5(lines[line - 1].encode(), usedforsecurity=False).digest()\n+        digest = hashlib.md5(lines[line - 1].encode(), usedforsecurity=True).digest()\n         # A 16-byte MD5 digest always has exactly two base64 padding characters.\n         expected = base64.b64encode(digest)[:-2].decode()\n         if checksum != expected:",
+      "diffSha256": "c9a11cef695b5311e5978db9e28dab76125a4d7679913beb731c53a34d37d9a9",
+      "byPython": {
+        "py314": {
+          "status": "killed",
+          "actualPytestExitCode": 1
+        },
+        "py310": {
+          "status": "killed",
+          "actualPytestExitCode": 1
+        }
+      }
+    }
+  ],
+  "utf16SixteenPiBCorrespondingMutation": {
+    "id": "report_stryker.x_valid_utf16_column__mutmut_5",
+    "diff": "--- src/report_stryker.py\n+++ src/report_stryker.py\n@@ -1,2 +1,2 @@\n def valid_utf16_column(encoded_byte_length, column):\n-    return 1 <= column <= encoded_byte_length // 2 + 1\n+    return 1 <= column <= encoded_byte_length / 2 + 1",
+    "diffSha256": "173d55a17bb90e789345719c29056516ccc0971615ba1c34f5ea1aaedf4559ac",
+    "byPython": {
+      "py314": {
+        "status": "killed",
+        "actualPytestExitCode": 1
+      },
+      "py310": {
+        "status": "killed",
+        "actualPytestExitCode": 1
+      }
+    }
+  },
+  "unchangedStandards": {
+    "scripts/self_mutation.py": {
+      "comparedWithHead": true,
+      "unchangedValues": {
+        "MUTMUT_CONFIG": "[tool.mutmut]\nsource_paths = [\"src/\", \"scripts/\"]\npytest_add_cli_args_test_selection = [\"tests/\", \"-k\", \"not script_entrypoint and not real_mutmut\"]\n"
+      }
+    },
+    "skills/workflow/scripts/shared_crap.py": {
+      "comparedWithHead": true,
+      "unchangedValues": {
+        "MAX_CRAP": 6,
+        "MIN_COVERAGE_PERCENT": {
+          "line": 95,
+          "branch": 90
+        }
+      }
+    },
+    "skills/workflow/scripts/shared_mutation.py": {
+      "comparedWithHead": true,
+      "unchangedValues": {
+        "ACTIONABLE": [
+          "survived",
+          "noCoverage",
+          "timeout",
+          "error"
+        ],
+        "STATUSES": [
+          "killed",
+          "survived",
+          "noCoverage",
+          "timeout",
+          "unviable",
+          "ignored",
+          "error"
+        ]
+      }
+    }
+  },
+  "workflowChanges": {
+    ".github/workflows/validate.yml": {
+      "binding": {
+        "path": "/Users/jameslan/Documents/Workflow/.github/workflows/validate.yml",
+        "sha256": "5ce537b285a73de7bab990976dee806bcccfa9df63bd8fb05feff3c9a95bc4d3",
+        "bytes": 2416
+      },
+      "onlyMutationStepNameAndArtifactAdditionsChanged": true,
+      "addedArtifactPaths": [
+        "${{ runner.temp }}/**/mutation-result.json",
+        "${{ runner.temp }}/**/mutation-reviewed.json",
+        "${{ runner.temp }}/**/md5-exclusion.json"
+      ],
+      "jobsMatrixRunCommandsConditionsAndExitHandlingUnchanged": true
+    },
+    ".github/workflows/release.yml": {
+      "binding": {
+        "path": "/Users/jameslan/Documents/Workflow/.github/workflows/release.yml",
+        "sha256": "5e739b6cf2b3bb8d73d85f43fd17a689dd3bd6b2de08d4f041b24e7e86ebec7e",
+        "bytes": 2373
+      },
+      "onlyMutationStepNameAndArtifactAdditionsChanged": true,
+      "addedArtifactPaths": [
+        "${{ runner.temp }}/**/mutation-result.json",
+        "${{ runner.temp }}/**/mutation-reviewed.json",
+        "${{ runner.temp }}/**/md5-exclusion.json"
+      ],
+      "jobsMatrixRunCommandsConditionsAndExitHandlingUnchanged": true
+    }
+  },
+  "reviewedGateControls": {
+    "binding": {
+      "path": "/private/tmp/workflow-reviewed-gate-20261014-jyqqqni9/real-report-gate-controls.json",
+      "sha256": "8ef10a61dcb88c1a8d5f79115facb36c108fc7590e93e65c04582d9948b4f6d1",
+      "bytes": 3797
+    },
+    "basedOn": "Real round3 raw normalized report with the same MD5 source/diff binding; controls use isolated copies and leave original evidence unchanged",
+    "cases": [
+      {
+        "label": "exact-approved-md5",
+        "rawExitCode": 1,
+        "counts": {
+          "killed": 4068,
+          "survived": 1,
+          "noCoverage": 0,
+          "timeout": 0,
+          "unviable": 0,
+          "ignored": 0,
+          "error": 0
+        },
+        "exitCode": 0,
+        "approvedEquivalentExclusions": [
+          {
+            "id": "coverage_lcov.x_validate_checksums__mutmut_3",
+            "file": "src/coverage_lcov.py",
+            "function": "validate_checksums",
+            "repositoryFile": "skills/workflow/scripts/coverage_lcov.py",
+            "sourceSha256": "ef99126aed9617accb3f32190a56822f49684df14bb0dc2366acfa5ad47fea47",
+            "diffSha256": "97ecc3613d91c5e6170e02a10a2269070c5b70fd0f47f967476b29d2cfc5e798",
+            "reason": "Approved by the repository owner: MD5 usedforsecurity=False to None is equivalent under the verified CPython OpenSSL providers. Both values select the same nonsecurity branch; removing the flag would break restricted-policy compatibility.",
+            "proof": "repo-review-survivor-remediation.json#/remainingEquivalentProof"
+          }
+        ]
+      },
+      {
+        "label": "source-sha-changed",
+        "rawExitCode": 1,
+        "counts": {
+          "killed": 4068,
+          "survived": 1,
+          "noCoverage": 0,
+          "timeout": 0,
+          "unviable": 0,
+          "ignored": 0,
+          "error": 0
+        },
+        "exitCode": 1,
+        "approvedEquivalentExclusions": []
+      },
+      {
+        "label": "diff-sha-changed",
+        "rawExitCode": 1,
+        "counts": {
+          "killed": 4068,
+          "survived": 1,
+          "noCoverage": 0,
+          "timeout": 0,
+          "unviable": 0,
+          "ignored": 0,
+          "error": 0
+        },
+        "exitCode": 1,
+        "approvedEquivalentExclusions": []
+      },
+      {
+        "label": "additional-survived",
+        "rawExitCode": 1,
+        "counts": {
+          "killed": 4067,
+          "survived": 2,
+          "noCoverage": 0,
+          "timeout": 0,
+          "unviable": 0,
+          "ignored": 0,
+          "error": 0
+        },
+        "exitCode": 1,
+        "approvedEquivalentExclusions": []
+      },
+      {
+        "label": "additional-noCoverage",
+        "rawExitCode": 1,
+        "counts": {
+          "killed": 4067,
+          "survived": 1,
+          "noCoverage": 1,
+          "timeout": 0,
+          "unviable": 0,
+          "ignored": 0,
+          "error": 0
+        },
+        "exitCode": 1,
+        "approvedEquivalentExclusions": []
+      },
+      {
+        "label": "additional-timeout",
+        "rawExitCode": 1,
+        "counts": {
+          "killed": 4067,
+          "survived": 1,
+          "noCoverage": 0,
+          "timeout": 1,
+          "unviable": 0,
+          "ignored": 0,
+          "error": 0
+        },
+        "exitCode": 1,
+        "approvedEquivalentExclusions": []
+      },
+      {
+        "label": "additional-unviable",
+        "rawExitCode": 1,
+        "counts": {
+          "killed": 4067,
+          "survived": 1,
+          "noCoverage": 0,
+          "timeout": 0,
+          "unviable": 1,
+          "ignored": 0,
+          "error": 0
+        },
+        "exitCode": 1,
+        "approvedEquivalentExclusions": []
+      },
+      {
+        "label": "additional-ignored",
+        "rawExitCode": 1,
+        "counts": {
+          "killed": 4067,
+          "survived": 1,
+          "noCoverage": 0,
+          "timeout": 0,
+          "unviable": 0,
+          "ignored": 1,
+          "error": 0
+        },
+        "exitCode": 1,
+        "approvedEquivalentExclusions": []
+      },
+      {
+        "label": "additional-error",
+        "rawExitCode": 2,
+        "counts": {
+          "killed": 4067,
+          "survived": 1,
+          "noCoverage": 0,
+          "timeout": 0,
+          "unviable": 0,
+          "ignored": 0,
+          "error": 1
+        },
+        "exitCode": 2,
+        "approvedEquivalentExclusions": []
+      },
+      {
+        "label": "inconsistent-raw-counts",
+        "blockedBy": "ValueError",
+        "error": "Invalid raw mutation evidence"
+      },
+      {
+        "label": "missing-approval",
+        "rawExitCode": 1,
+        "counts": {
+          "killed": 4068,
+          "survived": 1,
+          "noCoverage": 0,
+          "timeout": 0,
+          "unviable": 0,
+          "ignored": 0,
+          "error": 0
+        },
+        "exitCode": 1,
+        "approvedEquivalentExclusions": []
+      }
+    ],
+    "rawObjectsUnchanged": true
+  },
+  "restrictedMd5Replay": {
+    "binding": {
+      "path": "/private/tmp/workflow-reviewed-gate-20261014-jyqqqni9/restricted-md5-replay.json",
+      "sha256": "5574b26bf8d172082d5ca343f90ac747afdf15caa4ae4122aeb31f8aaafcbcb0",
+      "bytes": 1457
+    },
+    "results": {
+      "py314": {
+        "exitCode": 0,
+        "result": {
+          "python": "3.14.3 (main, Feb  3 2026, 15:32:20) [Clang 17.0.0 (clang-1700.6.3.2)]",
+          "executable": "/Users/jameslan/Documents/Workflow/.venv/bin/python",
+          "openssl": "OpenSSL 3.6.4 25 Aug 2026",
+          "md5Provider": "_hashlib",
+          "results": [
+            {
+              "flag": true,
+              "errorType": "UnsupportedDigestmodError",
+              "error": "[digital envelope routines] unsupported"
+            },
+            {
+              "flag": false,
+              "digest": "900150983cd24fb0d6963f7d28e17f72"
+            },
+            {
+              "flag": null,
+              "digest": "900150983cd24fb0d6963f7d28e17f72"
+            }
+          ],
+          "certificationClaim": false
+        }
+      },
+      "py310": {
+        "exitCode": 0,
+        "result": {
+          "python": "3.10.18 (main, Jun  3 2025, 18:23:41) [Clang 17.0.0 (clang-1700.3.19.1)]",
+          "executable": "/private/tmp/workflow-repo-review-fixes-20261012-O1IFPx/py310/bin/python",
+          "openssl": "OpenSSL 3.6.4 25 Aug 2026",
+          "md5Provider": "_hashlib",
+          "results": [
+            {
+              "flag": true,
+              "errorType": "ValueError",
+              "error": "[digital envelope routines] unsupported"
+            },
+            {
+              "flag": false,
+              "digest": "900150983cd24fb0d6963f7d28e17f72"
+            },
+            {
+              "flag": null,
+              "digest": "900150983cd24fb0d6963f7d28e17f72"
+            }
+          ],
+          "certificationClaim": false
+        }
+      }
+    }
+  },
+  "realLanguageIntegrations": {
+    "binding": {
+      "path": "/private/tmp/workflow-reviewed-gate-20261014-jyqqqni9/real-languages/real-language-summary.json",
+      "sha256": "ed6db20c5c39a3c6c0829e61706f2477e5debbc3dc53a3006be25a124b47e90d",
+      "bytes": 20987
+    },
+    "checks": {
+      "js": {
+        "crap": {
+          "command": [
+            "/Users/jameslan/Documents/Workflow/.venv/bin/python",
+            "/Users/jameslan/Documents/Workflow/skills/workflow/scripts/crap.py",
+            "js",
+            "/private/tmp/workflow-reviewed-gate-20261014-jyqqqni9/real-languages/languages/js",
+            "math.js",
+            "--timeout-ms",
+            "300000"
+          ],
+          "exitCode": 0,
+          "durationSeconds": 0.214,
+          "counts": null,
+          "coverage": {
+            "line": {
+              "covered": 3,
+              "total": 3,
+              "coverage": 1.0,
+              "meetsStandard": true
+            },
+            "branch": {
+              "covered": 2,
+              "total": 2,
+              "coverage": 1.0,
+              "meetsStandard": true
+            }
+          },
+          "findings": 0,
+          "toolExitCode": null,
+          "resultSha256": "c3853af57533ddf66087f9a84c9b2b16af45e53ff5b1a028c4462b3677d5351a",
+          "rawEvidenceOriginal": "/private/tmp/workflow-reviewed-gate-20261014-jyqqqni9/real-languages/tool-tmp/workflow-evidence-ovtyum92",
+          "rawEvidenceCopy": "/private/tmp/workflow-reviewed-gate-20261014-jyqqqni9/real-languages/raw-evidence/real-js-crap",
+          "rawEngineReportPath": null,
+          "evidenceSha256": {
+            "config.json": "6d97799284529a07fadc500ce77b775347b711c9d4cce95361450f9374f819fc",
+            "measurements.json": "a652ce2f3660a221a71a8d3d98884f24f4ecf2420ae63fc540e209819b91b3c5",
+            "coverage.lcov": "801e980fd3173a0e4d5e54a5fa10553d16c8d694488f186f494632eb861e3398"
+          },
+          "originalAndCopyEvidenceSha256Match": true
+        },
+        "mutation": {
+          "command": [
+            "/Users/jameslan/Documents/Workflow/.venv/bin/python",
+            "/Users/jameslan/Documents/Workflow/skills/workflow/scripts/mutation.py",
+            "--json",
+            "js",
+            "/private/tmp/workflow-reviewed-gate-20261014-jyqqqni9/real-languages/languages/js",
+            "--timeout-ms",
+            "300000"
+          ],
+          "exitCode": 0,
+          "durationSeconds": 0.889,
+          "counts": {
+            "killed": 2,
+            "survived": 0,
+            "noCoverage": 0,
+            "timeout": 0,
+            "unviable": 0,
+            "ignored": 0,
+            "error": 0
+          },
+          "coverage": null,
+          "findings": null,
+          "toolExitCode": 0,
+          "resultSha256": "a25d52a290038c95380479f3597fe1cc96ff7456bd27f0c022997a57d3cf3b78",
+          "rawEvidenceOriginal": "/private/tmp/workflow-reviewed-gate-20261014-jyqqqni9/real-languages/tool-tmp/workflow-evidence-yuqklg_m",
+          "rawEvidenceCopy": "/private/tmp/workflow-reviewed-gate-20261014-jyqqqni9/real-languages/raw-evidence/real-js-mutation",
+          "rawEngineReportPath": "/private/tmp/workflow-reviewed-gate-20261014-jyqqqni9/real-languages/tool-tmp/workflow-evidence-yuqklg_m/mutation.json",
+          "evidenceSha256": {
+            "config.json": "fc0dbff15e261ab4d9f335552dd996a49a79e62c0572b7844915bf5fd9299f94",
+            "mutation.json": "2e0da8af2de37f7626b24f6ba1228963c00d9ace6498492eda4617cfc5623999"
+          },
+          "originalAndCopyEvidenceSha256Match": true,
+          "rawEngineReportSha256": "2e0da8af2de37f7626b24f6ba1228963c00d9ace6498492eda4617cfc5623999",
+          "archivedRawEngineReportPath": "/private/tmp/workflow-reviewed-gate-20261014-jyqqqni9/real-languages/raw-evidence/real-js-mutation/mutation.json"
+        }
+      },
+      "ts": {
+        "crap": {
+          "command": [
+            "/Users/jameslan/Documents/Workflow/.venv/bin/python",
+            "/Users/jameslan/Documents/Workflow/skills/workflow/scripts/crap.py",
+            "ts",
+            "/private/tmp/workflow-reviewed-gate-20261014-jyqqqni9/real-languages/languages/ts",
+            "math.ts",
+            "--timeout-ms",
+            "300000"
+          ],
+          "exitCode": 0,
+          "durationSeconds": 0.214,
+          "counts": null,
+          "coverage": {
+            "line": {
+              "covered": 3,
+              "total": 3,
+              "coverage": 1.0,
+              "meetsStandard": true
+            },
+            "branch": {
+              "covered": 2,
+              "total": 2,
+              "coverage": 1.0,
+              "meetsStandard": true
+            }
+          },
+          "findings": 0,
+          "toolExitCode": null,
+          "resultSha256": "f829110ba521ef548ffe0d5357a5b620698ca332b869e0ae5241e4081ea9e075",
+          "rawEvidenceOriginal": "/private/tmp/workflow-reviewed-gate-20261014-jyqqqni9/real-languages/tool-tmp/workflow-evidence-4lx35skc",
+          "rawEvidenceCopy": "/private/tmp/workflow-reviewed-gate-20261014-jyqqqni9/real-languages/raw-evidence/real-ts-crap",
+          "rawEngineReportPath": null,
+          "evidenceSha256": {
+            "config.json": "b7fd0b6c8d317da7ef325ea8815a28b70b44862834ffd94a244afaa1220905bb",
+            "measurements.json": "66000abeb916040cb9a5edae68b2649ccddb25e5f90be9e7c9108819f32670ec",
+            "coverage.lcov": "a65118889fd6b0c6d81d54aed790959871a94947deec4ee80fc147f143ef2afe"
+          },
+          "originalAndCopyEvidenceSha256Match": true
+        },
+        "mutation": {
+          "command": [
+            "/Users/jameslan/Documents/Workflow/.venv/bin/python",
+            "/Users/jameslan/Documents/Workflow/skills/workflow/scripts/mutation.py",
+            "--json",
+            "ts",
+            "/private/tmp/workflow-reviewed-gate-20261014-jyqqqni9/real-languages/languages/ts",
+            "--timeout-ms",
+            "300000"
+          ],
+          "exitCode": 0,
+          "durationSeconds": 1.104,
+          "counts": {
+            "killed": 2,
+            "survived": 0,
+            "noCoverage": 0,
+            "timeout": 0,
+            "unviable": 0,
+            "ignored": 0,
+            "error": 0
+          },
+          "coverage": null,
+          "findings": null,
+          "toolExitCode": 0,
+          "resultSha256": "5020d78a5affa45627206451ae17c02e350fb4d9b0f71a223460ec8536c0a0b6",
+          "rawEvidenceOriginal": "/private/tmp/workflow-reviewed-gate-20261014-jyqqqni9/real-languages/tool-tmp/workflow-evidence-lfz4ras5",
+          "rawEvidenceCopy": "/private/tmp/workflow-reviewed-gate-20261014-jyqqqni9/real-languages/raw-evidence/real-ts-mutation",
+          "rawEngineReportPath": "/private/tmp/workflow-reviewed-gate-20261014-jyqqqni9/real-languages/tool-tmp/workflow-evidence-lfz4ras5/mutation.json",
+          "evidenceSha256": {
+            "config.json": "606189038bca7b524b6e944878df6266f41f17ea303455132230edf2110f9351",
+            "mutation.json": "f95083535b1ea67d2068f689f20e00705b5b7a96d0e261db7a27dfc923e5c857"
+          },
+          "originalAndCopyEvidenceSha256Match": true,
+          "rawEngineReportSha256": "f95083535b1ea67d2068f689f20e00705b5b7a96d0e261db7a27dfc923e5c857",
+          "archivedRawEngineReportPath": "/private/tmp/workflow-reviewed-gate-20261014-jyqqqni9/real-languages/raw-evidence/real-ts-mutation/mutation.json"
+        }
+      },
+      "rust": {
+        "crap": {
+          "command": [
+            "/Users/jameslan/Documents/Workflow/.venv/bin/python",
+            "/Users/jameslan/Documents/Workflow/skills/workflow/scripts/crap.py",
+            "rust",
+            "/private/tmp/workflow-reviewed-gate-20261014-jyqqqni9/real-languages/languages/rust",
+            "src/lib.rs",
+            "--timeout-ms",
+            "300000"
+          ],
+          "exitCode": 0,
+          "durationSeconds": 2.171,
+          "counts": null,
+          "coverage": {
+            "line": {
+              "covered": 4,
+              "total": 4,
+              "coverage": 1.0,
+              "meetsStandard": true
+            },
+            "branch": {
+              "covered": 2,
+              "total": 2,
+              "coverage": 1.0,
+              "meetsStandard": true
+            }
+          },
+          "findings": 0,
+          "toolExitCode": null,
+          "resultSha256": "de4d3c7ff61bd65716272f555b0823cf027dad3e2ba646b4f5c283a64f3f9f30",
+          "rawEvidenceOriginal": "/private/tmp/workflow-reviewed-gate-20261014-jyqqqni9/real-languages/tool-tmp/workflow-evidence-izhuokgd",
+          "rawEvidenceCopy": "/private/tmp/workflow-reviewed-gate-20261014-jyqqqni9/real-languages/raw-evidence/real-rust-crap",
+          "rawEngineReportPath": null,
+          "evidenceSha256": {
+            "config.json": "ae07592df03df3859b1eb1352fc8433dc2335d27b99d7a246be71ee08dbf4e4a",
+            "measurements.json": "cf8b04225b77941780a61b0f6bdd3eee532a670f1cda7832ab5a9e9ce2400894",
+            "coverage.lcov": "4bc917ade5ca35f47ed85fa7cbf59486d062eae0a56cae22d3898090087a4099"
+          },
+          "originalAndCopyEvidenceSha256Match": true
+        },
+        "mutation": {
+          "command": [
+            "/Users/jameslan/Documents/Workflow/.venv/bin/python",
+            "/Users/jameslan/Documents/Workflow/skills/workflow/scripts/mutation.py",
+            "--json",
+            "rust",
+            "/private/tmp/workflow-reviewed-gate-20261014-jyqqqni9/real-languages/languages/rust",
+            "--timeout-ms",
+            "300000"
+          ],
+          "exitCode": 0,
+          "durationSeconds": 4.117,
+          "counts": {
+            "killed": 6,
+            "survived": 0,
+            "noCoverage": 0,
+            "timeout": 0,
+            "unviable": 0,
+            "ignored": 0,
+            "error": 0
+          },
+          "coverage": null,
+          "findings": null,
+          "toolExitCode": 0,
+          "resultSha256": "f89e5722f0a599d3cfd4e8a2ff134aa3b4c7a01abbafc4e686122253e9e2b2fb",
+          "rawEvidenceOriginal": "/private/tmp/workflow-reviewed-gate-20261014-jyqqqni9/real-languages/tool-tmp/workflow-evidence-2ugut_4a",
+          "rawEvidenceCopy": "/private/tmp/workflow-reviewed-gate-20261014-jyqqqni9/real-languages/raw-evidence/real-rust-mutation",
+          "rawEngineReportPath": "/private/tmp/workflow-reviewed-gate-20261014-jyqqqni9/real-languages/tool-tmp/workflow-evidence-2ugut_4a/mutants.out/outcomes.json",
+          "evidenceSha256": {
+            "config.json": "d1d321a803309c5feead0114a66df9f5aff2145ef11ad62ab0f2a4fc12271cc8",
+            "mutants.out/lock.json": "70da5f43ef54c7db37c8360bf9a167823cea0795f9effa2f0b1f6a83d7c4c2bb",
+            "mutants.out/outcomes.json": "bb9d995556ca31d64148eaa7565626ec24bfa5efcc82fd1ba032ec8ef1c129e4",
+            "mutants.out/missed.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "mutants.out/caught.txt": "4f47ea378e2608c367932ba6ff156203d82b851b726a132a478d77724119e56b",
+            "mutants.out/timeout.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "mutants.out/mutants.json": "2f00d3488f783af1082dd2925dad3b73a050a7e80cebd7d52de661a34b1f600b",
+            "mutants.out/debug.log": "d5547e595fea68d3bc12bd1a82eb22006e8f2221035f4434a6ea92971265100a",
+            "mutants.out/unviable.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "mutants.out/diff/src__lib.rs_line_3_col_11.diff": "c9b6483c007356301f417da46e95728628b47527b62aef52d46d2a9b4c0d7203",
+            "mutants.out/diff/src__lib.rs_line_2_col_5_002.diff": "ae781eb2a031b6f3899cdf32bf33fce590cbb33f80658bb9cd41c3a769238f63",
+            "mutants.out/diff/src__lib.rs_line_2_col_14.diff": "52129a2c46e0fa1dfb118793b2349d168a707318c47a678cc8d6ea363d4e68d5",
+            "mutants.out/diff/src__lib.rs_line_3_col_11_001.diff": "6d59eed9a689374c4995179193348a385db798ed10738053a2d2e5f4bf492e4a",
+            "mutants.out/diff/src__lib.rs_line_2_col_5_001.diff": "714232749ce9dc41e2503206dc88aac2d9fb4d27a040f79ca1b0762a82e24b20",
+            "mutants.out/diff/src__lib.rs_line_2_col_5.diff": "3769823cc20b8f8510c160fd741050a2f9a0f7e561c3051b6604111fbaa0ecb3",
+            "mutants.out/log/src__lib.rs_line_2_col_5.log": "bfc503ace97be88a3e4dc68d1ed5275eb3803b1e4d0a121e3a7aad0f5b2316d2",
+            "mutants.out/log/src__lib.rs_line_3_col_11_001.log": "ae2de8e6cc0549cc7eff6028d3b12574a3f482734014eb7dfb107883c1066f8b",
+            "mutants.out/log/src__lib.rs_line_2_col_5_001.log": "e5cc16da476afcf9a7ab6859d9c58577b5b9563753aa69f09e1f89c51a0bb6a6",
+            "mutants.out/log/src__lib.rs_line_2_col_5_002.log": "c74583a988fc66e93f35d50c251a2d3721122601e0c3362aaf66a998bcce82fb",
+            "mutants.out/log/src__lib.rs_line_2_col_14.log": "5c707f56cdfdff83ce91b427f2552cd70a468a41f5a9b33ec55f8146ab5ad316",
+            "mutants.out/log/baseline.log": "7e2eae91df8c3ca0932745e00428443493be948626d10802133b3eb3241bb30a",
+            "mutants.out/log/src__lib.rs_line_3_col_11.log": "8fa14299b4acb94d973900d0431d9fe0089a6ba145e9c1a75d485c8e5651a618"
+          },
+          "originalAndCopyEvidenceSha256Match": true,
+          "rawEngineReportSha256": "bb9d995556ca31d64148eaa7565626ec24bfa5efcc82fd1ba032ec8ef1c129e4",
+          "archivedRawEngineReportPath": "/private/tmp/workflow-reviewed-gate-20261014-jyqqqni9/real-languages/raw-evidence/real-rust-mutation/mutants.out/outcomes.json"
+        }
+      },
+      "swift": {
+        "crap": {
+          "command": [
+            "/Users/jameslan/Documents/Workflow/.venv/bin/python",
+            "/Users/jameslan/Documents/Workflow/skills/workflow/scripts/crap.py",
+            "swift",
+            "/private/tmp/workflow-reviewed-gate-20261014-jyqqqni9/real-languages/languages/swift",
+            "Sources/workflow-swift-probe/workflow_swift_probe.swift",
+            "--timeout-ms",
+            "300000",
+            "--",
+            "xcrun",
+            "swift",
+            "test",
+            "--enable-code-coverage",
+            "--disable-sandbox"
+          ],
+          "exitCode": 0,
+          "durationSeconds": 12.047,
+          "counts": null,
+          "coverage": {
+            "line": {
+              "covered": 6,
+              "total": 6,
+              "coverage": 1.0,
+              "meetsStandard": true
+            },
+            "region": {
+              "covered": 4,
+              "total": 4,
+              "coverage": 1.0,
+              "meetsStandard": true
+            }
+          },
+          "findings": 0,
+          "toolExitCode": null,
+          "resultSha256": "843758d7bf94feb263a48e145edb874b342394037aa2b93274c9ee39d17aa536",
+          "rawEvidenceOriginal": "/private/tmp/workflow-reviewed-gate-20261014-jyqqqni9/real-languages/tool-tmp/workflow-evidence-1b2ign3m",
+          "rawEvidenceCopy": "/private/tmp/workflow-reviewed-gate-20261014-jyqqqni9/real-languages/raw-evidence/real-swift-crap",
+          "rawEngineReportPath": null,
+          "evidenceSha256": {
+            "config.json": "0a88892ad7eec8c893839d00303ad8b0b96ad73fc621779048c0fd3c1d2bd84e",
+            "measurements.json": "cc840a52236092960bb222c86ea51b59a2ffd214ba53f2c91454b012a14d2b01",
+            "coverage.json": "cc51ec6b8250940b4e13fc1a3c3c5409d7450ffa6b6377f0f96b33b8a8271ce2"
+          },
+          "originalAndCopyEvidenceSha256Match": true
+        },
+        "mutation": {
+          "command": [
+            "/Users/jameslan/Documents/Workflow/.venv/bin/python",
+            "/Users/jameslan/Documents/Workflow/skills/workflow/scripts/mutation.py",
+            "--json",
+            "swift",
+            "/private/tmp/workflow-reviewed-gate-20261014-jyqqqni9/real-languages/languages/swift",
+            "--timeout-ms",
+            "300000"
+          ],
+          "exitCode": 0,
+          "durationSeconds": 10.009,
+          "counts": {
+            "killed": 1,
+            "survived": 0,
+            "noCoverage": 0,
+            "timeout": 0,
+            "unviable": 0,
+            "ignored": 0,
+            "error": 0
+          },
+          "coverage": null,
+          "findings": null,
+          "toolExitCode": 0,
+          "resultSha256": "34caae6f45dbbd2d66c7d37c9e687c7dc988377ab8414e2dd11da5149692cb4d",
+          "rawEvidenceOriginal": "/private/tmp/workflow-reviewed-gate-20261014-jyqqqni9/real-languages/tool-tmp/workflow-evidence-01qrg_1g",
+          "rawEvidenceCopy": "/private/tmp/workflow-reviewed-gate-20261014-jyqqqni9/real-languages/raw-evidence/real-swift-mutation",
+          "rawEngineReportPath": "/private/tmp/workflow-reviewed-gate-20261014-jyqqqni9/real-languages/tool-tmp/workflow-evidence-01qrg_1g/mutation.json",
+          "evidenceSha256": {
+            "config.json": "a854a27d7b6951a70e7553552e25512a121ff38628ee08e90c64e52aeb425a17",
+            "mutation.json": "cdcbe6e4e1819a7e359a5e3c05fff85282bb32984254ea997e3871659e3302c8"
+          },
+          "originalAndCopyEvidenceSha256Match": true,
+          "rawEngineReportSha256": "cdcbe6e4e1819a7e359a5e3c05fff85282bb32984254ea997e3871659e3302c8",
+          "archivedRawEngineReportPath": "/private/tmp/workflow-reviewed-gate-20261014-jyqqqni9/real-languages/raw-evidence/real-swift-mutation/mutation.json"
+        }
+      }
+    },
+    "productionSourceSha256": {
+      "skills/workflow/scripts/coverage_lcov.py": "ef99126aed9617accb3f32190a56822f49684df14bb0dc2366acfa5ad47fea47",
+      "skills/workflow/scripts/coverage_llvm.py": "f9d60a92303a51351cda5f881631690aaaf08a6e3cb9027ca97e335849d2aab0",
+      "skills/workflow/scripts/crap.py": "dfd65f8d1d458b19d5f98094f23a0c6de906d676ed5e7250e6cdfda803317a82",
+      "skills/workflow/scripts/lang_js.py": "712a643c50dd7b9ace4885d10cebb3e02f53d9cc401c7b49d2cad1afd4dea088",
+      "skills/workflow/scripts/lang_python.py": "01185b579f0088dd1e8c0196ce972d382584f1aeb678a935b67f747315f5b72f",
+      "skills/workflow/scripts/lang_rust.py": "b96279a3d61befbcc86552551fdf6feb298a8a5ab269738a5ee6a19aa591c49f",
+      "skills/workflow/scripts/lang_swift.py": "d068430a73c99c1bc1ed898a7b11d4fe12f565bbe5b32d92a37f1d8acbfa9c57",
+      "skills/workflow/scripts/mutation.py": "7dbe2d0d42a469789b339e000f0fb556058ed466c638700e5b58633531c602ef",
+      "skills/workflow/scripts/report_cargo.py": "00c7284f81cdfede6adec091172cbfbdab360d0594735b4a87f11d37b9c7a0e8",
+      "skills/workflow/scripts/report_muter.py": "57fd0a032cdc56b8ce57a6ee88a675bc7cbac4c15750bdb95156534ce8946707",
+      "skills/workflow/scripts/report_normalized.py": "9718700636ff2b80bb291e519f556779cd617b28399b2b755d6c47217e39b1fe",
+      "skills/workflow/scripts/report_stryker.py": "fe183ecd1f99827ac83a24831b0cf011729f94eb277acf2631793bf3231ad2f7",
+      "skills/workflow/scripts/shared_crap.py": "6579383105be83f813a163776d0e1c3ce35401bb12be58ed1854328711edcab1",
+      "skills/workflow/scripts/shared_languages.py": "77723ff9ccc3d385ff3751a5fa9e5cd524f34b81d1bae6a85d767bc7e8b78235",
+      "skills/workflow/scripts/shared_mutation.py": "29d74c55217f448202e7013c780ecfe1a99b4450c82bafa2853c9166404c90e3",
+      "skills/workflow/scripts/shared_runner.py": "48454a26dff555656e45e44cf0310ae7fd5303a414a68380de78fec85a93b9a0",
+      "scripts/mutation_review.py": "e37ee4f3cc879d7a5e3e1e99257c0c2b11cda8c6153c136fde3ea3dea6fcf5b2",
+      "scripts/self_crap.py": "8455ca7e384181e2d5a82c20683bc2055186d76cce769af57c4b7c26c08007b4",
+      "scripts/self_mutation.py": "4cdf5ff113f867d975654e28d7b2a9ff9f3f7405554edbfa8bed9afcbbc21395",
+      "scripts/validation.py": "f8ed9758024e363ffbe88bfe17b51c7e90b60dd827049064081f9289cef14f3f"
+    },
+    "allEightActualChecksExitZero": true,
+    "scopeBoundary": "Small real-engine JS/TS/Rust/Swift smoke samples; Swift region coverage is explicitly labeled"
+  },
+  "repositoryValidation": {
+    "command": [
+      ".venv/bin/python",
+      "scripts/validation.py"
+    ],
+    "exitCode": 0,
+    "durationSeconds": 0.089,
+    "logs": {
+      "stdout": {
+        "path": "/private/tmp/workflow-reviewed-gate-20261014-jyqqqni9/final-validation.stdout",
+        "sha256": "ba3f7b64734535a1ca2d0a37ff133cb6b90f070c967877ca4ff5602fb2221a89",
+        "bytes": 110
+      },
+      "stderr": {
+        "path": "/private/tmp/workflow-reviewed-gate-20261014-jyqqqni9/final-validation.stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "status.json": {
+        "path": "/private/tmp/workflow-reviewed-gate-20261014-jyqqqni9/final-validation.status.json",
+        "sha256": "b2197316da22681f1b54d442e126bc40ad523e6d357b3c49f344bff79ec35c50",
+        "bytes": 120
+      }
+    }
+  },
+  "staticValidation": {
+    "binding": {
+      "path": "/private/tmp/workflow-reviewed-gate-20261014-jyqqqni9/final-static-checks.json",
+      "sha256": "4464ee64813ad7a26ae33dd6015a7e7afe0f9985afbb7b99d2f3924760e24359",
+      "bytes": 2261
+    },
+    "results": {
+      "productionFiles": 20,
+      "testFiles": 18,
+      "pythonAst": 38,
+      "workflows": 2,
+      "bashSteps": [
+        {
+          "workflow": ".github/workflows/release.yml",
+          "step": "Use runner-owned temporary directory for quality evidence",
+          "exitCode": 0
+        },
+        {
+          "workflow": ".github/workflows/release.yml",
+          "step": "Validate release tag and source",
+          "exitCode": 0
+        },
+        {
+          "workflow": ".github/workflows/release.yml",
+          "step": "Install validation dependencies",
+          "exitCode": 0
+        },
+        {
+          "workflow": ".github/workflows/release.yml",
+          "step": "Test validator and deterministic tools",
+          "exitCode": 0
+        },
+        {
+          "workflow": ".github/workflows/release.yml",
+          "step": "Validate skills",
+          "exitCode": 0
+        },
+        {
+          "workflow": ".github/workflows/release.yml",
+          "step": "Check every production script against the CRAP standard",
+          "exitCode": 0
+        },
+        {
+          "workflow": ".github/workflows/release.yml",
+          "step": "Review full-repository mutation with the approved MD5 equivalence",
+          "exitCode": 0
+        },
+        {
+          "workflow": ".github/workflows/release.yml",
+          "step": "Create GitHub release",
+          "exitCode": 0
+        },
+        {
+          "workflow": ".github/workflows/validate.yml",
+          "step": "Use runner-owned temporary directory for quality evidence",
+          "exitCode": 0
+        },
+        {
+          "workflow": ".github/workflows/validate.yml",
+          "step": "Install validation dependencies",
+          "exitCode": 0
+        },
+        {
+          "workflow": ".github/workflows/validate.yml",
+          "step": "Test validator and deterministic tools",
+          "exitCode": 0
+        },
+        {
+          "workflow": ".github/workflows/validate.yml",
+          "step": "Validate skills",
+          "exitCode": 0
+        },
+        {
+          "workflow": ".github/workflows/validate.yml",
+          "step": "Check every production script against the CRAP standard",
+          "exitCode": 0
+        },
+        {
+          "workflow": ".github/workflows/validate.yml",
+          "step": "Review full-repository mutation with the approved MD5 equivalence",
+          "exitCode": 0
+        },
+        {
+          "workflow": ".github/workflows/validate.yml",
+          "step": "Test native job ownership and timeout cleanup",
+          "exitCode": 0
+        }
+      ]
+    },
+    "bashStepsAreSyntaxOnly": true
+  },
+  "preservedFailedParallelUnitRun": {
+    "command": [
+      "/private/tmp/workflow-repo-review-fixes-20261012-O1IFPx/py310/bin/python",
+      "-m",
+      "unittest",
+      "discover",
+      "-s",
+      "tests",
+      "-v"
+    ],
+    "exitCode": 1,
+    "durationSeconds": 10.157,
+    "logs": {
+      "stdout": {
+        "path": "/private/tmp/workflow-reviewed-gate-20261014-jyqqqni9/verified-py310-unit.stdout",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "stderr": {
+        "path": "/private/tmp/workflow-reviewed-gate-20261014-jyqqqni9/verified-py310-unit.stderr",
+        "sha256": "09d97cb488454b3dda37fc8f2ad740c57df1b213e173c8a30d02471703d24d2f",
+        "bytes": 25035
+      },
+      "status.json": {
+        "path": "/private/tmp/workflow-reviewed-gate-20261014-jyqqqni9/verified-py310-unit.status.json",
+        "sha256": "f4b355cf3149f0fec125570ac0a16918c5a6d4db879207e3c82e90b0062477ba",
+        "bytes": 223
+      }
+    },
+    "tests": 245,
+    "failures": 1,
+    "skipped": 4,
+    "failure": "test_script_entrypoint_blocked_nightly_probe_times_out_and_stops_its_process: rustc probe did not start before the existing 100 ms timeout",
+    "observedContext": "Six full checks ran concurrently; serial full rerun passed on the exact same source/test hashes",
+    "sourceOrDeadlineOrSkipChangedForRerun": false,
+    "status": "Retained observed startup timing failure; not relabeled as passed"
+  },
+  "independentReview": {
+    "agent": "ci_evidence_verify",
+    "mode": "Read only",
+    "verified": [
+      "All 38 current/copied/snapshot hashes on both full mutation runs",
+      "All 4069 native IDs/statuses match actual per-mutant pytest exit metadata",
+      "All 326 new reviewer mutants killed",
+      "Seven neighboring MD5 line mutations generated and killed",
+      "Native/raw evidence unchanged; only one manifest approval; both source/diff match actual diff",
+      "Eleven real-report positive/negative gate controls",
+      "Workflow changes limited to the existing step name and three evidence paths",
+      "Both CRAP, final unit outputs, fresh real-language report hashes"
+    ],
+    "findings": []
+  },
+  "evidenceRoot": "/private/tmp/workflow-reviewed-gate-20261014-jyqqqni9",
+  "limitations": {
+    "nativeWindows": "Not run on this macOS host; four existing full-suite skips",
+    "remoteCi": "Not run for this uncommitted snapshot; no push authorized; exact local CI mutation command returned reviewed process exit 0 twice",
+    "timing": "The existing 100 ms Rust probe can fail to start under heavy parallel local load; failed attempt is preserved, serial full run passed without changes",
+    "rawMutation": "Still exit 1; approval affects only the separate reviewed gate, never raw statuses/counts/exits"
+  },
+  "lifecycle": {
+    "committed": false,
+    "pushed": false,
+    "merged": false
+  }
+}

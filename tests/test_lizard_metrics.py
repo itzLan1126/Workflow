@@ -14,7 +14,7 @@ from unittest import mock
 SCRIPT = Path(__file__).resolve().parents[1] / "skills/workflow/scripts/crap.py"
 sys.path.insert(0, str(SCRIPT.parent))
 import crap as lizard_metrics
-from coverage_lcov import open_section
+from coverage_lcov import open_section, read_lcov, validate_checksums
 from coverage.lcovreport import line_hash
 
 
@@ -284,6 +284,25 @@ class LizardMetricsTests(unittest.TestCase):
         result = self.run_metrics("sample.py")
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(json.loads(self.output.read_text())["coverage"]["line"], {"covered": 1, "total": 1})
+
+    def test_line_checksums_match_coverage_for_unicode_and_padding_boundaries(self):
+        lines = ["", "你好", "x", *(str(value) for value in range(64))]
+        checksums = {line: line_hash(text) for line, text in enumerate(lines, 1)}
+        validate_checksums(self.root / 'sample.py', lines, checksums)
+        for checksum in (checksums[2] + '==', checksums[2][:-1]):
+            with self.subTest(checksum=checksum), self.assertRaisesRegex(ValueError, 'does not match source'):
+                validate_checksums(self.root / 'sample.py', lines, {2: checksum})
+
+    def test_lcov_utf8_decoding_preserves_newline_variants_and_rejects_invalid_bytes(self):
+        source = self.root / '你好.py'
+        expected = {source.resolve(): {'lines': {2: 1}, 'branches': {}, 'checksums': {}}}
+        for newline in ('\n', '\r\n', '\r'):
+            with self.subTest(newline=newline):
+                self.coverage.write_bytes(newline.join((f'SF:{source}', 'DA:2,1', 'end_of_record', '')).encode())
+                self.assertEqual(read_lcov(self.coverage), expected)
+        self.coverage.write_bytes(b'SF:\xff.py\nDA:2,1\nend_of_record\n')
+        with self.assertRaises(UnicodeDecodeError):
+            read_lcov(self.coverage)
 
     def test_unicode_evidence_with_non_utf8_locale_and_restricted_md5(self):
         source = self.root / "你好.py"

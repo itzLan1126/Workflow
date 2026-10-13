@@ -1,6 +1,7 @@
 """Read cargo-mutants outcomes with a verified baseline."""
 from functools import partial
 from shared_mutation import object_value, array, safe_detail, code_diff, function_at
+from shared_runner import read_utf8
 
 ACCEPTED_EXIT_CODES = (0, 2, 3)
 STATUSES = {'CaughtMutant': 'killed', 'MissedMutant': 'survived', 'Timeout': 'timeout', 'Unviable': 'unviable'}
@@ -45,7 +46,7 @@ def read_cargo_diff(report_path, diff_path):
         raise ValueError("Cargo diff path must stay inside the report directory")
     detail = {"evidence": str(path)}
     try:
-        detail["diff"] = path.read_text(encoding="utf-8")
+        detail["diff"] = read_utf8(path)
     except OSError as error:
         detail["detailGap"] = f"Cannot read diff: {error}"
     return detail

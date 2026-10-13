@@ -9,11 +9,12 @@ import sys
 
 from shared_mutation import ACTIONABLE
 from shared_languages import Crap, Mutation
+from shared_runner import read_utf8
 
 
 def coverage_commands(project, evidence, args):
     rcfile = evidence / 'coveragerc'
-    rcfile.write_text('[run]\nbranch = true\nsource = ' + str(project) + '\npatch = subprocess\ndata_file = ' + str(evidence / '.coverage') + '\n', encoding='utf-8')
+    rcfile.write_bytes(('[run]\nbranch = true\nsource = ' + str(project) + '\npatch = subprocess\ndata_file = ' + str(evidence / '.coverage') + '\n').encode())
     return [[sys.executable, '-m', 'coverage', step[0], f'--rcfile={rcfile}', *step[1:]]
             for step in (['run', *(args or ['-m', 'pytest'])], ['combine'],
                          ['lcov', '-o', str(evidence / 'coverage.lcov')])]
@@ -52,7 +53,7 @@ def collect(mutants_dir, status_by_exit_code):
         raise ValueError("No mutmut results found under mutants/")
     mutants = []
     for meta in metas:
-        exit_codes = json.loads(meta.read_text(encoding="utf-8")).get("exit_code_by_key")
+        exit_codes = json.loads(read_utf8(meta)).get("exit_code_by_key")
         if not isinstance(exit_codes, dict):
             raise ValueError(f"Unrecognized mutmut metadata: {meta}")
         mutants.extend({"id": key, "status": classify(code, status_by_exit_code)}
@@ -65,7 +66,7 @@ def named_node(nodes, kind, name):
 
 
 def function_position(path, name, class_name):
-    nodes = ast.parse(path.read_text(encoding="utf-8")).body
+    nodes = ast.parse(read_utf8(path)).body
     if class_name:
         nodes = named_node(nodes, ast.ClassDef, class_name).body
     function = named_node(nodes, (ast.FunctionDef, ast.AsyncFunctionDef), name)
@@ -86,7 +87,7 @@ def add_details(mutants):
             mutant.update(file=str(path), function=f"{class_name}.{name}" if class_name else name)
             line, offset = function_position(path, name, class_name)
             mutant.update(line=line, diffOffset=offset,
-                          diff=get_diff_for_mutant(mutant["id"], path=path))
+                          diff=get_diff_for_mutant(mutant["id"]))
         except (OSError, ValueError, StopIteration, SyntaxError, KeyError) as error:
             mutant["detailGap"] = f"Cannot extract mutation diff: {error}"
     return mutants
@@ -103,7 +104,7 @@ def main(argv=None):
         subprocess.run([sys.executable, "-m", "mutmut", "run"], check=True)
         from mutmut.__main__ import status_by_exit_code
         report = {"baselinePassed": True, "mutants": add_details(collect("mutants", status_by_exit_code))}
-        Path(args[0]).write_text(json.dumps(report, indent=2), encoding="utf-8")
+        Path(args[0]).write_bytes(json.dumps(report).encode())
         return 0
     except (OSError, ValueError, ImportError, subprocess.CalledProcessError) as error:
         print(f"mutmut_export: {error}", file=sys.stderr)

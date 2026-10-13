@@ -2,6 +2,7 @@
 
 from fractions import Fraction
 from pathlib import Path
+from shared_runner import read_utf8
 
 
 # The skill's fixed standard: every function's CRAP <= 6, aggregate line coverage >= 95%,
@@ -88,7 +89,7 @@ def analyze(source):
 
     if get_reader_for(str(source)) is None:
         raise ValueError(f"Unsupported source: {source}")
-    code = source.read_text(encoding="utf-8")
+    code = read_utf8(source)
     # Lizard records functions when they close; retain that order to distinguish nested ranges.
     functions = lizard.analyze_file.analyze_source_code(str(source), code).function_list
     if not functions:

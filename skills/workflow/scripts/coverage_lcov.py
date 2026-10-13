@@ -77,7 +77,7 @@ def read_record(files, current, record):
 
 def read_lcov(path):
     files, current = {}, None
-    for record in Path(path).read_text(encoding="utf-8").splitlines():
+    for record in Path(path).read_bytes().decode().splitlines():
         current = read_record(files, current, record)
     if current is not None or not files:
         raise ValueError("Incomplete or empty LCOV report")
@@ -87,8 +87,9 @@ def read_lcov(path):
 def validate_checksums(source, lines, checksums):
     for line, checksum in checksums.items():
         # LCOV fingerprints UTF-8 source lines without their newline, with unpadded base64 MD5.
-        digest = hashlib.md5(lines[line - 1].encode("utf-8"), usedforsecurity=False).digest()
-        expected = base64.b64encode(digest).decode("ascii").rstrip("=")
+        digest = hashlib.md5(lines[line - 1].encode(), usedforsecurity=False).digest()
+        # A 16-byte MD5 digest always has exactly two base64 padding characters.
+        expected = base64.b64encode(digest)[:-2].decode()
         if checksum != expected:
             raise ValueError(f"LCOV checksum does not match source: {source}:{line}")
 

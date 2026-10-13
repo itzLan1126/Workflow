@@ -7,12 +7,13 @@ from pathlib import Path
 import subprocess
 import sys
 import tempfile
+from types import SimpleNamespace
 import unittest
 from unittest import mock
 
 SCRIPTS = Path(__file__).resolve().parents[1] / "skills/workflow/scripts"
 sys.path.insert(0, str(SCRIPTS))
-from lang_python import add_details, classify, collect, function_position, main
+from lang_python import add_details, classify, collect, coverage_commands, function_position, main
 from mutation import summarize
 from shared_mutation import numbered_diff
 
@@ -197,6 +198,72 @@ class MutmutExportTests(unittest.TestCase):
             self.assertEqual(function_position(path, "目标", None), (4, 3))
             self.assertEqual(collect(self.root / "mutants", TABLE),
                              [{"id": "模块.x_目标__mutmut_1", "status": "survived"}])
+
+    def test_unicode_source_locations_and_metadata_preserve_native_newlines(self):
+        source = ('def 前置():\n    value = """一\n二"""\n    return value\n\n'
+                  '@staticmethod\ndef 目标():\n    return "你好+"\n')
+        path = self.root / 'unicode.py'
+        meta_path = self.root / 'mutants/unicode.py.meta'
+        meta_path.parent.mkdir()
+        metadata = json.dumps({'exit_code_by_key': {'模块.x_目标__mutmut_1': 0}},
+                              ensure_ascii=False, indent=2)
+        for newline in ('\n', '\r\n', '\r'):
+            with self.subTest(newline=newline):
+                path.write_bytes(source.replace('\n', newline).encode())
+                meta_path.write_bytes(metadata.replace('\n', newline).encode())
+                self.assertEqual(function_position(path, '目标', None), (7, 5))
+                self.assertEqual(collect(self.root / 'mutants', TABLE),
+                                 [{'id': '模块.x_目标__mutmut_1', 'status': 'survived'}])
+
+    def test_sources_and_metadata_still_reject_invalid_utf8_and_bom(self):
+        path = self.root / 'invalid.py'
+        meta_path = self.root / 'mutants/invalid.py.meta'
+        meta_path.parent.mkdir()
+        for raw in (b'\xff', 'def cible():\n    return "é"\n'.encode('cp1252')):
+            with self.subTest(source=raw):
+                path.write_bytes(raw)
+                with self.assertRaises(UnicodeDecodeError):
+                    function_position(path, 'cible', None)
+        path.write_bytes('\ufeffdef cible():\n    pass\n'.encode())
+        with self.assertRaises(SyntaxError):
+            function_position(path, 'cible', None)
+        metadata = '{"exit_code_by_key": {"cible.x_f__mutmut_1": 0}}'
+        for raw, error in ((b'\xff', UnicodeDecodeError),
+                           (metadata.encode('utf-16'), UnicodeDecodeError),
+                           (metadata.encode('utf-32'), UnicodeDecodeError),
+                           (('\ufeff' + metadata).encode(), json.JSONDecodeError)):
+            with self.subTest(metadata=raw):
+                meta_path.write_bytes(raw)
+                with self.assertRaises(error):
+                    collect(self.root / 'mutants', TABLE)
+
+    def test_coverage_config_preserves_unicode_paths_and_machine_line_endings(self):
+        from coverage import Coverage
+        project = self.root / '项目+plus'
+        commands = coverage_commands(project, self.root, [])
+        self.assertIn('-m', commands[0])
+        raw = (self.root / 'coveragerc').read_bytes()
+        self.assertEqual(raw.decode(), '[run]\nbranch = true\nsource = ' + str(project) +
+                         '\npatch = subprocess\ndata_file = ' + str(self.root / '.coverage') + '\n')
+        config = Coverage(config_file=str(self.root / 'coveragerc')).config
+        self.assertIs(config.branch, True)
+        self.assertEqual(config.source, [str(project)])
+        self.assertEqual(config.patch, ['subprocess'])
+        self.assertEqual(config.data_file, str(self.root / '.coverage'))
+
+    @unittest.skipUnless(HAS_MUTMUT, 'mutmut is not installed')
+    def test_exported_json_preserves_unicode_ids_and_diff_line_endings(self):
+        mutants = [{'id': '模块.x_目标__mutmut_1', 'status': 'survived',
+                    'diff': '--- before\r\n+++ after\n@@\r-return "你好+"\n+return "再见"'}]
+        with mock.patch.dict(sys.modules, {'mutmut.__main__': SimpleNamespace(status_by_exit_code={})}), \
+                mock.patch('lang_python.subprocess.run'), \
+                mock.patch('lang_python.collect', return_value=mutants), \
+                mock.patch('lang_python.add_details', side_effect=lambda value: value):
+            self.assertEqual(self.run_main(), (0, ''))
+        raw = (self.root / 'report.json').read_bytes()
+        report = json.loads(raw.decode())
+        self.assertEqual(report, {'baselinePassed': True, 'mutants': mutants})
+        self.assertEqual(json.loads(raw), report)
 
     def test_main_writes_no_report_when_mutmut_fails(self):
         failure = subprocess.CalledProcessError(1, ["mutmut", "run"])

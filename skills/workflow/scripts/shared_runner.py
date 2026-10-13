@@ -1,5 +1,6 @@
 """Run a trusted project's command and read its newly created JSON report."""
 
+import io
 import json
 import math
 import os
@@ -24,8 +25,12 @@ def finite_float(value):
     return number
 
 
+def read_utf8(path):
+    return io.IncrementalNewlineDecoder(None, True).decode(Path(path).read_bytes().decode(), True)
+
+
 def read_json(path):
-    return json.loads(Path(path).read_text(encoding="utf-8"),
+    return json.loads(read_utf8(path),
                       parse_constant=invalid_constant, parse_float=finite_float)
 
 
@@ -82,7 +87,7 @@ def run_command(command, cwd, timeout, *, env=None):
     # The caller supplies an isolated copy; this runner does not sandbox commands.
     if os.name == "nt":
         return run_windows(command, cwd, timeout, env=env)
-    with subprocess.Popen(command, cwd=cwd, shell=False, stdin=subprocess.DEVNULL,
+    with subprocess.Popen(command, cwd=cwd, stdin=subprocess.DEVNULL,
                           stdout=sys.stderr, stderr=sys.stderr,
                           start_new_session=True, env=env) as child:
         try:
@@ -212,7 +217,7 @@ def run_windows(command, cwd, timeout, *, env=None):
     bootstrap_command = [sys.executable, str(Path(__file__).resolve()), *command]
     try:
         with WindowsJob() as job:
-            with subprocess.Popen(bootstrap_command, cwd=cwd, shell=False, stdin=subprocess.PIPE,
+            with subprocess.Popen(bootstrap_command, cwd=cwd, stdin=subprocess.PIPE,
                                   stdout=sys.stderr, stderr=sys.stderr, env=env) as child:
                 return start_and_wait(child, job, timeout)
     except subprocess.TimeoutExpired as error:

@@ -1,4 +1,5 @@
 """Rust uses nightly branch coverage and cargo-mutants."""
+import codecs
 import re
 from pathlib import Path
 import subprocess
@@ -27,11 +28,11 @@ def report_path(project, evidence):
 
 def exclude_tests(source, code):
     test_attribute = r'#\s*\[\s*cfg\s*\(\s*test\s*\)\s*\]'
-    tokens = rust_tokens(source, code.removeprefix('\ufeff'))
+    tokens = rust_tokens(source, code.removeprefix(codecs.BOM_UTF8.decode()))
     ranges, line, had_code, boundary = [], 1, False, None
     for token in tokens:
         if re.fullmatch(test_attribute, token):
-            require_test_boundary(had_code, False)
+            require_test_boundary(had_code)
             start = line
             line += token.count('\n')
             line = test_declaration_end(tokens, line)
@@ -55,7 +56,7 @@ def rust_tokens(source, code):
                 r'|\br\#[^\W\d]\w*'
                 r"|'[^\W\d]\w*(?![\w'])|" + test_attribute + r'|#\s*\[')
     reader, position = get_reader_for(str(source)), 0
-    while position < len(code):
+    while True:
         for token in reader.generate_tokens(code[position:], addition=addition):
             if code.startswith('/*', position):
                 end = block_comment_end(code, position)
@@ -71,23 +72,23 @@ def rust_tokens(source, code):
 
 
 def block_comment_end(code, start):
-    depth = 0
-    for marker in re.compile(r'/\*|\*/').finditer(code, start):
+    depth = 1
+    for marker in re.compile(r'/\*|\*/').finditer(code, start + 2):
         depth += 1 if marker.group() == '/*' else -1
         if not depth:
             return marker.end()
     raise ValueError('Unclosed Rust block comment')
 
 
-def require_test_boundary(had_code, at_boundary):
-    if had_code or at_boundary:
+def require_test_boundary(ambiguous):
+    if ambiguous:
         raise ValueError('Ambiguous Rust test boundary: production and tests share a line')
 
 
 def outside_test_token(token, had_code, at_boundary):
     if token.isspace() or token.startswith(('//', '/*')):
         return had_code and '\n' not in token
-    require_test_boundary(False, at_boundary)
+    require_test_boundary(at_boundary)
     return True
 
 

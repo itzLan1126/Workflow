@@ -88,7 +88,9 @@ def group_mutants(mutants):
 
 def render_mutant(mutant):
     output = [f"mutant {mutant.get('id') or '(ID unavailable)'} [{mutant['status']}]"]
-    diff = numbered_diff(mutant.get("diff") or "", mutant.get("diffOffset", 0))
+    diff = mutant.get("diff")
+    if diff:
+        diff = numbered_diff(diff, mutant.get("diffOffset", 0))
     output.append(diff or "Diff unavailable; inspect the original engine report.")
     if mutant.get("detailGap"):
         output.append(mutant["detailGap"])

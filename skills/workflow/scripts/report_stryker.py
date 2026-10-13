@@ -1,4 +1,5 @@
 """Read Stryker reports and UTF-16 source locations."""
+import codecs
 from functools import partial
 from shared_mutation import object_value, array, safe_detail, code_diff, function_at
 
@@ -11,7 +12,7 @@ def valid_utf16_column(encoded_byte_length, column):
 
 def valid_position(lines, line, column):
     return (1 <= line <= len(lines)
-            and valid_utf16_column(len(lines[line - 1].rstrip("\r\n").encode("utf-16-le")), column))
+            and valid_utf16_column(len(codecs.utf_16_le_encode(lines[line - 1].rstrip("\r\n"))[0]), column))
 
 
 def source_offset(source, position):
@@ -24,7 +25,7 @@ def source_offset(source, position):
     if not valid_position(lines, line, column):
         raise ValueError("Invalid Stryker source position")
     # Stryker columns count UTF-16 code units, including two units for astral characters.
-    prefix = lines[line - 1].encode("utf-16-le")[:(column - 1) * 2].decode("utf-16-le")
+    prefix = codecs.utf_16_le_decode(codecs.utf_16_le_encode(lines[line - 1])[0][:(column - 1) * 2], None, True)[0]
     return sum(map(len, lines[:line - 1])) + len(prefix)
 
 

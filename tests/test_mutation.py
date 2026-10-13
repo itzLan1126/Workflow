@@ -146,6 +146,14 @@ class MutationTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "^Unsupported mutation format: bogus$"):
             summarize(normalized("killed"), "bogus")
 
+    def test_cli_rejects_nonfinite_values_in_extra_report_fields(self):
+        for value in (float('nan'), float('inf'), float('-inf')):
+            with self.subTest(value=value):
+                report = {**normalized('killed'), 'extra': {'nested': [value]}}
+                code, stdout, stderr = self.run_main(['--json', str(self.fixture(report))])
+                self.assertEqual((code, stdout), (2, ''))
+                self.assertIn('Non-finite JSON number:', stderr)
+
     def test_runner_evaluates_fresh_report_and_rejects_existing_links(self):
         path = self.fixture(normalized("killed"))
         self.assertEqual(run_mutation(path), {
@@ -364,6 +372,14 @@ class MutationTests(unittest.TestCase):
         for line, column in ((1, 4), (2, 5), (3, 1)):
             with self.subTest(line=line, column=column), self.assertRaises(ValueError):
                 source_offset(source, {"line": line, "column": column})
+
+    def test_stryker_rejects_split_or_unpaired_surrogates(self):
+        for source, column, kind in (('😀', 2, UnicodeDecodeError),
+                                     ('a😀b', 3, UnicodeDecodeError),
+                                     ('\ud800', 1, UnicodeEncodeError),
+                                     ('\udfff', 1, UnicodeEncodeError)):
+            with self.subTest(source=repr(source), column=column), self.assertRaises(kind):
+                source_offset(source, {'line': 1, 'column': column})
 
     def test_stryker_top_level_insertions_and_missing_source_keep_identity(self):
         location = {"start": {"line": 1, "column": 2}, "end": {"line": 1, "column": 2}}
