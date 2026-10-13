@@ -9,7 +9,6 @@ from shared_languages import LANGUAGES, language, arguments, evidence_directory
 
 from shared_runner import read_json, is_valid_config, run_report
 from shared_mutation import adapter, assess, render_report, summarize, object_value
-MAPS = {name: adapter(name).STATUSES for name in ("stryker", "cargo-mutants", "muter")}
 
 
 def execute_config(path, config, codes):
