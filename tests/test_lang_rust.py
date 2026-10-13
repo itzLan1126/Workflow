@@ -4,6 +4,7 @@ import io
 import os
 from pathlib import Path
 import runpy
+import signal
 import subprocess
 import sys
 import tempfile
@@ -18,11 +19,77 @@ from shared_crap import calculate, collect
 from shared_runner import run_command
 
 
+def fail_parser_deadline(signum, frame):
+    raise AssertionError('Rust scanner did not finish within 8 seconds')
+
+
 class RustCoverageTests(unittest.TestCase):
+    def setUp(self):
+        if hasattr(signal, 'setitimer'):
+            handler = signal.signal(signal.SIGALRM, fail_parser_deadline)
+            self.addCleanup(signal.signal, signal.SIGALRM, handler)
+            self.addCleanup(signal.setitimer, signal.ITIMER_REAL, 0)
+            signal.setitimer(signal.ITIMER_REAL, 8)
+
+    def test_block_comment_end_starts_at_the_requested_comment(self):
+        code = '/* first */ fn production() {} /* outer /* inner */ last */'
+        start = code.index('/* outer')
+        self.assertEqual(lang_rust.block_comment_end(code, start), len(code))
+        for comment in ('/* unclosed', '/* outer /* inner */', '/*/'):
+            with self.subTest(comment=comment), self.assertRaises(ValueError) as raised:
+                lang_rust.block_comment_end(comment, 0)
+            self.assertEqual(str(raised.exception), 'Unclosed Rust block comment')
+
+    def test_multiline_attributes_and_signatures_preserve_exact_test_lines(self):
+        declarations = ('#\n[\n cfg(\n test\n )\n]\nfn helper() {}',
+                        '#\n[allow(dead_code)] #[cfg(test)]\nfn helper() {}',
+                        '#[cfg(test)]\n#\n[allow(dead_code)]\nfn helper() {}',
+                        '#[cfg(test)]\nfn helper(\n value: bool,\n)\n-> bool\n{ value }',
+                        '#[cfg(test)]\nmod\n tests\n;')
+        for declaration in declarations:
+            with self.subTest(declaration=declaration):
+                code = declaration + '\npub fn production() {}\n'
+                start = 2 if declaration.startswith('#\n[allow') else 1
+                self.assertEqual(lang_rust.exclude_tests('lib.rs', code),
+                                 [(start, len(declaration.splitlines()))])
+
+    def test_declaration_attributes_and_comments_cannot_hide_unsupported_items(self):
+        declarations = ('#[allow(dead_code)]\ntype Alias = fn();',
+                        '/* prefix */ type Alias = fn();',
+                        'tracked:/* comment */fn() {}',
+                        'type\n// comment\nAlias = fn();',
+                        'type Missing;',
+                        '')
+        for declaration in declarations:
+            with self.subTest(declaration=declaration), self.assertRaises(ValueError) as raised:
+                lang_rust.exclude_tests('lib.rs', '#[cfg(test)]\n' + declaration)
+            self.assertEqual(str(raised.exception),
+                             'Unsupported Rust test declaration: require a module or function')
+
+    def test_repeated_cfg_attributes_and_boundary_comments_are_preserved(self):
+        code = ('#[cfg(test)]\n#[cfg(test)]\n// prefix comment\nfn helper() {} // boundary comment\n'
+                'pub fn production() {}\n')
+        self.assertEqual(lang_rust.exclude_tests('lib.rs', code), [(1, 4)])
+
+    def test_attribute_on_shared_production_boundary_is_rejected(self):
+        code = 'pub fn production() {} #[allow(dead_code)] #[cfg(test)]\nfn helper() {}\n'
+        with self.assertRaises(ValueError) as raised:
+            lang_rust.exclude_tests('lib.rs', code)
+        self.assertEqual(str(raised.exception),
+                         'Ambiguous Rust test boundary: production and tests share a line')
+
+    def test_unclosed_and_unbalanced_declarations_have_exact_diagnostics(self):
+        for declaration, message in (('fn helper()', 'Unclosed Rust test declaration'),
+                                     ('fn helper() {', 'Unclosed Rust test declaration'),
+                                     ('fn helper(]', 'Unbalanced Rust test declaration')):
+            with self.subTest(declaration=declaration), self.assertRaises(ValueError) as raised:
+                lang_rust.exclude_tests('lib.rs', '#[cfg(test)]\n' + declaration)
+            self.assertEqual(str(raised.exception), message)
+
     def test_long_unsupported_declaration_is_rejected_without_parser_hang(self):
         code = ('#[cfg(test)]\ntype ' + 'A' * 64 + ' = fn();\n'
                 'pub fn production() {}\n')
-        probe = (f'import sys; sys.path.insert(0, {str(SCRIPTS)!r}); '
+        probe = (f'import sys; sys.path.insert(0, {str(Path(lang_rust.__file__).resolve().parent)!r}); '
                  'import lang_rust\n'
                  'try:\n'
                  f'    lang_rust.exclude_tests("lib.rs", {code!r})\n'
