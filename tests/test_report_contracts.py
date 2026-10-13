@@ -100,6 +100,17 @@ class ReportContractsTests(unittest.TestCase):
         result = assess(report, 'stryker', Path('report.json'))
         self.assertEqual(result['mutants'][0]['detailGap'], 'Cannot extract mutation details: Invalid Stryker source range')
 
+    def test_detail_adapters_preserve_file_and_explain_missing_function(self):
+        point = {'mutationPoint': {'mutationOperatorId': 'swap', 'position': {'line': 2}},
+                 'mutationSnapshot': {'before': 'return true', 'after': 'return false'},
+                 'testSuiteOutcome': 'passed'}
+        report = {'fileReports': [{'fileName': 'sample.swift', 'appliedOperators': [point]}]}
+        detail = assess(report, 'muter', Path('report.json'))['mutants'][0]
+        self.assertEqual(detail['file'], 'sample.swift')
+        self.assertEqual(detail['detailGap'], 'Muter provides a code snippet; function name is unavailable')
+        report = {'files': {'sample.js': {'mutants': [{'id': '1', 'status': 'Survived', 'file': 'forged.js'}]}}}
+        self.assertEqual(assess(report, 'stryker', Path('report.json'))['mutants'][0]['file'], 'sample.js')
+
     def test_unified_diff_preserves_header_and_line_format(self):
         from shared_mutation import code_diff, numbered_diff
         self.assertEqual(code_diff('old\n', 'new\n'), '--- \n+++ \n@@ -1 +1 @@\n-old\n+new')

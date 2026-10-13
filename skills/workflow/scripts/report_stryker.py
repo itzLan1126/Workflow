@@ -25,7 +25,7 @@ def source_offset(source, position):
 
 
 def stryker_detail(file, source, mutant):
-    detail = {**mutant, "file": file}
+    detail = {**mutant}
     location = mutant.get("location")
     if not isinstance(source, str) or not isinstance(location, dict):
         return detail
@@ -41,8 +41,8 @@ def stryker_detail(file, source, mutant):
 
 
 def describe(file, data, mutant):
-    return {"id": mutant.get("id"), "file": file,
-            **safe_detail(stryker_detail, file, data.get("source"), mutant)}
+    return {**safe_detail(stryker_detail, file, data.get("source"), mutant),
+            "id": mutant.get("id"), "file": file}
 
 
 def mutants(report, report_path):
