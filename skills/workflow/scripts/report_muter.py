@@ -5,10 +5,10 @@ from shared_mutation import object_value, array, safe_detail, code_diff, functio
 ACCEPTED_EXIT_CODES = (0,)
 STATUSES = {'failed': 'killed', 'passed': 'survived', 'noCoverage': 'noCoverage', 'timeout': 'timeout', 'buildError': 'unviable', 'runtimeError': 'error'}
 
-def muter_detail(file, mutant):
+def muter_detail(mutant):
     point = mutant.get("mutationPoint") or {}
     line = point.get("position", {}).get("line")
-    detail = {"id": point.get("mutationOperatorId"), "file": file, "line": line}
+    detail = {"id": point.get("mutationOperatorId"), "line": line}
     snapshot = mutant.get("mutationSnapshot") or {}
     before, after = snapshot.get("before"), snapshot.get("after")
     if isinstance(before, str) and isinstance(after, str) and line:
@@ -18,7 +18,7 @@ def muter_detail(file, mutant):
 
 
 def describe(file, mutant):
-    return {"file": file, **safe_detail(muter_detail, file, mutant)}
+    return {**safe_detail(muter_detail, mutant), "file": file}
 
 
 def mutants(report, report_path):
