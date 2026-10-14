@@ -155,6 +155,12 @@ class CommandRunnerTests(unittest.TestCase):
                 'objects': [{'id': 'one'}, {'id': 'two'}],
                 'values': [None, True, False, 1, 1.5, '中文😀', {}]})
 
+    def test_config_mode_keeps_last_duplicate_key(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'config.json'
+            path.write_text('{"cwd":".","report":"report.json","command":["tool"],"timeoutMs":0,"timeoutMs":1234}')
+            self.assertEqual(run_report.read_config(path)['timeoutMs'], 1234)
+
 
 if __name__ == "__main__":
     unittest.main()

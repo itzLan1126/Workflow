@@ -188,6 +188,11 @@ class MutationTests(unittest.TestCase):
             run_mutation(path)
         self.assertFalse((path.parent / "report.json").exists())
 
+    def test_config_mode_keeps_last_duplicate_key(self):
+        path = self.fixture(normalized("killed"))
+        path.write_text('{"format": "bogus", ' + path.read_text()[1:])
+        self.assertEqual(run_mutation(path)["counts"]["killed"], 1)
+
     def test_runner_rejects_invalid_commands_timeouts_and_missing_reports(self):
         for overrides in [{"command": []}, {"command": [sys.executable, ""]}, {"timeoutMs": -1}, {"timeoutMs": 0},
                           {"timeoutMs": 2147483648}, {"timeoutMs": True}, {"cwd": ""}, {"cwd": 5},
