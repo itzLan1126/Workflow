@@ -1,6 +1,33 @@
 # Repository review repairs and survivor verification
 
-## Latest approved MD5 reviewed gate (2026-10-14)
+## Latest Codex review repairs (2026-10-14)
+
+GitHub Codex review of `e5a35e364f2a7595619ec414e7efb643548dcf93` completed with two findings, both independently reproduced and repaired. [P1](https://github.com/itzLan1126/Workflow/pull/22#discussion_r4265935611) showed that changing source/diff and matching editable manifest hashes could silently create a new approval. The reviewer now pins the original owner-approved `ef99126aed9617accb3f32190a56822f49684df14bb0dc2366acfa5ad47fea47` source hash and `97ecc3613d91c5e6170e02a10a2269070c5b70fd0f47f967476b29d2cfc5e798` diff hash before comparing the actual copied source and generated diff. Coordinated changes now return reviewed exit 1 with no approval; normal JSON formatting and legitimate reason changes do not expand those bindings.
+
+[P2](https://github.com/itzLan1126/Workflow/pull/22#discussion_r4265935616) showed that duplicate JSON keys use the last value, hiding conflicting evidence. Independent checks also demonstrated a hidden extra survivor and a duplicate native metadata ID changing survived into killed. One shared object-pairs hook now rejects duplicate keys at every nesting depth in original reports, captured approvals and mutmut metadata. Ambiguous raw/approval documents return reviewed exit 2; metadata export fails without emitting a passable report. Original raw and approval bytes remain untouched. Normal objects, including the same key in distinct objects, retain their values.
+
+The existing MD5 production source and approval manifest are byte-identical to `e5a35e3`. No exemption, generator filter, status mapping, CRAP standard, workflow or platform skip was added or relaxed. Positive approval fixtures use the actual approved source and canonical diff independently of the reviewer's constants, and read the original analysis-copy source rather than a mutation trampoline. Red/green tests cover all three coordinated source/diff change combinations, hidden survivors/counts, approval identity/hash keys, nested objects/arrays and duplicate mutmut metadata.
+
+| Final local check | Python 3.14.3 | Python 3.10.18 |
+| --- | --- | --- |
+| Full unit suite | 251 total; 247 passed; 4 existing native Windows skips; exit 0 | Same |
+| Full-repository CRAP | 190 functions; maximum 6; 0 findings; exit 0 | Same |
+| Line coverage | 1,457 / 1,469 = 99.1831% | 1,463 / 1,475 = 99.1864% |
+| Branch coverage | 519 / 528 = 98.2955% | Same |
+| Full-repository mutation | 4,082 generated; 4,081 killed; exactly 1 MD5 survivor | Same IDs/statuses |
+| Engine / raw strict exit | **0 / 1** | **0 / 1** |
+| Reviewed gate / actual self-check process exit | **0 / 0**, original single approval | Same |
+| Other mutant statuses | All zero | Same |
+
+Both fresh mutation copies match all 38 current input hashes: 20 production scripts and 18 test resources. Every complete native ID/status was independently compared with its real per-mutant pytest exit metadata. The duplicate-key hook's four generated mutants, all 332 reviewer mutants and all 24 approval-check mutants are killed; ten actual approval-check diffs exercise the new hash-pin comparison. The seven other MD5-line mutants and the 16 PiB UTF-16 arithmetic mutant remain killed.
+
+Fresh JS/TS/Rust/Swift checks all returned actual exit 0: mutation 2/2, 2/2, 6/6 and 1/1 killed, with complete measured CRAP coverage (Swift: region). Production hashes remained stable. Validation, both dependency checks, all 38 Python AST checks, both workflow YAML files, all 15 Bash-step syntax checks and `git diff --check` passed. Full unit and CRAP checks ran before heavy concurrent checks to avoid the previously documented 100 ms probe startup contention; no deadline or skip changed.
+
+The initial local `codex review --base origin/main` returned exit 0 without finding the two subsequently confirmed flaws; that result does not override their concrete reproductions. A fresh official `codex review --uncommitted` of the eight repaired source/test files returned exit 0 with no confirmed defects. HEAD, the complete repair diff and all 38 input hashes stayed unchanged throughout that review. Its internal read-only sandbox limited some test execution; complete checks above were independently executed in the real workspace. A separate read-only acceptance audit verified the copies, native metadata, fixes, negative controls and real-language reports.
+
+[repo-review-codex-followup.json](repo-review-codex-followup.json) records the review identities, complete source hashes, original/copy evidence bindings, red/green results, before/after counterexamples, fixed authority values and actual final checks. Raw files are preserved in `/private/tmp/workflow-pr22-codex-review-20261014-_kzww2sr/`. This is the pre-commit repair verification snapshot; fresh remote CI/native Windows checks will be recorded on the PR after pushing. Raw mutation remains exit 1, and only the separately reviewed gate passes. No merge or release was performed. All sections below describe older snapshots.
+
+## Historical approved MD5 reviewed gate (2026-10-14)
 
 The current uncommitted snapshot remains based on `ea67dabf9b7b7767f8be10fb92ec997045a52540` on `fix/repo-review`. The repository owner approved exactly the MD5 `usedforsecurity=False` to `None` equivalent. The new reviewed gate passes on Python 3.14.3 and 3.10.18; **the original strict mutation result remains exit 1**, with its counts, statuses and bytes preserved. All sections after this update describe historical snapshots.
 

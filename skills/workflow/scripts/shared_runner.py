@@ -29,9 +29,19 @@ def read_utf8(path):
     return io.IncrementalNewlineDecoder(None, True).decode(Path(path).read_bytes().decode(), True)
 
 
+def unique_json_object(pairs):
+    result = {}
+    for key, value in pairs:
+        if key in result:
+            raise ValueError(f'Duplicate JSON object key: {key}')
+        result[key] = value
+    return result
+
+
 def read_json(path):
     return json.loads(read_utf8(path),
-                      parse_constant=invalid_constant, parse_float=finite_float)
+                      parse_constant=invalid_constant, parse_float=finite_float,
+                      object_pairs_hook=unique_json_object)
 
 
 DEFAULT_TIMEOUT_MS = 3600000

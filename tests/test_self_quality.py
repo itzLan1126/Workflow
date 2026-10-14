@@ -12,6 +12,7 @@ from unittest import mock
 import builtins
 
 from scripts import self_crap, self_mutation
+from test_mutation_review import DIFF, approved_source_bytes
 
 
 class SelfQualityTests(unittest.TestCase):
@@ -133,8 +134,8 @@ class SelfQualityTests(unittest.TestCase):
 
     def approved_case(self):
         source = self.root / 'skills/workflow/scripts/coverage_lcov.py'
-        source.write_bytes(b'def validate_checksums(source, lines, checksums):\n    pass\n')
-        diff = '- usedforsecurity=False\n+ usedforsecurity=None'
+        source.write_bytes(approved_source_bytes())
+        diff = DIFF
         self.approval.update(sourceSha256=hashlib.sha256(source.read_bytes()).hexdigest(),
                              diffSha256=hashlib.sha256(diff.encode()).hexdigest())
         self.approval_path.write_bytes(json.dumps(self.approval).encode())
@@ -145,6 +146,32 @@ class SelfQualityTests(unittest.TestCase):
         counts.update(killed=1, survived=1)
         return {'format': 'normalized', 'counts': counts, 'assessed': 2, 'exitCode': 1,
                 'toolExitCode': 0, 'mutants': [mutant], 'reportPath': '/evidence/mutation.json'}
+
+    def test_coordinated_proof_and_manifest_changes_preserve_raw_failure(self):
+        for change_source, change_diff in ((True, False), (False, True), (True, True)):
+            with self.subTest(source=change_source, diff=change_diff):
+                raw = self.approved_case()
+                source = self.root / 'skills/workflow/scripts/coverage_lcov.py'
+                if change_source:
+                    source.write_bytes(source.read_bytes() + b'\n# unapproved change\n')
+                if change_diff:
+                    raw['mutants'][0]['diff'] = DIFF.replace('usedforsecurity=None', 'usedforsecurity=True')
+                self.approval.update(sourceSha256=hashlib.sha256(source.read_bytes()).hexdigest(),
+                                     diffSha256=hashlib.sha256(raw['mutants'][0]['diff'].encode()).hexdigest())
+                approval_bytes = json.dumps(self.approval).encode()
+                raw_bytes = json.dumps(raw).encode()
+                copy = self.root / f'changed-{change_source}-{change_diff}'
+                (copy / 'src').mkdir(parents=True)
+                (copy / 'src/coverage_lcov.py').write_bytes(source.read_bytes())
+                (copy / 'md5-exclusion.json').write_bytes(approval_bytes)
+                (copy / 'mutation-result.json').write_bytes(raw_bytes)
+                self.assertEqual(self_mutation.emit_review(copy, 1, True, approval_bytes), 1)
+                reviewed = json.loads((copy / 'mutation-reviewed.json').read_bytes())
+                self.assertEqual(reviewed['reviewGate'], {'exitCode': 1, 'approvedEquivalentExclusions': []})
+                self.assertEqual({key: reviewed[key] for key in raw}, raw)
+                self.assertEqual(reviewed['rawExitCode'], 1)
+                self.assertEqual((copy / 'mutation-result.json').read_bytes(), raw_bytes)
+                self.assertEqual((copy / 'md5-exclusion.json').read_bytes(), approval_bytes)
 
     def test_approved_gate_passes_without_rewriting_raw_status_or_exit(self):
         raw = self.approved_case()
@@ -215,6 +242,38 @@ class SelfQualityTests(unittest.TestCase):
                     result = json.loads((copy / 'mutation-reviewed.json').read_bytes())
                     self.assertIn('Non-finite JSON number:', result['reviewGate']['error'])
                     self.assertEqual((copy / 'mutation-result.json').read_bytes(), raw_bytes)
+
+    def test_duplicate_raw_or_approval_keys_never_hide_survivors_or_pass_review(self):
+        raw = self.approved_case()
+        raw_bytes = json.dumps(raw).encode()
+        approval_bytes = json.dumps(self.approval).encode()
+        extra = {**raw['mutants'][0], 'id': 'unapproved.survivor'}
+        bad_counts = {**raw['counts'], 'survived': 2}
+        cases = (
+            ('raw-mutants', b'{"mutants":' + json.dumps([raw['mutants'][0], extra]).encode() + b',' + raw_bytes[1:], approval_bytes, 'mutants'),
+            ('raw-counts', b'{"counts":' + json.dumps(bad_counts).encode() + b',' + raw_bytes[1:], approval_bytes, 'counts'),
+            ('raw-nested-object', raw_bytes[:-1] + b',"extra":{"status":"error","status":"killed"}}', approval_bytes, 'status'),
+            ('raw-nested-array', raw_bytes[:-1] + b',"extra":[{"id":"unapproved","id":"approved"}]}', approval_bytes, 'id'),
+            ('approval-source', raw_bytes, b'{"sourceSha256":"' + b'0' * 64 + b'",' + approval_bytes[1:], 'sourceSha256'),
+            ('approval-id', raw_bytes, b'{"id":"unapproved.survivor",' + approval_bytes[1:], 'id'),
+            ('approval-nested-object', raw_bytes, approval_bytes[:-1] + b',"extra":{"id":"unapproved","id":"approved"}}', 'id'),
+            ('approval-nested-array', raw_bytes, approval_bytes[:-1] + b',"extra":[{"status":"error","status":"killed"}]}', 'status'),
+        )
+        for name, encoded_raw, encoded_approval, key in cases:
+            with self.subTest(name=name):
+                copy = self.root / name
+                (copy / 'src').mkdir(parents=True)
+                (copy / 'src/coverage_lcov.py').write_bytes((self.root / 'skills/workflow/scripts/coverage_lcov.py').read_bytes())
+                (copy / 'mutation-result.json').write_bytes(encoded_raw)
+                (copy / 'md5-exclusion.json').write_bytes(encoded_approval)
+                self.assertEqual(self_mutation.emit_review(copy, 1, True, encoded_approval), 2)
+                reviewed = json.loads((copy / 'mutation-reviewed.json').read_bytes())
+                self.assertEqual(reviewed['reviewGate'], {'exitCode': 2,
+                                 'error': f'Duplicate JSON object key: {key}'})
+                self.assertEqual(reviewed['rawExitCode'], 1)
+                self.assertEqual(reviewed['approvalSha256'], hashlib.sha256(encoded_approval).hexdigest())
+                self.assertEqual((copy / 'mutation-result.json').read_bytes(), encoded_raw)
+                self.assertEqual((copy / 'md5-exclusion.json').read_bytes(), encoded_approval)
 
     def test_default_output_for_invalid_utf8_or_missing_raw_returns_recorded_gate(self):
         for data in (b'\xff', None):

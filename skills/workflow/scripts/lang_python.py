@@ -9,7 +9,7 @@ import sys
 
 from shared_mutation import ACTIONABLE
 from shared_languages import Crap, Mutation
-from shared_runner import read_utf8
+from shared_runner import read_json, read_utf8
 
 
 def coverage_commands(project, evidence, args):
@@ -53,7 +53,7 @@ def collect(mutants_dir, status_by_exit_code):
         raise ValueError("No mutmut results found under mutants/")
     mutants = []
     for meta in metas:
-        exit_codes = json.loads(read_utf8(meta)).get("exit_code_by_key")
+        exit_codes = read_json(meta).get("exit_code_by_key")
         if not isinstance(exit_codes, dict):
             raise ValueError(f"Unrecognized mutmut metadata: {meta}")
         mutants.extend({"id": key, "status": classify(code, status_by_exit_code)}

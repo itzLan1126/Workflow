@@ -54,6 +54,31 @@ class MutmutExportTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "^Unrecognized mutmut metadata: .*a.py.meta$"):
             collect(self.root / "mutants", TABLE)
 
+    def test_duplicate_metadata_keys_cannot_turn_survivors_into_kills(self):
+        path = self.root / 'mutants/module.py.meta'
+        path.parent.mkdir()
+        cases = ((b'{"exit_code_by_key":{"module.x_function__mutmut_1":0},'
+                  b'"exit_code_by_key":{"module.x_function__mutmut_1":1}}', 'exit_code_by_key'),
+                 (b'{"exit_code_by_key":{"module.x_function__mutmut_1":0,'
+                  b'"module.x_function__mutmut_1":1}}', 'module.x_function__mutmut_1'))
+        for encoded, key in cases:
+            with self.subTest(encoded=encoded):
+                path.write_bytes(encoded)
+                with self.assertRaises(ValueError) as raised:
+                    collect(self.root / 'mutants', TABLE)
+                message = f'Duplicate JSON object key: {key}'
+                self.assertEqual(str(raised.exception), message)
+                path.unlink()
+                path.parent.rmdir()
+                def run(*args, **kwargs):
+                    path.parent.mkdir()
+                    path.write_bytes(encoded)
+                with mock.patch.dict(sys.modules, {'mutmut.__main__': SimpleNamespace(status_by_exit_code=TABLE)}), \
+                        mock.patch('lang_python.subprocess.run', side_effect=run):
+                    self.assertEqual(self.run_main(['report.json']), (2, f'mutmut_export: {message}\n'))
+                self.assertFalse((self.root / 'report.json').exists())
+                self.assertEqual(path.read_bytes(), encoded)
+
     def test_only_pytest_test_failure_can_count_as_a_kill(self):
         # These semantics must not change even if a display table mislabels operational failures.
         table = {code: "killed" for code in (0, 1, 2, 3, 4, 5, 99)}
