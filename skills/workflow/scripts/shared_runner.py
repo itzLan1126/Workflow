@@ -38,10 +38,13 @@ def unique_json_object(pairs):
     return result
 
 
-def read_json(path):
-    return json.loads(read_utf8(path),
-                      parse_constant=invalid_constant, parse_float=finite_float,
-                      object_pairs_hook=unique_json_object)
+def parse_json(text, object_pairs_hook=unique_json_object):
+    return json.loads(text, parse_constant=invalid_constant, parse_float=finite_float,
+                      object_pairs_hook=object_pairs_hook)
+
+
+def read_json(path, object_pairs_hook=unique_json_object):
+    return parse_json(read_utf8(path), object_pairs_hook)
 
 
 DEFAULT_TIMEOUT_MS = 3600000
@@ -65,7 +68,8 @@ def is_valid_config(config):
 
 
 def read_config(config_path):
-    config = read_json(config_path)
+    # Config mode keeps its original last-value-wins handling of duplicate keys.
+    config = read_json(config_path, object_pairs_hook=None)
     if not isinstance(config, dict):
         raise ValueError("Configuration must be an object")
     if not is_valid_config(config):

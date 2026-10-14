@@ -18,7 +18,8 @@ def execute_config(path, config, codes):
 
 
 def run_mutation(config_path):
-    config = object_value(read_json(config_path))
+    # Config mode keeps its original last-value-wins handling of duplicate keys.
+    config = object_value(read_json(config_path, object_pairs_hook=None))
     format = config.get("format")
     reader = adapter(format)
     run = execute_config(config_path, config, reader.ACCEPTED_EXIT_CODES)
