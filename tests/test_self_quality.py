@@ -199,7 +199,7 @@ class SelfQualityTests(unittest.TestCase):
             self.assertEqual(self_mutation.main(), 2)
         result = json.loads(self.stdout.getvalue())
         self.assertEqual(result['reviewGate'], {'exitCode': 2,
-                         'error': 'MD5 approval changed during the mutation run'})
+                         'runFailure': 'MD5 approval changed during the mutation check'})
 
     def test_damaged_raw_json_is_preserved_and_never_passes_review(self):
         def run(*args, **kwargs):
@@ -240,7 +240,7 @@ class SelfQualityTests(unittest.TestCase):
                     (copy / 'md5-exclusion.json').write_bytes(approval_bytes)
                     self.assertEqual(self_mutation.emit_review(copy, 1, True, approval_bytes), 2)
                     result = json.loads((copy / 'mutation-reviewed.json').read_bytes())
-                    self.assertIn('Non-finite JSON number:', result['reviewGate']['error'])
+                    self.assertIn('Non-finite JSON number:', result['reviewGate']['runFailure'])
                     self.assertEqual((copy / 'mutation-result.json').read_bytes(), raw_bytes)
 
     def test_duplicate_raw_or_approval_keys_never_hide_survivors_or_pass_review(self):
@@ -269,7 +269,7 @@ class SelfQualityTests(unittest.TestCase):
                 self.assertEqual(self_mutation.emit_review(copy, 1, True, encoded_approval), 2)
                 reviewed = json.loads((copy / 'mutation-reviewed.json').read_bytes())
                 self.assertEqual(reviewed['reviewGate'], {'exitCode': 2,
-                                 'error': f'Duplicate JSON object key: {key}'})
+                                 'runFailure': f'Duplicate JSON object key: {key}'})
                 self.assertEqual(reviewed['rawExitCode'], 1)
                 self.assertEqual(reviewed['approvalSha256'], hashlib.sha256(encoded_approval).hexdigest())
                 self.assertEqual((copy / 'mutation-result.json').read_bytes(), encoded_raw)

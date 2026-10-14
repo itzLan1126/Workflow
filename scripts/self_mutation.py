@@ -46,14 +46,14 @@ def emit_review(copy, raw_exit_code, as_json, approval_bytes):
     result = {}
     try:
         if (copy / 'md5-exclusion.json').read_bytes() != approval_bytes:
-            raise ValueError('MD5 approval changed during the mutation run')
+            raise ValueError('MD5 approval changed during the mutation check')
         raw = read_json(raw_path)
         approval = parse_json(approval_bytes.decode())
         gate = review_result(raw, raw_exit_code, copy, approval)
         result.update(raw)
         result['reviewGate'] = gate
     except (OSError, ValueError, KeyError, TypeError) as error:
-        result['reviewGate'] = {'exitCode': 2, 'error': str(error)}
+        result['reviewGate'] = {'exitCode': 2, 'runFailure': str(error)}
     result['rawExitCode'] = raw_exit_code
     result['rawResultPath'] = str(raw_path)
     result['approvalSha256'] = hashlib.sha256(approval_bytes).hexdigest()
