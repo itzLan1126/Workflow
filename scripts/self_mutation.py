@@ -9,17 +9,17 @@ import subprocess
 import sys
 import tempfile
 
-if __package__:
-    from .mutation_review import review_result
-else:
-    from mutation_review import review_result
-
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPTS = ROOT / "skills/workflow/scripts"
 sys.path.insert(0, str(SCRIPTS))
 from shared_runner import read_json, parse_json
 from shared_mutation import render_report
+
+if __package__:
+    from .mutation_review import review_result
+else:
+    from mutation_review import review_result
 # mutmut names mutants by path from the project root, while the tests import the scripts
 # as top-level modules, so the analysis copy places them under src/. The script-entrypoint
 # smoke tests run scripts by repository path, which does not exist in the copy, and the

@@ -139,7 +139,7 @@ def assess(report, format, report_path):
             details.append({**validate_detail(describe()), "status": status})
     if not sum(counts.values()):
         raise ValueError("No mutations reported")
-    assessed = sum(counts[s] for s in ("killed", "survived", "noCoverage", "timeout"))
+    assessed = assessed_count(counts)
     return {"format": format, "counts": counts, "assessed": assessed,
             "exitCode": exit_code(counts, assessed), "mutants": details}
 
@@ -152,6 +152,10 @@ def summarize(report, format):
 
 def report_details(report, format, report_path):
     return assess(report, format, report_path)["mutants"]
+def assessed_count(counts):
+    return sum(counts[s] for s in ("killed", "survived", "noCoverage", "timeout"))
+
+
 def exit_code(counts, assessed):
     if counts["error"] or not assessed:
         return 2
