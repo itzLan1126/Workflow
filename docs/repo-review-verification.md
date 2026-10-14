@@ -1,6 +1,19 @@
 # Repository review repairs and survivor verification
 
-## Latest Codex review repairs (2026-10-14)
+## Latest review follow-up repairs (2026-10-14)
+
+A two-axis review of `66d7cf9` against `origin/main` found that the shared duplicate-key hook also changed config mode, which `docs/quality-checks-plan.md` lists as unchanged behavior. Config files read by `read_config` and `mutation.py` again keep the last duplicate value; reports, captured approvals and mutmut metadata still reject duplicates through the shared `parse_json`. `mutation_review.py` now imports the statuses, assessed count and exit code from `shared_mutation.py` instead of copying them. A reviewed-gate run failure is reported as `reviewGate.runFailure`. CI now writes the reviewed stdout to `mutation-reviewed.json`, so it is no longer named like the raw report. The MD5 source, approval manifest and pinned hashes are unchanged.
+
+| Local check (Python 3.14.3) | Result |
+| --- | --- |
+| Full unit suite (`unittest discover`) | 253 tests; 4 existing Windows skips; OK |
+| Full-repository CRAP | 191 functions; maximum 6; 0 findings; exit 0 |
+| Full-repository mutation | 4,060 generated; 4,059 killed; exactly 1 MD5 survivor |
+| Raw strict exit / reviewed gate / process exit | **1 / 0 / 0** |
+
+Both new config-mode tests fail against `66d7cf9` and pass with the repair. Repository validation and `git diff --check` passed. Python 3.10, remote CI and native Windows were not run for this snapshot.
+
+## Codex review repairs at `66d7cf9` (2026-10-14)
 
 GitHub Codex review of `e5a35e364f2a7595619ec414e7efb643548dcf93` completed with two findings, both independently reproduced and repaired. [P1](https://github.com/itzLan1126/Workflow/pull/22#discussion_r4265935611) showed that changing source/diff and matching editable manifest hashes could silently create a new approval. The reviewer now pins the original owner-approved `ef99126aed9617accb3f32190a56822f49684df14bb0dc2366acfa5ad47fea47` source hash and `97ecc3613d91c5e6170e02a10a2269070c5b70fd0f47f967476b29d2cfc5e798` diff hash before comparing the actual copied source and generated diff. Coordinated changes now return reviewed exit 1 with no approval; normal JSON formatting and legitimate reason changes do not expand those bindings.
 
@@ -25,7 +38,7 @@ Fresh JS/TS/Rust/Swift checks all returned actual exit 0: mutation 2/2, 2/2, 6/6
 
 The initial local `codex review --base origin/main` returned exit 0 without finding the two subsequently confirmed flaws; that result does not override their concrete reproductions. A fresh official `codex review --uncommitted` of the eight repaired source/test files returned exit 0 with no confirmed defects. HEAD, the complete repair diff and all 38 input hashes stayed unchanged throughout that review. Its internal read-only sandbox limited some test execution; complete checks above were independently executed in the real workspace. A separate read-only acceptance audit verified the copies, native metadata, fixes, negative controls and real-language reports.
 
-[repo-review-codex-followup.json](repo-review-codex-followup.json) records the review identities, complete source hashes, original/copy evidence bindings, red/green results, before/after counterexamples, fixed authority values and actual final checks. Raw files are preserved in `/private/tmp/workflow-pr22-codex-review-20261014-_kzww2sr/`. This is the pre-commit repair verification snapshot; fresh remote CI/native Windows checks will be recorded on the PR after pushing. Raw mutation remains exit 1, and only the separately reviewed gate passes. No merge or release was performed. All sections below describe older snapshots.
+[repo-review-codex-followup.json](repo-review-codex-followup.json) records the review identities, complete source hashes, original/copy evidence bindings, red/green results, before/after counterexamples, fixed authority values and actual final checks. Raw files are preserved in `/private/tmp/workflow-pr22-codex-review-20261014-_kzww2sr/`. This was the pre-commit repair verification snapshot; after pushing, remote CI [run 38500034724](https://github.com/itzLan1126/Workflow/actions/runs/38500034724) passed all four jobs at `66d7cf9`, including native Windows. Raw mutation remains exit 1, and only the separately reviewed gate passes. No merge or release was performed. All sections below describe older snapshots.
 
 ## Historical approved MD5 reviewed gate (2026-10-14)
 
