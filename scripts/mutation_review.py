@@ -4,9 +4,9 @@ import hashlib
 from pathlib import Path
 import re
 
+from shared_mutation import ACTIONABLE, STATUSES, assessed_count, exit_code
 
-STATUSES = ('killed', 'survived', 'noCoverage', 'timeout', 'unviable', 'ignored', 'error')
-ACTIONABLE = ('survived', 'noCoverage', 'timeout', 'error')
+
 IDENTITY = {'id': 'coverage_lcov.x_validate_checksums__mutmut_3',
             'file': 'src/coverage_lcov.py', 'function': 'validate_checksums'}
 REPOSITORY_FILE = 'skills/workflow/scripts/coverage_lcov.py'
@@ -14,7 +14,7 @@ APPROVED_SOURCE_SHA256 = 'ef99126aed9617accb3f32190a56822f49684df14bb0dc2366acfa
 APPROVED_DIFF_SHA256 = '97ecc3613d91c5e6170e02a10a2269070c5b70fd0f47f967476b29d2cfc5e798'
 
 
-def is_integer(value):
+def is_count(value):
     return type(value) is int and value >= 0
 
 
@@ -26,23 +26,17 @@ def raw_counts(raw):
     counts = raw.get('counts')
     if not isinstance(counts, dict) or set(counts) != set(STATUSES):
         raise ValueError('Invalid raw mutation evidence')
-    if not all(is_integer(value) for value in counts.values()):
+    if not all(is_count(value) for value in counts.values()):
         raise ValueError('Invalid raw mutation evidence')
     return counts
 
 
-def expected_exit(counts, assessed):
-    if counts['error'] or not assessed:
-        return 2
-    return int(bool(counts['survived'] + counts['noCoverage'] + counts['timeout']))
-
-
 def validate_totals(raw, code, counts):
-    assessed = sum(counts[status] for status in ('killed', 'survived', 'noCoverage', 'timeout'))
+    assessed = assessed_count(counts)
     values = (code, raw.get('exitCode'), raw.get('toolExitCode'), raw.get('assessed'))
-    if not all(is_integer(value) for value in values):
+    if not all(is_count(value) for value in values):
         raise ValueError('Invalid raw mutation evidence')
-    expected = (expected_exit(counts, assessed), expected_exit(counts, assessed), 0, assessed)
+    expected = (exit_code(counts, assessed), exit_code(counts, assessed), 0, assessed)
     if values != expected:
         raise ValueError('Invalid raw mutation evidence')
 
