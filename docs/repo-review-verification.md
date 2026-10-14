@@ -33,9 +33,9 @@ The current uncommitted snapshot remains based on `ea67dabf9b7b7767f8be10fb92ec9
 
 [repo-review-md5-exclusion.json](repo-review-md5-exclusion.json) binds the exact ID, file, function and repository path to the complete source-file SHA-256 `ef99126aed9617accb3f32190a56822f49684df14bb0dc2366acfa5ad47fea47` and actual generated diff SHA-256 `97ecc3613d91c5e6170e02a10a2269070c5b70fd0f47f967476b29d2cfc5e798`. The production MD5 call remains unchanged for restricted-policy compatibility. This is a reviewed-result exception, without a line exclusion or generator filter. All eight mutations on the digest line remain generated: only False-to-None survives and is approved; the other seven, including True and argument deletion, are killed. Other failures, stale hashes, changed identities, malformed evidence or approval changes during execution block the reviewed gate.
 
-`scripts/mutation_review.py` validates the raw evidence and applies the single approval. `scripts/self_mutation.py` preserves separate raw `mutation-result.json` and overlaid `mutation-reviewed.json` files, with raw exit 1, review exit 0 and the captured manifest SHA clearly labeled. The original bundled strict mutation command retains its behavior. CI uses the existing self-check command and uploads both results, the approval and source snapshot; only the existing step name and three artifact paths changed, with no new jobs or altered exit handling.
+`scripts/mutation_review.py` validates the raw evidence and applies the single approval. `scripts/self_mutation.py` preserves separate raw `mutation-result.json` and overlaid `mutation-reviewed.json` files, with raw exit 1, review exit 0 and the captured manifest SHA clearly labeled. The original bundled strict mutation command retains its behavior. CI uses the existing self-check command and uploads both results, the approval and source snapshot; only the existing step name and three evidence paths changed, with no new jobs or altered exit handling.
 
-The complete scope is **20 production scripts and 18 test resources**, including the new reviewer. Both full mutation runs match all 38 current source/test hashes to their snapshots and actual copied bytes. Every native ID/status was independently compared with its real per-mutant pytest exit metadata. All **326 mutations in the new reviewer are killed**, and the previously repaired 16 PiB UTF-16 arithmetic mutation remains killed.
+The complete scope is **20 production scripts and 18 test resources**, including the new reviewer. Both full mutation checks match all 38 current source/test hashes to their snapshots and actual copied bytes. Every native ID/status was independently compared with its real per-mutant pytest exit metadata. All **326 mutations in the new reviewer are killed**, and the previously repaired 16 PiB UTF-16 arithmetic mutation remains killed.
 
 | Final accepted check | Python 3.14.3 | Python 3.10.18 |
 | --- | --- | --- |
@@ -50,7 +50,7 @@ The complete scope is **20 production scripts and 18 test resources**, including
 
 Eleven controls based on a real raw report confirm that only the exact approved item passes. Source/diff changes, an extra survivor, noCoverage, timeout, unviable, ignored, error and inconsistent counts are blocked. Raw objects remain unchanged. Strict JSON tests also reject NaN, infinity, overflow and invalid UTF-8 without hiding damaged raw output. A case-sensitive read fixture exercises Linux filename semantics on macOS and is applied through `Path.open` on both Python versions; subprocess tests load the helper from the actual isolated module location.
 
-Fresh real JS/TS/Rust/Swift checks all returned exit 0: mutation 2/2, 2/2, 6/6 and 1/1 killed, with complete measured CRAP coverage (Swift retains its region label). Their 20 production-source hashes match this final snapshot. Repository validation, both dependency checks, AST syntax for all 38 Python inputs, both workflow YAML files, all 15 embedded Bash-step syntax checks and `git diff --check` passed. Thresholds, inner test selection, raw status mapping and platform skips are unchanged.
+Fresh real JS/TS/Rust/Swift checks all returned exit 0: mutation 2/2, 2/2, 6/6 and 1/1 killed, with complete measured CRAP coverage (Swift retains its region label). Their 20 production-source hashes match this final snapshot. Repository validation, both dependency checks, AST syntax for all 38 Python inputs, both workflow YAML files, all 15 embedded Bash-step syntax checks and `git diff --check` passed. The CRAP standard, inner test selection, raw status mapping and platform skips are unchanged.
 
 One Python 3.10 full-unit attempt under six concurrent heavy checks failed because an existing Rust probe had not started before its 100 ms deadline. Its failure log and exit 1 are retained. The complete suite then passed serially on the exact same source/test snapshot, without changing the timeout or adding a skip. This remains an observed startup timing limitation under heavy parallel load.
 
@@ -68,7 +68,7 @@ The complete reruns now generate **3,601 mutants: 3,600 killed and 1 survived**,
 
 Of the previous 71 survivors, 68 redundant sites were removed or consolidated into standard/shared operations. JSON formatting/default arguments, repeated Rust opener scans, duplicate exhaustion checks and absent-diff processing were simplified. Strict UTF-8, universal newlines, surrogate errors, non-finite input rejection, exclusive report ownership and process cleanup remain covered. The two corresponding Rust comment-depth operator mutants now fail tests in both complete runs. A disappearing or reused historical ID is not counted as a kill. The 16 PiB UTF-16 arithmetic regression still kills the exact floating-division mutation.
 
-[repo-review-survivor-remediation.json](repo-review-survivor-remediation.json) records each of the 71 dispositions, old/current source and diff hashes, the new corresponding mutant diffs, all 36 copied-input hashes, native per-ID/pytest-exit verification, complete check results and the remaining proof. The previous audit and equivalence artifacts retain their original source bindings. No threshold, mutation selection, status mapping, workflow or platform skip changed.
+[repo-review-survivor-remediation.json](repo-review-survivor-remediation.json) records each of the 71 dispositions, old/current source and diff hashes, the new corresponding mutant diffs, all 36 copied-input hashes, native per-ID/pytest-exit verification, complete check results and the remaining proof. The previous audit and equivalence evidence files retain their original source bindings. No CRAP standard, mutation selection, status mapping, workflow or platform skip changed.
 
 The remaining mutation changes `hashlib.md5(..., usedforsecurity=False)` to `usedforsecurity=None`. In the verified CPython [3.10.18 parameter parser](https://github.com/python/cpython/blob/v3.10.18/Modules/clinic/_hashopenssl.c.h#L262) and [3.14.3 parameter parser](https://github.com/python/cpython/blob/v3.14.3/Modules/clinic/_hashopenssl.c.h#L408), both values become the same false C integer and select the same OpenSSL nonsecurity branch. Real subprocesses using `default_properties=fips=yes` reject the default/True call but accept False and None with the same checksum. Removing this parameter would therefore break restricted-policy compatibility. Tests that only assert a literal False, changing its spelling, hiding it outside mutation coverage or suppressing the survivor would not prove a behavioral repair. The flag and raw failure remain. The replayable probe, configuration, outputs and exact official-source excerpts are embedded in the remediation JSON; this property-policy check does not claim FIPS module certification.
 
@@ -110,7 +110,7 @@ The old `report_stryker.x_valid_position__mutmut_9` ID is no longer generated af
 
 There is no remaining memory-conditional item. The 71 remaining IDs and diffs match the previously reviewed set after removing the UTF-16 finding. The source-offset function bodies and their two codec-alias diffs are unchanged, even though their containing file now has a new SHA-256. The current ledger binds them to that new file hash.
 
-[repo-review-equivalents.json](repo-review-equivalents.json) contains only the 71 remaining survivors and lists all 22 withdrawn claims. Neither artifact is an exclusion list or automatic approval mechanism. The earlier counterexamples for omitted UTF-8, bytes temporary directories, directory ownership audit policies, and literal DLL audit policies remain preserved.
+[repo-review-equivalents.json](repo-review-equivalents.json) contains only the 71 remaining survivors and lists all 22 withdrawn claims. Neither evidence file is an exclusion list or automatic approval mechanism. The earlier counterexamples for omitted UTF-8, bytes temporary directories, directory ownership audit policies, and literal DLL audit policies remain preserved.
 
 ## Final complete checks
 
@@ -129,7 +129,7 @@ Both Python versions used pinned dependencies and normal repository commands. Th
 
 Extraction changes the generated mutant set from 3,715 to 3,719; the difference in total kills is not attributed solely to the original disappearing ID. The generated corresponding arithmetic mutation is verified directly.
 
-Repository validation, both dependency checks (`pip check`), Python syntax, workflow YAML, Bash syntax, and `git diff --check` passed. No threshold, status mapping, exclusion, or platform skip changed. The existing `not script_entrypoint and not real_mutmut` inner selection remains; those tests still execute in the full unit and CRAP suites.
+Repository validation, both dependency checks (`pip check`), Python syntax, workflow YAML, Bash syntax, and `git diff --check` passed. No CRAP standard, status mapping, exclusion, or platform skip changed. The existing `not script_entrypoint and not real_mutmut` inner selection remains; those tests still execute in the full unit and CRAP suites.
 
 ## Real external-tool checks and limits
 
@@ -142,7 +142,7 @@ All four language samples were rerun with the actual entry points and engines:
 | Rust / cargo-mutants | Full measured coverage, exit 0 | 6 / 6 killed, exit 0 |
 | Swift / Muter | Full measured coverage, exit 0; region measure explicitly labeled | 1 / 1 killed, exit 0 |
 
-The initial JS/TS repeat attempts correctly refused the existing report files. Fresh source/config projects were then used for their successful mutation runs; no stale report was accepted. Swift retained the restricted-host `--disable-sandbox` test setting, with coverage instrumentation enabled. These are small integration samples, not broad compatibility or performance benchmarks.
+The initial JS/TS repeat attempts correctly refused the existing report files. Fresh source/config projects were then used for their successful mutation checks; no stale report was accepted. Swift retained the restricted-host `--disable-sandbox` test setting, with coverage instrumentation enabled. These are small integration samples, not broad compatibility or performance benchmarks.
 
 The five independent initial review skills and subsequent per-survivor reviews remain recorded. This UTF-16 follow-up received an independent read-only review of the pure integer seam, numeric test, unchanged source path, and actual mutant identity mapping.
 
