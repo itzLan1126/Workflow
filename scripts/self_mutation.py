@@ -18,7 +18,7 @@ else:
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPTS = ROOT / "skills/workflow/scripts"
 sys.path.insert(0, str(SCRIPTS))
-from shared_runner import read_json, invalid_constant, finite_float
+from shared_runner import read_json, invalid_constant, finite_float, unique_json_object
 from shared_mutation import render_report
 # mutmut names mutants by path from the project root, while the tests import the scripts
 # as top-level modules, so the analysis copy places them under src/. The script-entrypoint
@@ -48,7 +48,8 @@ def emit_review(copy, raw_exit_code, as_json, approval_bytes):
         if (copy / 'md5-exclusion.json').read_bytes() != approval_bytes:
             raise ValueError('MD5 approval changed during the mutation run')
         raw = read_json(raw_path)
-        approval = json.loads(approval_bytes.decode(), parse_constant=invalid_constant, parse_float=finite_float)
+        approval = json.loads(approval_bytes.decode(), parse_constant=invalid_constant,
+                              parse_float=finite_float, object_pairs_hook=unique_json_object)
         gate = review_result(raw, raw_exit_code, copy, approval)
         result.update(raw)
         result['reviewGate'] = gate

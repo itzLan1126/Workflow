@@ -9,8 +9,27 @@ from scripts import mutation_review
 
 
 STATUSES = ('killed', 'survived', 'noCoverage', 'timeout', 'unviable', 'ignored', 'error')
-DIFF = '- usedforsecurity=False\n+ usedforsecurity=None'
+DIFF = '''--- src/coverage_lcov.py
++++ src/coverage_lcov.py
+@@ -1,7 +1,7 @@
+ def validate_checksums(source, lines, checksums):
+     for line, checksum in checksums.items():
+         # LCOV fingerprints UTF-8 source lines without their newline, with unpadded base64 MD5.
+-        digest = hashlib.md5(lines[line - 1].encode(), usedforsecurity=False).digest()
++        digest = hashlib.md5(lines[line - 1].encode(), usedforsecurity=None).digest()
+         # A 16-byte MD5 digest always has exactly two base64 padding characters.
+         expected = base64.b64encode(digest)[:-2].decode()
+         if checksum != expected:'''
 UNSET = object()
+
+
+def approved_source_bytes():
+    root = Path(__file__).resolve().parents[1]
+    if root.name == 'mutants':
+        root = root.parent
+    if (root / 'source-snapshot.json').is_file():
+        return (root / 'src/coverage_lcov.py').read_bytes()
+    return (root / 'skills/workflow/scripts/coverage_lcov.py').read_bytes()
 
 
 class MutationReviewTests(unittest.TestCase):
@@ -20,7 +39,7 @@ class MutationReviewTests(unittest.TestCase):
         self.root = Path(temporary.name)
         self.source = self.root / 'src' / 'coverage_lcov.py'
         self.source.parent.mkdir()
-        self.source.write_bytes(b'original source\n')
+        self.source.write_bytes(approved_source_bytes())
         self.mutant = {'id': 'coverage_lcov.x_validate_checksums__mutmut_3',
                        'file': 'src/coverage_lcov.py', 'function': 'validate_checksums',
                        'status': 'survived', 'diff': DIFF}
@@ -76,8 +95,25 @@ class MutationReviewTests(unittest.TestCase):
                                  {'exitCode': 1, 'approvedEquivalentExclusions': []})
         self.source.write_bytes(b'changed source\n')
         self.assert_blocked(self.review())
-        self.source.write_bytes(b'original source\n')
+        self.source.write_bytes(approved_source_bytes())
         self.assert_blocked(self.review(raw={**self.raw, 'mutants': [{**self.mutant, 'diff': DIFF + '\n'}]}))
+
+    def test_coordinated_source_diff_and_manifest_changes_are_not_new_approvals(self):
+        original = self.source.read_bytes()
+        for change_source, change_diff in ((True, False), (False, True), (True, True)):
+            with self.subTest(source=change_source, diff=change_diff):
+                self.source.write_bytes(original + b'\n# unapproved change\n' if change_source else original)
+                raw = deepcopy(self.raw)
+                if change_diff:
+                    raw['mutants'][0]['diff'] = DIFF.replace('usedforsecurity=None', 'usedforsecurity=True')
+                approval = {**self.approval,
+                            'sourceSha256': hashlib.sha256(self.source.read_bytes()).hexdigest(),
+                            'diffSha256': hashlib.sha256(raw['mutants'][0]['diff'].encode()).hexdigest()}
+                before = deepcopy(raw)
+                self.assert_blocked(self.review(raw=raw, approval=approval))
+                self.assertEqual(raw, before)
+                self.assertEqual(approval['id'], self.approval['id'])
+                self.assertEqual(approval['reason'], self.approval['reason'])
 
     def test_each_identity_is_fixed_in_manifest_and_mutant(self):
         for field in ('id', 'file', 'function', 'repositoryFile'):

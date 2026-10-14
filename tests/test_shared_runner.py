@@ -130,6 +130,31 @@ class CommandRunnerTests(unittest.TestCase):
             with mock.patch.object(io, 'text_encoding', side_effect=lambda encoding, *args: encoding or 'ascii'):
                 self.assertEqual(run_report.read_json(path), {"中文": "😀"})
 
+    def test_json_rejects_duplicate_object_keys_at_every_depth(self):
+        cases = ((b'{"value":1,"value":2}', 'value'),
+                 (b'{"value":1,"value":1}', 'value'),
+                 (b'{"outer":{"status":"survived","status":"killed"}}', 'status'),
+                 (b'{"outer":[{"id":"unapproved","id":"approved"}]}', 'id'),
+                 (b'{"a":1,"\\u0061":2}', 'a'))
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'report.json'
+            for encoded, key in cases:
+                with self.subTest(encoded=encoded):
+                    path.write_bytes(encoded)
+                    with self.assertRaises(ValueError) as raised:
+                        run_report.read_json(path)
+                    self.assertEqual(str(raised.exception), f'Duplicate JSON object key: {key}')
+                    self.assertEqual(path.read_bytes(), encoded)
+
+    def test_json_allows_same_key_in_separate_objects_and_preserves_values(self):
+        encoded = '{"objects":[{"id":"one"},{"id":"two"}],"values":[null,true,false,1,1.5,"中文😀",{}]}'
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'report.json'
+            path.write_bytes(encoded.encode())
+            self.assertEqual(run_report.read_json(path), {
+                'objects': [{'id': 'one'}, {'id': 'two'}],
+                'values': [None, True, False, 1, 1.5, '中文😀', {}]})
+
 
 if __name__ == "__main__":
     unittest.main()

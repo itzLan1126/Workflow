@@ -10,6 +10,8 @@ ACTIONABLE = ('survived', 'noCoverage', 'timeout', 'error')
 IDENTITY = {'id': 'coverage_lcov.x_validate_checksums__mutmut_3',
             'file': 'src/coverage_lcov.py', 'function': 'validate_checksums'}
 REPOSITORY_FILE = 'skills/workflow/scripts/coverage_lcov.py'
+APPROVED_SOURCE_SHA256 = 'ef99126aed9617accb3f32190a56822f49684df14bb0dc2366acfa5ad47fea47'
+APPROVED_DIFF_SHA256 = '97ecc3613d91c5e6170e02a10a2269070c5b70fd0f47f967476b29d2cfc5e798'
 
 
 def is_integer(value):
@@ -110,7 +112,8 @@ def approved_md5(mutants, copy_root, approval):
     validate_approval(approval)
     if len(mutants) != 1 or not matches_identity(approval):
         return []
-    if approval['repositoryFile'] != REPOSITORY_FILE:
+    if (approval['repositoryFile'], approval['sourceSha256'], approval['diffSha256']) != (
+            REPOSITORY_FILE, APPROVED_SOURCE_SHA256, APPROVED_DIFF_SHA256):
         return []
     return matched_proof(mutants[0], copy_root, approval)
 
