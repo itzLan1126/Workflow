@@ -43,15 +43,15 @@ jobs:
         run: python scripts/self_crap.py > crap-result.json
       - name: Review full-repository mutation with the approved MD5 equivalence
         if: runner.os != 'Windows'
-        run: python scripts/self_mutation.py --json > mutation-result.json 2> mutation-run.log
-      - name: Preserve quality evidence even when the strict gate fails
+        run: python scripts/self_mutation.py --json > mutation-reviewed.json 2> mutation-run.log
+      - name: Preserve quality evidence even when a check fails
         if: always() && runner.os != 'Windows'
         uses: actions/upload-artifact@v7
         with:
           name: mutation-${{ runner.os }}-python-${{ matrix.python }}
           path: |
             crap-result.json
-            mutation-result.json
+            mutation-reviewed.json
             mutation-run.log
             ${{ runner.temp }}/**/source-snapshot.json
             ${{ runner.temp }}/**/mutation-result.json
