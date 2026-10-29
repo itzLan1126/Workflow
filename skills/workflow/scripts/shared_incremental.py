@@ -112,6 +112,8 @@ def plan(current, previous, by_function):
 
 
 def full_run_reason(current, old, outcomes):
+    if old['files'].keys() - current['files'].keys():
+        return 'full run: source files were deleted'
     if any(current[key] != old[key] for key in INVALIDATING):
         return 'full run: tests, engine, configuration or language module changed'
     if any(item['sourceFile'] is None for item in outcomes):

@@ -40,13 +40,21 @@ class OverlayTests(unittest.TestCase):
             target = root / 'external.txt'
             target.write_bytes(b'original')
             (project / 'linked.txt').symlink_to(target)
+            (root / 'external-dir').mkdir()
+            (root / 'external-dir/data.txt').write_bytes(b'original')
+            (project / 'linked-dir').symlink_to(root / 'external-dir')
+            (project / 'dangling').symlink_to(project / 'missing.txt')
             script = ('import os,pathlib; pathlib.Path("linked.txt").write_text("changed"); '
+                      'assert pathlib.Path("linked-dir/data.txt").read_bytes() == b"original"; '
+                      'pathlib.Path("linked-dir/data.txt").write_text("changed"); '
+                      'assert pathlib.Path("dangling").is_symlink(); '
                       'pathlib.Path(os.environ["WORKFLOW_REPORT_FILE"]).write_text('
                       '\'{"baselinePassed":true,"mutants":[{"status":"killed"}]}\')')
             with redirect_stdout(io.StringIO()), tempfile.TemporaryFile(mode='w+') as err, redirect_stderr(err):
                 code = mutation.main(['python', str(project), '--overlay', '--', sys.executable, '-c', script])
             self.assertEqual(code, 0)
             self.assertEqual(target.read_bytes(), b'original')
+            self.assertEqual((root / 'external-dir/data.txt').read_bytes(), b'original')
 
     def test_overlay_timeout_preserves_original_and_removes_copy(self):
         with tempfile.TemporaryDirectory() as directory:

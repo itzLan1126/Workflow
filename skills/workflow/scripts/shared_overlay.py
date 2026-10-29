@@ -13,7 +13,22 @@ def isolated(project, enabled):
     # The parent is disposable so siblings such as Muter's <project>_mutated stay inside it.
     with tempfile.TemporaryDirectory(prefix='workflow-overlay-') as directory:
         target = Path(directory) / project.name
-        # shortcut: every file is a private copy because a link is writable into the original;
-        # add read-only links only if a project proves too large to copy.
-        shutil.copytree(project, target, ignore=shutil.ignore_patterns('.git'))
+        shutil.copytree(project, target, symlinks=True, ignore=shutil.ignore_patterns('.git'))
+        for link in target.rglob('*'):
+            if link.is_symlink():
+                relocate_link(link, project, target)
         yield target
+
+
+def relocate_link(link, project, target):
+    original = project / link.relative_to(target)
+    # A dangling link inside the project stays dangling; one pointing outside fails the copy.
+    destination = original.resolve()
+    link.unlink()
+    if destination.is_relative_to(project):
+        # shortcut: Windows directory links need target_is_directory; add it if overlays run there.
+        link.symlink_to(target / destination.relative_to(project))
+    elif destination.is_dir():
+        shutil.copytree(destination, link)
+    else:
+        shutil.copy2(destination, link)

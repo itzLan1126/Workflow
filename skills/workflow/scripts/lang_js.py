@@ -45,7 +45,7 @@ DUPLICATION_SYNTAX = Syntax(
                  'shorthand_property_identifier_pattern'},
     literals={'number', 'string', 'true', 'false', 'null', 'undefined', 'regex'},
     calls={'call_expression', 'new_expression'}, attributes={'member_expression'}, paths=set())
-DUPLICATION_GRAMMARS = {'.tsx': 'tsx'}
+DUPLICATION_GRAMMARS = {'.tsx': 'tsx', '.jsx': 'tsx'}
 
 
 def duplication_candidate(node):
