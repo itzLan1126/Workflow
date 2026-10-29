@@ -5,12 +5,17 @@ import json
 import sys
 
 from shared_duplication import calculate
-from shared_languages import arguments, evidence_directory, language
+from shared_tools import options, python_tools
+from shared_languages import LANGUAGES, arguments, evidence_directory, language
+
+USAGE = 'Usage: duplication.py LANGUAGE PROJECT SOURCE_FILE...'
+EXTENSIONS = {'python': {'.py'}, 'js': {'.js', '.jsx', '.mjs', '.cjs'},
+              'ts': {'.ts', '.tsx'}, 'rust': {'.rs'}, 'swift': {'.swift'}}
 
 
 def selected_sources(args):
-    if not args or args[0] != 'python':
-        raise ValueError('Usage: duplication.py python PROJECT SOURCE_FILE...; only Python is supported')
+    if not args or args[0] not in LANGUAGES:
+        raise ValueError(USAGE)
     if '--timeout-ms' in args:
         raise ValueError('Duplication check does not accept timeout overrides')
     project, sources, _, tool = arguments(args[1:])
@@ -20,12 +25,23 @@ def selected_sources(args):
 
 
 def dispatch(args):
+    args, install = options(args)
     project, sources = selected_sources(args)
+    with python_tools(['tree-sitter', 'tree-sitter-language-pack'], project, install) as tools:
+        return prepared_result(args[0], project, sources, tools)
+
+
+def prepared_result(name, project, sources, tools):
     evidence = evidence_directory()
-    config = {'cwd': str(project), 'sources': sources}
+    config = {'cwd': str(project), 'sources': sources, 'tools': tools}
     config['parserVersions'] = {name: version(name) for name in ('tree-sitter', 'tree-sitter-language-pack')}
     (evidence / 'config.json').write_bytes(json.dumps(config).encode())
-    entries = collect(project, sources)
+    if name == 'swift':
+        result = {'findings': 0, 'pairs': [], 'sources': sources, 'unverified': 'language not supported'}
+        (evidence / 'result.json').write_bytes(json.dumps(result).encode())
+        print(json.dumps(result))
+        return 1
+    entries = collect(project, sources, name)
     measurements = [{**entry, 'fingerprints': sorted(entry['fingerprints'])} for entry in entries]
     (evidence / 'measurements.json').write_bytes(json.dumps(measurements).encode())
     result = {**calculate(entries), 'sources': sources, 'parserVersions': config['parserVersions']}
@@ -34,17 +50,17 @@ def dispatch(args):
     return 1 if result['findings'] else 0
 
 
-def collect(project, sources):
+def collect(project, sources, name):
     entries = []
     seen = set()
     for source in sources:
         path = (project / source).resolve()
-        if path.suffix != '.py':
+        if path.suffix not in EXTENSIONS[name]:
             raise ValueError(f'Unsupported source file: {source}')
         if path in seen:
             continue
         seen.add(path)
-        entries.extend(language('python').duplication_entries(path, source))
+        entries.extend(language(name).duplication_entries(path, source))
     return entries
 
 

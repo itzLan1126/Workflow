@@ -10,7 +10,7 @@ After the user accepts the behavior, independently verify code quality and test 
 
 ## Phase 2: Deterministic Quality Checks
 
-Follow [the tool guide](quality-tools.md) to execute [CRAP](../scripts/crap.py) and [mutation testing](../scripts/mutation.py). It holds the fixed CRAP standard, mutation scoping, and isolation requirements. Select the toolchain guide for [Python](languages/python.md), [JS/TS](languages/js.md), [Rust](languages/rust.md), or [Swift](languages/swift.md).
+Follow [the tool guide](quality-tools.md) to execute [CRAP](../scripts/crap.py), [mutation testing](../scripts/mutation.py), and the [duplication check](../scripts/duplication.py). Report Swift duplication as an unverified unsupported-language gap. It holds the fixed CRAP standard, mutation scoping, and isolation requirements. Select the toolchain guide for [Python](languages/python.md), [JS/TS](languages/js.md), [Rust](languages/rust.md), or [Swift](languages/swift.md).
 
 - **Tool Execution**: Run real analysis commands and validate freshly generated reports; prose estimates are not results.
 - **Scope**: Select relevant changed logic and project-supported tools. Record tool versions and scope.

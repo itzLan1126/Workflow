@@ -5,7 +5,11 @@ import json
 import sys
 from pathlib import Path
 import shutil
-from shared_languages import LANGUAGES, language, arguments, evidence_directory
+from shared_languages import LANGUAGES, language, arguments, evidence_directory, split_tool
+from shared_tools import options, python_tools, native_tools
+from shared_overlay import isolated
+import shared_incremental as incremental
+from shared_mutation import STATUSES, ACTIONABLE, assessed_count, exit_code
 
 from shared_runner import read_json, is_valid_config, run_report
 from shared_mutation import adapter, assess, render_report, summarize, object_value
@@ -30,21 +34,93 @@ def run_mutation(config_path):
 
 
 def language_result(name, args):
-    project, sources, timeout, tool = arguments(args)
+    args, install = options(args)
+    wrapper, tool = split_tool(args)
+    previous = previous_option(wrapper)
+    overlay = '--overlay' in wrapper
+    if overlay:
+        wrapper.remove('--overlay')
+    project, sources, timeout, tool = arguments([*wrapper, '--', *tool])
+    # Snapshots hash functions with Lizard, so every language needs it alongside its engine.
+    names = ['lizard', 'mutmut'] if name == 'python' and not tool else ['lizard']
+    with python_tools(names, project, install) as tools, isolated(project, overlay) as copy, \
+            native_tools(language(name), 'mutation', copy, install, tool) as native:
+        return prepared_result(name, copy, sources, timeout, tool, tools + native, previous)
+
+
+def prepared_result(name, project, sources, timeout, tool, tools, previous):
     if sources:
         raise ValueError('Mutation check accepts one project path')
     spec = language(name).MUTATION
     evidence = evidence_directory()
     report = Path(spec.report(project, evidence))
     config = {'cwd': str(project), 'report': str(report), 'format': spec.format,
-              'command': spec.command(project, evidence, tool), 'timeoutMs': timeout}
+              'command': spec.command(project, evidence, tool), 'timeoutMs': timeout, 'tools': tools}
+    engine = {'format': spec.format, 'command': tool or [spec.format], 'tools': tools}
+    current = incremental.snapshot(project, language(name), engine)
+    return execute_incremental(name, evidence, report, config, current, previous, tool)
+
+
+def execute_incremental(name, evidence, report, config, current, previous, tool):
+    reused, files, functions, fallback = [], None, None, None
+    if previous is not None:
+        reused, files, functions, fallback = incremental.plan(current, previous, name == 'python')
+    if files and tool:
+        # A replaced command has no selection protocol; rerun it rather than drop outcomes.
+        reused, files, functions, fallback = [], None, None, 'full run: replaced command cannot be scoped'
+    if files:
+        config['command'] = language(name).incremental_command(config['command'], files, functions)
+    config['selectedFiles'] = files
     path = evidence / 'config.json'
     path.write_bytes(json.dumps(config).encode())
-    result = run_mutation(path)
+    result, outcomes = run_selected(path, config['format'], report, files, reused)
+    incremental.save(evidence, current, outcomes)
+    result.update(reusedCount=len(reused), outcomes=outcomes)
+    if previous is not None:
+        result['incrementalScope'] = {'files': files, 'functions': functions, 'fallback': fallback}
+    preserve_report(report, evidence, result)
+    (evidence / 'result.json').write_bytes(json.dumps(result).encode())
+    return result
+
+
+def preserve_report(report, evidence, result):
     if not report.resolve().is_relative_to(evidence.resolve()):
         shutil.copy2(report, evidence / report.name)
         result['reportPath'] = str(evidence / report.name)
-    return result
+
+
+def run_selected(path, format, report, selected, reused):
+    if selected == [] and reused:
+        report.parent.mkdir(parents=True, exist_ok=True)
+        report.write_bytes(json.dumps({'baselinePassed': True, 'mutants': reused}).encode())
+        return combined_result(reused, format, report), reused
+    result = run_mutation(path)
+    outcomes = incremental.all_outcomes(read_json(report), format, report)
+    if selected is not None:
+        outcomes = [*outcomes, *reused]
+        result = {**result, **combined_result(outcomes, format, report)}
+    return result, outcomes
+
+
+def previous_option(wrapper):
+    if '--previous-evidence' not in wrapper:
+        return None
+    index = wrapper.index('--previous-evidence')
+    if index + 1 >= len(wrapper):
+        raise ValueError('Require --previous-evidence DIRECTORY')
+    previous = incremental.load_previous(wrapper[index + 1])
+    del wrapper[index:index + 2]
+    return previous
+
+
+def combined_result(outcomes, format, report):
+    counts = dict.fromkeys(STATUSES, 0)
+    for item in outcomes:
+        counts[item['status']] += 1
+    assessed = assessed_count(counts)
+    return {'format': format, 'counts': counts, 'assessed': assessed,
+            'exitCode': exit_code(counts, assessed), 'toolExitCode': 0, 'reportPath': str(report),
+            'mutants': [item for item in outcomes if item['status'] in ACTIONABLE]}
 
 
 def dispatch(args):

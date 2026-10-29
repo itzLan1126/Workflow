@@ -47,7 +47,7 @@ class EvidenceEncodingTests(unittest.TestCase):
                 with patch.object(Path, 'write_text', write), patch('lang_python.subprocess.run'), \
                         patch('lang_python.collect', return_value=mutants), \
                         patch.dict(sys.modules, {'mutmut.__main__': SimpleNamespace(status_by_exit_code={})}), \
-                        patch('lang_python.add_details', side_effect=lambda value: value):
+                        patch('lang_python.add_details', side_effect=lambda value, **kwargs: value):
                     self.assertEqual(lang_python.main(['report.json']), 0)
                 self.assertEqual(read_json('report.json'), {'baselinePassed': True, 'mutants': mutants})
             finally:
@@ -68,7 +68,7 @@ os.chdir(root)
 with patch.dict(sys.modules, {'mutmut.__main__': SimpleNamespace(status_by_exit_code={})}), \\
      patch('lang_python.subprocess.run'), \\
      patch('lang_python.collect', return_value=[{'id': 'm+1', 'status': 'killed'}]), \\
-     patch('lang_python.add_details', side_effect=lambda value: value):
+     patch('lang_python.add_details', side_effect=lambda value, **kwargs: value):
     assert lang_python.main([str(root / 'export.json')]) == 0
 assert json.loads((root / 'export.json').read_text(encoding='utf-8'))['mutants'][0]['id'] == 'm+1'
 project = root / 'project+plus'

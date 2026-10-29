@@ -3,6 +3,7 @@ import importlib.util
 import io
 import json
 import os
+import shutil
 from pathlib import Path
 import subprocess
 import sys
@@ -108,6 +109,40 @@ class MutmutExportTests(unittest.TestCase):
 
     def test_usage(self):
         self.assertEqual(self.run_main([]), (2, "mutmut_export: Usage: python mutmut_export.py REPORT.json\n"))
+
+    @unittest.skipUnless(HAS_MUTMUT, "mutmut is not installed")
+    def test_selected_functions_and_files_export_only_their_mutants_with_details(self):
+        (self.root / "src").mkdir()
+        (self.root / "src/calc.py").write_text("def choose(x):\n    return x\n\n\ndef other(x):\n    return x\n\n\n"
+                                               "class Box:\n    def size(self, x):\n        return x\n")
+        commands = []
+
+        # Function keys are FILE:NAME:LINE; Lizard writes nested names with dots.
+        def mutmut(command, check):
+            # mutmut records every generated mutant but leaves unselected ones without an exit code.
+            commands.append(command)
+            meta(self.root, "src/calc.py.meta", {"calc.x_choose__mutmut_1": 1, "calc.xǁBoxǁsize__mutmut_1": 0,
+                                                 "calc.x_other__mutmut_1": None})
+        with mock.patch("lang_python.subprocess.run", side_effect=mutmut), \
+                mock.patch.dict(sys.modules, {"mutmut.__main__": SimpleNamespace(status_by_exit_code=TABLE)}), \
+                mock.patch("mutmut.mutation.diff_apply.find_mutant", return_value=SimpleNamespace(path=Path("src/calc.py"))), \
+                mock.patch("mutmut.mutation.diff_apply.get_diff_for_mutant", return_value="--- a\n+++ b"):
+            self.assertEqual(self.run_main(["report.json", "src/calc.py:choose:1", "src/calc.py:Box.size:10"]), (0, ""))
+            selected = json.loads((self.root / "report.json").read_text())["mutants"]
+            (self.root / "report.json").unlink()
+            shutil.rmtree(self.root / "mutants")
+            self.assertEqual(self.run_main(["report.json", "src/calc.py"]), (0, ""))
+            whole = json.loads((self.root / "report.json").read_text())["mutants"]
+        self.assertEqual([command[1:] for command in commands], [
+            ["-m", "mutmut", "run", "calc.x_choose__mutmut_*", "calc.xǁ*ǁchoose__mutmut_*",
+             "calc.x_size__mutmut_*", "calc.xǁ*ǁsize__mutmut_*"],
+            ["-m", "mutmut", "run", "calc.*"]])
+        self.assertEqual([(m["id"], m["status"], m["function"], m["line"]) for m in selected],
+                         [("calc.x_choose__mutmut_1", "killed", "choose", 1),
+                          ("calc.xǁBoxǁsize__mutmut_1", "survived", "Box.size", 10)])
+        self.assertEqual(sorted((m["id"], m["status"]) for m in whole), [
+            ("calc.x_choose__mutmut_1", "killed"), ("calc.x_other__mutmut_1", "error"),
+            ("calc.xǁBoxǁsize__mutmut_1", "survived")])
 
     def test_function_position_includes_decorators_and_distinguishes_methods(self):
         path = self.root / "example.py"
@@ -283,7 +318,7 @@ class MutmutExportTests(unittest.TestCase):
         with mock.patch.dict(sys.modules, {'mutmut.__main__': SimpleNamespace(status_by_exit_code={})}), \
                 mock.patch('lang_python.subprocess.run'), \
                 mock.patch('lang_python.collect', return_value=mutants), \
-                mock.patch('lang_python.add_details', side_effect=lambda value: value):
+                mock.patch('lang_python.add_details', side_effect=lambda value, **kwargs: value):
             self.assertEqual(self.run_main(), (0, ''))
         raw = (self.root / 'report.json').read_bytes()
         report = json.loads(raw.decode())
