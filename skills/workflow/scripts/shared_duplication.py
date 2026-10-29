@@ -38,8 +38,13 @@ def eligible(entry):
             and entry['nodes'] >= MIN_NODES)
 
 
+def same_source(left, right):
+    # Extraction visits each file once in source order, so left starts before right.
+    return left['file'] == right['file'] and left['endLine'] >= right['endLine']
+
+
 def pair(left, right):
-    if left['language'] != right['language']:
+    if left['language'] != right['language'] or same_source(left, right):
         return None
     union = left['fingerprints'] | right['fingerprints']
     score = len(left['fingerprints'] & right['fingerprints']) / len(union)

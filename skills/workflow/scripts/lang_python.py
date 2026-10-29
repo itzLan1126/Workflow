@@ -97,7 +97,7 @@ def add_details(mutants):
 DUPLICATION_OPERATORS = {
     '+', '-', '*', '/', '//', '%', '**', '==', '!=', '<', '>', '<=', '>=',
     '&', '|', '^', '<<', '>>', '+=', '-=', '*=', '/=', '//=', '%=', '**=',
-    '&=', '|=', '^=', '<<=', '>>=', '~', 'and', 'or', 'not', 'in', 'is', '=', ':=',
+    '&=', '|=', '^=', '<<=', '>>=', '~', 'and', 'or', 'not', 'in', 'is', 'not in', 'is not', '=', ':=',
 }
 DUPLICATION_LITERALS = {'integer', 'float', 'true', 'false', 'none', 'string'}
 
@@ -124,8 +124,12 @@ def duplication_children(node, head):
         return [(node.child_by_field_name('function'), 'callee'),
                 (node.child_by_field_name('arguments'), None)]
     if node.type == 'parenthesized_expression':
-        return [(node.named_children[0], head)]
+        return [(duplication_expression(node), head)]
     return [(child, None) for child in node.children if duplication_keep(child)]
+
+
+def duplication_expression(node):
+    return next(child for child in node.named_children if child.type != 'comment')
 
 
 def duplication_keep(node):

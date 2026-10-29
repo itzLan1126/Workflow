@@ -212,6 +212,49 @@ class DuplicationTests(unittest.TestCase):
         _, result, _, _, _ = self.run_check({'a.py': first, 'b.py': commented})
         self.assertEqual(result['pairs'][0]['score'], 1.0)
 
+    def test_compound_comparison_operators_remain_distinct(self):
+        template = 'def f(a, b):\n    c = 0\n    if a OP b:\n        c = abs(a)\n    return c\n'
+        _, result, _, _, evidence = self.run_check({
+            'a.py': template.replace('OP', 'not in'),
+            'b.py': template.replace('OP', 'is not'),
+        })
+        for finding in result['pairs']:
+            self.assertLess(finding['score'], 1.0)
+        measurements = json.loads((evidence / 'measurements.json').read_bytes())
+        self.assertIn('[\":symbol\" \"not in\"]', measurements[0]['fingerprints'])
+        self.assertIn('[\":symbol\" \"is not\"]', measurements[1]['fingerprints'])
+
+    def test_comments_inside_parentheses_preserve_expression_and_callee(self):
+        for expression in ['abs(a) + 1', 'abs']:
+            with self.subTest(expression=expression):
+                plain = f'def f(a):\n    b = (\n        {expression}\n    )\n    return b\n'
+                commented = plain.replace('        ' + expression, '        # note\n        ' + expression)
+                code, result, _, _, evidence = self.run_check({'a.py': plain, 'b.py': commented})
+                self.assertEqual(code, 1)
+                self.assertEqual(result['pairs'][0]['score'], 1.0)
+                measurements = json.loads((evidence / 'measurements.json').read_bytes())
+                self.assertEqual(measurements[0]['nodes'], measurements[1]['nodes'])
+                self.assertEqual(measurements[0]['fingerprints'], measurements[1]['fingerprints'])
+        plain = 'def f(a):\n    b = (abs)(a)\n    c = b + 1\n    return c\n'
+        commented = plain.replace('(abs)', '(\n        # note\n        abs\n    )')
+        _, result, _, _, _ = self.run_check({'a.py': plain, 'b.py': commented})
+        self.assertEqual(result['pairs'][0]['score'], 1.0)
+
+    def test_enclosing_function_pairs_are_excluded_but_separate_methods_are_compared(self):
+        method = '        def m(self, a):\n            b = 0\n            for c in a:\n                b += abs(c)\n            return b\n'
+        factory = 'def factory():\n    class C:\n' + method + '    return C\n'
+        code, result, _, _, _ = self.run_check({'a.py': factory})
+        self.assertEqual(code, 0)
+        self.assertEqual(result['pairs'], [])
+        code, result, _, _, _ = self.run_check({'a.py': factory.removesuffix('    return C\n')})
+        self.assertEqual(code, 0)
+        self.assertEqual(result['pairs'], [])
+        separate = 'class D:\n' + '\n'.join(line[4:] for line in method.splitlines()) + '\n'
+        code, result, _, _, _ = self.run_check({'a.py': factory + '\n' + separate})
+        self.assertEqual(code, 1)
+        self.assertEqual([(p['left']['startLine'], p['right']['startLine']) for p in result['pairs']],
+                         [(1, 11), (3, 11)])
+
     def test_duplicate_source_paths_do_not_pair_a_function_with_itself(self):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / 'a.py'
