@@ -11,6 +11,7 @@ from shared_runner import read_config, read_utf8, run_report, run_command
 from shared_languages import LANGUAGES, language, arguments, evidence_directory
 from importlib import import_module
 import os
+from shared_tools import options, python_tools, native_tools
 
 def collect_main(args):
     if len(args) < 3:
@@ -44,8 +45,18 @@ def read_measurements(project, sources, spec, evidence):
         os.chdir(previous)
 
 
+CRAP_TOOLS = {'python': ['lizard', 'coverage']}
+
+
 def language_result(name, args):
+    args, install = options(args)
     project, sources, timeout, tool = arguments(args)
+    with python_tools(CRAP_TOOLS.get(name, ['lizard']), project, install) as tools, \
+            native_tools(language(name), 'crap', project, install, tool) as native:
+        return prepared_result(name, project, sources, timeout, tool, tools + native)
+
+
+def prepared_result(name, project, sources, timeout, tool, tools):
     if not sources:
         raise ValueError('Require at least one source file')
     spec = language(name).CRAP
@@ -54,7 +65,7 @@ def language_result(name, args):
     environment = {'WORKFLOW_COVERAGE_FILE': str(evidence / spec.coverage)}
     (evidence / 'config.json').write_bytes(json.dumps({'cwd': str(project), 'commands': commands,
                                                      'sources': sources, 'timeoutMs': timeout,
-                                                     'env': environment}).encode())
+                                                     'env': environment, 'tools': tools}).encode())
     for command in commands:
         if run_command(command, project, timeout, env={**os.environ, **environment}) != 0:
             raise ValueError('Coverage command failed')

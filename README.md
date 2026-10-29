@@ -66,17 +66,21 @@ python3 -m venv .venv
 .venv/bin/python scripts/validation.py
 ```
 
-The Python [duplication check](skills/workflow/references/languages/python.md#duplication-check) is also available:
+The [duplication check](skills/workflow/references/languages/python.md#duplication-check) is also available:
 
 ```sh
 .venv/bin/python skills/workflow/scripts/duplication.py python . path/to/first.py path/to/second.py
 ```
 
-It compares explicitly selected Python functions against a fixed similarity of 0.8, excluding functions below 4 lines or 20 normalized nodes. Install the pinned tree-sitter packages manually via `requirements-dev.txt`; they support Python 3.10+. JSON and evidence include both spans, analysed scope and parser versions. The [ported analyser's provenance and 0BSD licence](skills/workflow/references/dryer-LICENSE.txt) are preserved.
+It compares explicitly selected Python, JS/TS and Rust functions against a fixed similarity of 0.8, excluding functions below 4 lines or 20 normalized nodes. Swift reports an explicit unverified gap. Missing pinned tools install automatically into skill-owned environments outside the project; `--no-install` disables installation. Python 3.10+ remains supported. JSON and evidence include both spans, analysed scope and parser versions. The [ported analyser's provenance and 0BSD licence](skills/workflow/references/dryer-LICENSE.txt) are preserved.
 
 Language commands and prerequisites: [Python](skills/workflow/references/languages/python.md), [JS/TS](skills/workflow/references/languages/js.md), [Rust](skills/workflow/references/languages/rust.md), [Swift](skills/workflow/references/languages/swift.md). The [shared contract](skills/workflow/references/quality-tools.md) defines config mode, evidence, and results.
 
+Mutation language commands support `--overlay` to create and clean up their own isolated copy, and `--previous-evidence DIRECTORY` to reuse labelled outcomes with source, test, engine and configuration bindings. Damaged evidence is a run failure. System toolchains are never installed. See the shared contract for evidence and selection details.
+
 ### Self-Quality Verification
+
+- **Duplication Check**: `.venv/bin/python scripts/self_duplication.py` checks every production script. Linux and macOS CI preserve its result, log and evidence even when the gate fails.
 
 - **CRAP Check**:
 
@@ -102,7 +106,7 @@ Language commands and prerequisites: [Python](skills/workflow/references/languag
   The Windows runner holds a bootstrap behind a pipe until it is assigned to a kill-on-close Job Object, then releases the tool ([shared runner](skills/workflow/scripts/shared_runner.py)); the tool and all descendants inherit that job. Cleanup owns the job rather than looking up a possibly exited root PID, and timeout failures keep their timeout classification even if cleanup reports an error. Native timeout and root-exit cleanup behavior is verified in Windows CI; Linux self-tests exercise API contracts. Bundled scripts require Python 3.10+.
 
 - **Deterministic Repository CI**:
-  CI checks packaging, frontmatter, references, README consistency, invocation policies, and full-repository CRAP and reviewed mutation on Linux and macOS; Linux also checks the minimum Python 3.10 version. Windows retains its native Job Object tests. Raw mutation reports, reviewed decisions, the copied MD5 approval and source snapshots are uploaded even when the gate fails. Only the single hash-bound MD5 approval can change the reviewed exit; raw statuses and exits remain visible. These checks do not prove that an agent host implements the workflow correctly or that a target application meets requirements.
+  CI checks packaging, frontmatter, references, README consistency, invocation policies, and full-repository CRAP, duplication and reviewed mutation on Linux and macOS; Linux also checks the minimum Python 3.10 version. Windows retains its native Job Object tests. Raw mutation reports, reviewed decisions, the copied MD5 approval and source snapshots are uploaded even when the gate fails. Only the single hash-bound MD5 approval can change the reviewed exit; raw statuses and exits remain visible. These checks do not prove that an agent host implements the workflow correctly or that a target application meets requirements.
 
 ---
 

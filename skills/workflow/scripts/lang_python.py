@@ -24,8 +24,17 @@ def mutation_command(project, evidence, args):
     return args or [sys.executable, str(Path(__file__).resolve()), str(evidence / 'mutation.json')]
 
 
+def incremental_command(command, files, functions):
+    return [*command, *(files if functions is None else functions)]
+
+
 def report_path(project, evidence):
     return evidence / 'mutation.json'
+
+
+def prepare_tools(project, check, install):
+    # Python tools are packages, provided through shared_tools.python_tools.
+    return None, []
 
 
 CRAP = Crap('lcov', coverage_commands, 'coverage.lcov')
@@ -74,12 +83,12 @@ def function_position(path, name, class_name):
     return function.lineno, first_line - 1
 
 
-def add_details(mutants):
+def add_details(mutants, include_all=False):
     from mutmut.mutation.diff_apply import find_mutant, get_diff_for_mutant
     from mutmut.utils.format_utils import orig_function_and_class_names_from_key
 
     for mutant in mutants:
-        if mutant["status"] not in ACTIONABLE:
+        if not include_all and mutant['status'] not in ACTIONABLE:
             continue
         try:
             path = find_mutant(mutant["id"]).path
@@ -194,18 +203,41 @@ def duplication_entries(path, file):
     return entries
 
 
+def selected_mutants(mutants, selection):
+    from fnmatch import fnmatch
+    if not selection:
+        return mutants
+    return [item for item in mutants if any(fnmatch(item['id'], pattern) for pattern in selection)]
+
+
+def mutant_patterns(key):
+    """Select a whole module for a file, or every mutmut mangling of a function's name."""
+    from mutmut.utils.format_utils import get_mutant_name
+    file, _, function = key.partition(':')
+    if not function:
+        return [get_mutant_name(Path(file), '*')]
+    # Lizard omits the class of a method, so match the method in any class of the module.
+    name = function.split(':')[0].rpartition('.')[2]
+    return [get_mutant_name(Path(file), f'x_{name}__mutmut_*'), get_mutant_name(Path(file), f'xǁ*ǁ{name}__mutmut_*')]
+
+
+def export(keys):
+    # mutmut exits nonzero when the clean baseline fails, so no report is written.
+    selection = [pattern for key in keys for pattern in mutant_patterns(key)]
+    subprocess.run([sys.executable, "-m", "mutmut", "run", *selection], check=True)
+    from mutmut.__main__ import status_by_exit_code
+    mutants = selected_mutants(collect('mutants', status_by_exit_code), selection)
+    return {"baselinePassed": True, "mutants": add_details(mutants, include_all=True)}
+
+
 def main(argv=None):
     args = sys.argv[1:] if argv is None else argv
     try:
-        if len(args) != 1:
+        if not args:
             raise ValueError("Usage: python mutmut_export.py REPORT.json")
         if Path("mutants").exists():
             raise ValueError("mutants/ already exists; mutmut would reuse stale results. Use a fresh analysis copy")
-        # mutmut exits nonzero when the clean baseline fails, so no report is written.
-        subprocess.run([sys.executable, "-m", "mutmut", "run"], check=True)
-        from mutmut.__main__ import status_by_exit_code
-        report = {"baselinePassed": True, "mutants": add_details(collect("mutants", status_by_exit_code))}
-        Path(args[0]).write_bytes(json.dumps(report).encode())
+        Path(args[0]).write_bytes(json.dumps(export(args[1:])).encode())
         return 0
     except (OSError, ValueError, ImportError, subprocess.CalledProcessError) as error:
         print(f"mutmut_export: {error}", file=sys.stderr)

@@ -62,13 +62,28 @@ A mutant whose status is survived, noCoverage, timeout, or error. It requires re
 _Avoid_: surviving mutant (when meaning all four statuses)
 
 **Isolated copy**:
-A disposable copy of the project that contains the accepted changes and in which mutation commands run.
+A disposable copy of the project that contains the accepted changes and in which mutation commands run, supplied by the caller or created as an overlay.
 _Avoid_: sandbox, checkout, working copy
+
+**Overlay**:
+An isolated copy that a mutation check creates itself inside a disposable parent directory and removes after the check, preserving its evidence.
+
+**Reused outcome**:
+A non-actionable mutant outcome carried from trustworthy previous evidence for unchanged source and labelled as reused.
+
+**Tool environment**:
+A skill-owned location outside the project containing a pinned tool and its dependencies.
+
+**Duplication check**:
+The check that identifies pairs of functions with similar normalized structure.
+
+**Duplication standard**:
+The fixed criteria of the duplication check: similarity at least 0.8 for functions with at least 4 lines and 20 normalized syntax nodes.
 
 ## Structure
 
 **Entry point**:
-The single command for one check. There is one for the CRAP check and one for the mutation check.
+The single command for one check. There is one each for the CRAP, mutation and duplication checks.
 _Avoid_: CLI, wrapper, runner
 
 **Language module**:

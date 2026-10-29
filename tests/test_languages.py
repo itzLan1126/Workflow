@@ -20,7 +20,7 @@ class LanguageArgumentsTests(unittest.TestCase):
         project, evidence = Path('/project'), Path('/evidence')
         self.assertEqual(coverage_commands(project, evidence, []), [['node', '--experimental-strip-types', '--test', '--experimental-test-coverage', '--test-reporter=lcov', '--test-reporter-destination=/evidence/coverage.lcov']])
         self.assertEqual(coverage_commands(project, evidence, ['custom']), [['custom']])
-        self.assertEqual(mutation_command(project, evidence, []), ['/project/node_modules/.bin/stryker', 'run', '--testRunner', 'command', '--reporters', 'json'])
+        self.assertEqual(mutation_command(project, evidence, []), ['stryker', 'run', '--testRunner', 'command', '--reporters', 'json'])
         self.assertEqual(mutation_command(project, evidence, ['custom']), ['custom'])
         self.assertEqual(report_path(project, evidence), project / 'reports/mutation/mutation.json')
 
@@ -31,7 +31,7 @@ class LanguageArgumentsTests(unittest.TestCase):
         for platform, executable in (('posix', 'stryker'), ('nt', 'stryker.cmd')):
             with self.subTest(platform=platform), patch('os.name', platform):
                 self.assertEqual(mutation_command(project, evidence, []),
-                                 [str(project / 'node_modules/.bin' / executable), 'run',
+                                 [executable, 'run',
                                   '--testRunner', 'command', '--reporters', 'json'])
                 self.assertEqual(mutation_command(project, evidence, ['custom', 'literal argument']),
                                  ['custom', 'literal argument'])

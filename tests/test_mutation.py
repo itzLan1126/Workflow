@@ -76,10 +76,11 @@ class MutationTests(unittest.TestCase):
                     tempfile.TemporaryFile(mode='w+') as stderr, redirect_stderr(stderr), \
                     redirect_stdout(io.StringIO()) as stdout:
                 self.assertEqual(main(['--json', 'python', str(project), '--', *command]), 0)
-            self.assertEqual({path.name for path in evidence.iterdir()}, {'config.json', 'mutation.json'})
+            self.assertEqual({path.name for path in evidence.iterdir()}, {'config.json', 'mutation.json', 'snapshot.json', 'outcomes.json', 'result.json'})
             config = read_json(evidence / 'config.json')
             self.assertEqual(config, {'cwd': str(project), 'report': str(evidence / 'mutation.json'),
-                                     'format': 'normalized', 'command': command, 'timeoutMs': 3600000})
+                                     'format': 'normalized', 'command': command, 'timeoutMs': 3600000, 'selectedFiles': None,
+                                      'tools': [{'name': 'lizard', 'version': '1.17.31', 'location': 'interpreter'}]})
             self.assertEqual(json.loads(stdout.getvalue())['reportPath'], str(evidence / 'mutation.json'))
 
     def fixture(self, report, exit_code=0, **overrides):

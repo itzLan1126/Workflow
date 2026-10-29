@@ -61,7 +61,7 @@ class CrapTests(unittest.TestCase):
                         f'Path(os.environ["WORKFLOW_COVERAGE_FILE"]).write_text({lcov!r},encoding="utf-8")')
             spec = Crap('lcov', lambda project, evidence, tool: [[sys.executable, '-c', exporter]], 'coverage.lcov')
             with tempfile.TemporaryFile(mode='w+', encoding='utf-8') as stderr, redirect_stderr(stderr), \
-                    redirect_stdout(stdout), mock.patch.object(crap, 'language', return_value=SimpleNamespace(CRAP=spec)), \
+                    redirect_stdout(stdout), mock.patch.object(crap, 'language', return_value=SimpleNamespace(CRAP=spec, prepare_tools=lambda *args: (None, []))), \
                     mock.patch.object(crap, 'evidence_directory', return_value=evidence), \
                     mock.patch.object(io, 'text_encoding', side_effect=strict_text_encoding):
                 self.assertEqual(crap.language_result('python', [str(root), source.name]), 0)

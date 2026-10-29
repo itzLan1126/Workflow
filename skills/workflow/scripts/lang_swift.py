@@ -6,6 +6,20 @@ import sys
 from shared_languages import Crap, Mutation
 
 
+XCODE = (['xcrun', 'swift', '--version'], 'Xcode command line tools: xcode-select --install')
+MUTER = (['muter', '--version'], 'Muter from https://github.com/muter-mutation-testing/muter')
+
+
+def prepare_tools(project, check, install):
+    from shared_tools import require_system
+    require_macos()
+    require_system(*XCODE)
+    if check != 'mutation':
+        return None, []
+    # Muter is a system-level install, so the version is recorded rather than pinned.
+    return None, [{'name': 'muter', 'version': require_system(*MUTER), 'location': 'PATH'}]
+
+
 def require_macos():
     if sys.platform != 'darwin':
         raise ValueError('Swift quality checks require macOS')
@@ -44,6 +58,10 @@ def export_coverage(project, output, args=()):
 def mutation_command(project, evidence, args):
     require_macos()
     return args or ['muter', 'run', '--format', 'json', '--output', str(evidence / 'mutation.json'), '--skip-update-check']
+
+
+def incremental_command(command, files, functions):
+    return [*command, '--files-to-mutate', ','.join(files)]
 
 
 def report_path(project, evidence):

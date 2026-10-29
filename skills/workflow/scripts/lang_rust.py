@@ -12,6 +12,23 @@ def coverage_commands(project, evidence, args):
             args or ['cargo', '+nightly', 'llvm-cov', '--branch', '--lcov', '--output-path', str(evidence / 'coverage.lcov')]]
 
 
+RUST_PREREQUISITES = {
+    'crap': [(['cargo', '--version'], 'Rust with rustup', ''),
+             (['rustc', '+nightly', '--version'], 'nightly Rust: rustup toolchain install nightly', 'nightly'),
+             (['rustup', 'component', 'list', '--installed', '--toolchain', 'nightly'],
+              'nightly LLVM tools: rustup component add llvm-tools-preview --toolchain nightly', 'llvm-tools')],
+    'mutation': [(['cargo', '--version'], 'Rust with rustup', '')]}
+RUST_TOOLS = {'crap': ('cargo-llvm-cov', '0.9.1'), 'mutation': ('cargo-mutants', '27.1.0')}
+
+
+def prepare_tools(project, check, install):
+    from shared_tools import require_system, native_tool
+    for command, hint, contains in RUST_PREREQUISITES[check]:
+        require_system(command, hint, contains)
+    directory, record = native_tool(*RUST_TOOLS[check], project, install, 'cargo')
+    return directory, [record]
+
+
 def require_nightly():
     probe = subprocess.run(['rustc', '+nightly', '--version'], capture_output=True, text=True)
     if probe.returncode or 'nightly' not in probe.stdout:
@@ -20,6 +37,10 @@ def require_nightly():
 
 def mutation_command(project, evidence, args):
     return args or ['cargo', 'mutants', '--output', str(evidence)]
+
+
+def incremental_command(command, files, functions):
+    return [*command, *(argument for file in files for argument in ('--file', file))]
 
 
 def report_path(project, evidence):
@@ -154,6 +175,37 @@ def test_block_end(tokens, line, opening='{', closing='}'):
         if not depth:
             return line
     raise ValueError('Unclosed Rust test declaration')
+
+
+# Ported from dryer 66ff6d2; see references/dryer-LICENSE.txt.
+from shared_syntax import Syntax, entries
+
+DUPLICATION_SYNTAX = Syntax(
+    identifiers={'identifier', 'type_identifier', 'field_identifier'},
+    literals={'integer_literal', 'float_literal', 'string_literal', 'raw_string_literal', 'char_literal',
+              'boolean_literal'},
+    calls={'call_expression'}, attributes={'field_expression'},
+    paths={'scoped_identifier', 'scoped_type_identifier', 'generic_type'})
+
+
+def duplication_candidate(node):
+    if node.type != 'function_item' or node.child_by_field_name('body') is None:
+        return False
+    # Closures and functions nested in a body belong to their enclosing function.
+    return node.parent.type != 'block' and not duplication_in_tests(node)
+
+
+def duplication_in_tests(node):
+    parent = node.parent
+    while parent is not None:
+        if parent.type == 'mod_item' and parent.child_by_field_name('name').text == b'tests':
+            return True
+        parent = parent.parent
+    return False
+
+
+def duplication_entries(path, file):
+    return entries(path, file, 'rust', 'rust', duplication_candidate, DUPLICATION_SYNTAX)
 
 
 CRAP = Crap('lcov', coverage_commands, 'coverage.lcov', exclude_tests)

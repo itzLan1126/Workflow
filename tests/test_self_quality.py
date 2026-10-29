@@ -11,7 +11,7 @@ import unittest
 from unittest import mock
 import builtins
 
-from scripts import self_crap, self_mutation
+from scripts import self_crap, self_mutation, self_duplication
 from test_mutation_review import DIFF, approved_source_bytes
 
 
@@ -47,7 +47,7 @@ class SelfQualityTests(unittest.TestCase):
         patcher = mock.patch.object(sys, 'stdout', self.stdout)
         patcher.start()
         self.addCleanup(patcher.stop)
-        for module in (self_crap, self_mutation):
+        for module in (self_crap, self_mutation, self_duplication):
             for field, value in (('ROOT', self.root), ('SCRIPTS', self.root / 'skills/workflow/scripts')):
                 patcher = mock.patch.object(module, field, value)
                 patcher.start()
@@ -81,6 +81,17 @@ class SelfQualityTests(unittest.TestCase):
             with self.subTest(code=code), mock.patch.object(self_crap.subprocess, 'run') as run:
                 run.return_value.returncode = code
                 self.assertEqual(self_crap.main(), code)
+                run.assert_called_once_with(expected, cwd=self.root)
+
+    def test_duplication_checks_all_production_sources_and_propagates_result(self):
+        expected = [sys.executable, str(self.root / 'skills/workflow/scripts/duplication.py'),
+                    'python', str(self.root),
+                    *(str(self.root / name) for prefix in ('skills/', 'scripts/')
+                      for name in sorted(self.sources) if name.startswith(prefix))]
+        for code in (0, 1, 2):
+            with self.subTest(code=code), mock.patch.object(self_duplication.subprocess, 'run') as run:
+                run.return_value.returncode = code
+                self.assertEqual(self_duplication.main(), code)
                 run.assert_called_once_with(expected, cwd=self.root)
 
     def test_mutation_copies_all_source_and_test_files_and_propagates_result(self):

@@ -78,12 +78,11 @@ class DuplicationTests(unittest.TestCase):
                 config.write_text(json.dumps({'cwd': directory, 'sources': ['a.py'], policy: 0}))
                 with redirect_stderr(io.StringIO()) as error:
                     self.assertEqual(duplication.main([str(config)]), 2)
-                self.assertEqual(error.getvalue(), 'Duplication: Usage: duplication.py python PROJECT SOURCE_FILE...; only Python is supported\n')
+                self.assertEqual(error.getvalue(), 'Duplication: Usage: duplication.py LANGUAGE PROJECT SOURCE_FILE...\n')
         cases = [(['python', '.', 'a.py', '--', 'anything'], 'Require source files; tool overrides are not supported'),
                  (['python', '.'], 'Require source files; tool overrides are not supported'),
                  (['python', '.', 'a.py', '--timeout-ms', '100'], 'Duplication check does not accept timeout overrides'),
-                 ([], 'Usage: duplication.py python PROJECT SOURCE_FILE...; only Python is supported'),
-                 (['swift', '.', 'a.swift'], 'Usage: duplication.py python PROJECT SOURCE_FILE...; only Python is supported')]
+                 ([], 'Usage: duplication.py LANGUAGE PROJECT SOURCE_FILE...')]
         for args, message in cases:
             with redirect_stderr(io.StringIO()) as error:
                 self.assertEqual(duplication.main(args), 2)

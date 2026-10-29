@@ -8,16 +8,18 @@ ACTIONABLE = ("survived", "noCoverage", "timeout", "error")
 STATUSES = ("killed", "survived", "noCoverage", "timeout", "unviable", "ignored", "error")
 FORMATS = {"normalized": "report_normalized", "stryker": "report_stryker", "cargo-mutants": "report_cargo", "muter": "report_muter"}
 
-def object_value(value):
-    if not isinstance(value, dict):
-        raise ValueError("Expected an object in mutation report")
+def typed_value(value, kind, description):
+    if not isinstance(value, kind):
+        raise ValueError(f"Expected an {description} in mutation report")
     return value
+
+
+def object_value(value):
+    return typed_value(value, dict, 'object')
 
 
 def array(value):
-    if not isinstance(value, list):
-        raise ValueError("Expected an array in mutation report")
-    return value
+    return typed_value(value, list, 'array')
 
 
 def code_diff(before, after):
