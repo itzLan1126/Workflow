@@ -3,3 +3,5 @@ strictyaml==1.7.3
 lizard==1.17.31
 mutmut==3.8.0
 pytest==9.1.1
+tree-sitter==0.25.2
+tree-sitter-language-pack==0.9.0

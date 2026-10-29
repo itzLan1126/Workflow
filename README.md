@@ -66,6 +66,14 @@ python3 -m venv .venv
 .venv/bin/python scripts/validation.py
 ```
 
+The Python [duplication check](skills/workflow/references/languages/python.md#duplication-check) is also available:
+
+```sh
+.venv/bin/python skills/workflow/scripts/duplication.py python . path/to/first.py path/to/second.py
+```
+
+It compares explicitly selected Python functions against a fixed similarity of 0.8, excluding functions below 4 lines or 20 normalized nodes. Install the pinned tree-sitter packages manually via `requirements-dev.txt`; they support Python 3.10+. JSON and evidence include both spans, analysed scope and parser versions. The [ported analyser's provenance and 0BSD licence](skills/workflow/references/dryer-LICENSE.txt) are preserved.
+
 Language commands and prerequisites: [Python](skills/workflow/references/languages/python.md), [JS/TS](skills/workflow/references/languages/js.md), [Rust](skills/workflow/references/languages/rust.md), [Swift](skills/workflow/references/languages/swift.md). The [shared contract](skills/workflow/references/quality-tools.md) defines config mode, evidence, and results.
 
 ### Self-Quality Verification
