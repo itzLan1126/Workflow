@@ -194,7 +194,8 @@ class NativeWindowsJobTests(unittest.TestCase):
         shim.parent.mkdir(parents=True)
         shim.write_text('@echo off\n> arguments.txt echo %*\nexit /b 7\n')
         command = mutation_command(project, self.root, [])
-        self.assertEqual(windows_job.run_command(command, project, 10000), 7)
+        self.assertEqual(windows_job.run_command(command, project, 10000,
+                                                env={**os.environ, 'PATH': str(shim.parent) + os.pathsep + os.environ['PATH']}), 7)
         self.assertEqual((project / 'arguments.txt').read_text().strip(),
                          'run --testRunner command --reporters json')
 

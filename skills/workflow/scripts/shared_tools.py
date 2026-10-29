@@ -3,6 +3,7 @@ from contextlib import contextmanager
 from importlib import metadata
 import json
 import os
+import re
 from pathlib import Path
 import shutil
 import subprocess
@@ -45,10 +46,11 @@ def tool_root(project):
     return root
 
 
-def probe(command, expected):
+def probe(command, expected, exact=False):
     result = subprocess.run(command, capture_output=True, text=True)
     output = (result.stdout + result.stderr).strip()
-    if result.returncode or expected not in output:
+    matched = expected in re.findall(r'(?<![\w.])\d+\.\d+\.\d+(?:[-+][\w.-]+)?(?![\w.])', output) if exact else expected in output
+    if result.returncode or not matched:
         raise ValueError(f'Tool check failed: {" ".join(command)}: {output}')
     return output
 
@@ -143,7 +145,7 @@ def native_tools(module, check, project, install, replaced):
 
 
 def native_version(binary, name, pinned):
-    return probe([binary, *NATIVE_SUBCOMMANDS.get(name, []), '--version'], pinned)
+    return probe([binary, *NATIVE_SUBCOMMANDS.get(name, []), '--version'], pinned, exact=True)
 
 
 def existing_native(name, pinned, project, kind):

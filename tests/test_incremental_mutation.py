@@ -201,13 +201,14 @@ class IncrementalMutationTests(unittest.TestCase):
         self.assertEqual(json.loads(Path(second['reportPath']).read_bytes())['baselinePassed'], True)
         (self.project / 'b.py').unlink()
         code, third, _ = self.custom(self.evidence(second))
-        self.assertEqual((code, self.engine_runs(), third['reusedCount']), (0, 1, 1))
+        self.assertEqual((code, self.engine_runs(), third['reusedCount']), (0, 2, 0))
+        self.assertEqual(third['incrementalScope']['fallback'], 'full run: source files were deleted')
         evidence = self.evidence(third)
         for name, text in [('README.md', 'notes'), ('node_modules/x/index.js', 'x'), ('docs/notes.txt', 'n')]:
             with self.subTest(ignored=name):
                 self.write(name, text)
                 code, result, _ = self.custom(evidence)
-                self.assertEqual((code, self.engine_runs(), result['reusedCount']), (0, 1, 1))
+                self.assertEqual((code, self.engine_runs(), result['reusedCount']), (0, 2, 1))
         cases = [('a.py', 'def f(x):\n    return x + 0\n', 'full run: replaced command cannot be scoped'),
                  ('pkg/tests/helper.py', 'x = 1\n', INVALIDATED), ('test_a.py', 'x = 1\n', INVALIDATED),
                  ('web/a.spec.js', 'x\n', INVALIDATED), ('Sources/ATests.swift', 'x\n', INVALIDATED),

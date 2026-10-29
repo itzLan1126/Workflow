@@ -56,18 +56,31 @@ def prepared_result(name, project, sources, timeout, tool, tools, previous):
     report = Path(spec.report(project, evidence))
     config = {'cwd': str(project), 'report': str(report), 'format': spec.format,
               'command': spec.command(project, evidence, tool), 'timeoutMs': timeout, 'tools': tools}
-    engine = {'format': spec.format, 'command': tool or [spec.format], 'tools': tools}
+    identity = [{**record, 'location': stable_location(record['location'], project)} for record in tools]
+    engine = {'format': spec.format, 'command': tool or [spec.format], 'tools': identity}
     current = incremental.snapshot(project, language(name), engine)
     return execute_incremental(name, evidence, report, config, current, previous, tool)
 
 
-def execute_incremental(name, evidence, report, config, current, previous, tool):
-    reused, files, functions, fallback = [], None, None, None
-    if previous is not None:
-        reused, files, functions, fallback = incremental.plan(current, previous, name == 'python')
-    if files and tool:
+def stable_location(location, project):
+    path = Path(location)
+    if path.is_absolute() and path.is_relative_to(project):
+        return path.relative_to(project).as_posix()
+    return location
+
+
+def incremental_plan(name, current, previous, tool):
+    if previous is None:
+        return [], None, None, None
+    plan = incremental.plan(current, previous, name == 'python')
+    if plan[1] and tool:
         # A replaced command has no selection protocol; rerun it rather than drop outcomes.
-        reused, files, functions, fallback = [], None, None, 'full run: replaced command cannot be scoped'
+        return [], None, None, 'full run: replaced command cannot be scoped'
+    return plan
+
+
+def execute_incremental(name, evidence, report, config, current, previous, tool):
+    reused, files, functions, fallback = incremental_plan(name, current, previous, tool)
     if files:
         config['command'] = language(name).incremental_command(config['command'], files, functions)
     config['selectedFiles'] = files
@@ -75,7 +88,7 @@ def execute_incremental(name, evidence, report, config, current, previous, tool)
     path.write_bytes(json.dumps(config).encode())
     result, outcomes = run_selected(path, config['format'], report, files, reused)
     incremental.save(evidence, current, outcomes)
-    result.update(reusedCount=len(reused), outcomes=outcomes)
+    result.update(reusedCount=sum(item['reused'] for item in outcomes), outcomes=outcomes)
     if previous is not None:
         result['incrementalScope'] = {'files': files, 'functions': functions, 'fallback': fallback}
     preserve_report(report, evidence, result)
@@ -97,9 +110,19 @@ def run_selected(path, format, report, selected, reused):
     result = run_mutation(path)
     outcomes = incremental.all_outcomes(read_json(report), format, report)
     if selected is not None:
-        outcomes = [*outcomes, *reused]
+        outcomes = merge_outcomes(outcomes, reused)
         result = {**result, **combined_result(outcomes, format, report)}
     return result, outcomes
+
+
+def mutant_identity(item):
+    return item.get('file'), item.get('id')
+
+
+def merge_outcomes(fresh, reused):
+    # A freshly executed mutant replaces its earlier outcome instead of being counted twice.
+    seen = set(map(mutant_identity, fresh))
+    return [*fresh, *(item for item in reused if mutant_identity(item) not in seen)]
 
 
 def previous_option(wrapper):
