@@ -93,6 +93,103 @@ def add_details(mutants):
     return mutants
 
 
+# Python-only reduction of dryer astnorm/extract at 66ff6d2; see dryer-LICENSE.txt.
+DUPLICATION_OPERATORS = {
+    '+', '-', '*', '/', '//', '%', '**', '==', '!=', '<', '>', '<=', '>=',
+    '&', '|', '^', '<<', '>>', '+=', '-=', '*=', '/=', '//=', '%=', '**=',
+    '&=', '|=', '^=', '<<=', '>>=', '~', 'and', 'or', 'not', 'in', 'is', '=', ':=',
+}
+DUPLICATION_LITERALS = {'integer', 'float', 'true', 'false', 'none', 'string'}
+
+
+def duplication_leaf(node, head):
+    if node.type == 'identifier':
+        return [':symbol', node.text.decode()] if head == 'callee' else ':symbol'
+    if duplication_literal(node):
+        return ':literal'
+    if node.type in DUPLICATION_OPERATORS:
+        return [':symbol', node.type]
+    return None
+
+
+def duplication_literal(node):
+    return node.type in DUPLICATION_LITERALS and not any(c.type == 'interpolation' for c in node.children)
+
+
+def duplication_children(node, head):
+    if node.type == 'attribute':
+        return [(node.child_by_field_name('object'), None),
+                (node.child_by_field_name('attribute'), head)]
+    if node.type == 'call':
+        return [(node.child_by_field_name('function'), 'callee'),
+                (node.child_by_field_name('arguments'), None)]
+    if node.type == 'parenthesized_expression':
+        return [(node.named_children[0], head)]
+    return [(child, None) for child in node.children if duplication_keep(child)]
+
+
+def duplication_keep(node):
+    return node.type != 'comment' and (node.is_named or node.type in DUPLICATION_OPERATORS)
+
+
+def duplication_normalize(root):
+    cache = {}
+    stack = [(root, None)]
+    pending = []
+    while stack:
+        node, head = stack.pop()
+        leaf = duplication_leaf(node, head)
+        if leaf is not None:
+            cache[node.id] = leaf
+            continue
+        children = duplication_children(node, head)
+        pending.append((node, children))
+        stack.extend(children)
+    for node, children in reversed(pending):
+        cache[node.id] = duplication_assemble(node, children, cache)
+    return cache[root.id]
+
+
+def duplication_assemble(node, children, cache):
+    values = [cache[child.id] for child, _ in children]
+    if node.type == 'parenthesized_expression':
+        return values[0]
+    return [':' + node.type, *values]
+
+
+def duplication_nested(node):
+    parent = node.parent
+    while parent is not None:
+        if parent.type == 'class_definition':
+            return False
+        if parent.type == 'function_definition':
+            return True
+        parent = parent.parent
+    return False
+
+
+def duplication_entries(path, file):
+    import tree_sitter
+    from tree_sitter_language_pack import get_parser
+    from shared_duplication import fingerprint_tree
+
+    tree = get_parser('python').parse(read_utf8(path).encode())
+    if tree.root_node.has_error:
+        raise ValueError(f'Unparseable Python source: {path}')
+    entries = []
+    stack = [tree.root_node]
+    while stack:
+        node = stack.pop()
+        stack.extend(reversed(node.children))
+        if node.type == 'function_definition' and not duplication_nested(node):
+            count, fingerprints = fingerprint_tree(duplication_normalize(node))
+            entries.append({'language': 'python', 'file': file,
+                            'startLine': node.start_point.row + 1,
+                            'endLine': node.end_point.row + bool(node.end_point.column),
+                            'nodes': count, 'fingerprints': fingerprints})
+    return entries
+
+
 def main(argv=None):
     args = sys.argv[1:] if argv is None else argv
     try:
